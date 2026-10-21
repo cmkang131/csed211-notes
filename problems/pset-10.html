@@ -28,9 +28,11 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 10</span>
-
-<p>call foo 직전 %rsp = 0x7fffffffe010. foo 안에서 pushq %rbp, subq $0x20, %rsp를 실행. 다음 시점의 %rsp는? (a) foo 첫 명령 직전 (b) push 직후 (c) sub 직후 (d) ret 직후 (정상 복귀 시, 스택 정리 완료 가정).</p>
-<div class="nb"><div>%rsp = 0x1000에서 call foo → 0x0FF8, pushq %rbp → 0x0FF0. 스택은 주소가 감소하는 방향으로 자람.</div></div>
+<p>call foo 직전 %rsp = 0x7fffffffe010. foo 안에서 pushq %rbp, subq $0x20, %rsp를 실행. 다음 시점의 %rsp는?</p>
+<ul><li>(a) foo 첫 명령 직전</li>
+<li>(b) push 직후</li>
+<li>(c) sub 직후</li>
+<li>(d) ret 직후 (정상 복귀 시, 스택 정리 완료 가정)</li></ul>
 </div>
 </section>
 <section>

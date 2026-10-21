@@ -706,7 +706,7 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 3.</b> zincr 어셈블리의 cmpq $4, %rax + jbe .L4에서 ① i = 5일 때 점프하지 않는 이유를 CF, ZF로 설명하고, ② ZLEN이 8이면 비교 상수가 무엇으로 바뀌는지, ③ zincr(postech)를 연속 두 번 호출하면 postech이 어떻게 되는지 구하라.</p>
+<p><b>문제 3.</b> zincr 어셈블리의 cmpq $4, %rax + jbe .L4에서</p><ul><li>① i = 5일 때 점프하지 않는 이유를 CF, ZF로 설명하고,</li><li>② ZLEN이 8이면 비교 상수가 무엇으로 바뀌는지,</li><li>③ zincr(postech)를 연속 두 번 호출하면 postech이 어떻게 되는지 구하라.</li></ul><p></p>
 <details class="pd ans"><summary>정답 보기</summary>
 <div class="pd-body">
 <ol class="steps">
@@ -765,7 +765,7 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 7.</b> int A[3][2] = {{1, 2}, {3, 4}, {5, 6}}을 ① row-major로 저장했을 때 메모리 순서, ② A[2][1]의 시작 주소로부터의 offset(byte)과 값, ③ column-major였다면 메모리 순서를 쓰라.</p>
+<p><b>문제 7.</b> int A[3][2] = {{1, 2}, {3, 4}, {5, 6}}을</p><ul><li>① row-major로 저장했을 때 메모리 순서,</li><li>② A[2][1]의 시작 주소로부터의 offset(byte)과 값,</li><li>③ column-major였다면 메모리 순서를 쓰라.</li></ul><p></p>
 <details class="pd ans"><summary>정답 보기</summary>
 <div class="pd-body">
 <ol class="steps">
@@ -778,7 +778,10 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 8.</b> int *tab[3]의 시작 주소가 0x100이고 tab[0] = 0x400, tab[1] = 0x500, tab[2] = 0x440이다. 0x400부터 1 2 3 4, 0x440부터 9 8 7 6, 0x500부터 5 5 5 5가 int로 저장되어 있다. <code>int get(size_t index, size_t col) { return tab[index][col]; }</code>가 슬라이드의 get_univ_digit처럼 컴파일되었을 때 get(2, 3)에 대해 ① 첫 번째 메모리 읽기의 주소와 읽은 값 ② 최종 주소 ③ 반환값 ④ 같은 값들이 int t[3][4](시작 0x400, row-major)에 들어 있는 nested 배열이었다면 t[2][3]의 주소를 구하라.</p>
+<p><b>문제 8.</b> int *tab[3]의 시작 주소가 0x100이고 tab[0] = 0x400, tab[1] = 0x500, tab[2] = 0x440이다.</p>
+<ul><li>0x400부터 1 2 3 4</li><li>0x440부터 9 8 7 6</li><li>0x500부터 5 5 5 5 (int로 저장)</li></ul>
+<p><code>int get(size_t index, size_t col) { return tab[index][col]; }</code>가 슬라이드의 get_univ_digit처럼 컴파일되었을 때 get(2, 3)에 대해 다음을 구하라.</p>
+<ul><li>① 첫 번째 메모리 읽기의 주소와 읽은 값</li><li>② 최종 주소</li><li>③ 반환값</li><li>④ 같은 값들이 int t[3][4](시작 0x400, row-major)에 들어 있는 nested 배열이었다면 t[2][3]의 주소를 구하라.</li></ul><p></p>
 <details class="pd ans"><summary>정답 보기</summary>
 <div class="pd-body">
 <ol class="steps">
@@ -792,7 +795,9 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 9.</b> <code>long var_ele(size_t n, long a[n][n], long i, long j) { return a[i][j]; }</code>가 아래처럼 컴파일되었다. 빈칸을 채우고, n = 7, a = 0x3000, i = 4, j = 2일 때 읽는 주소를 구하라. 또 n이 상수 8인 long fix[8][8]이면 행 시작 offset을 만드는 명령은 무엇이 되는가?</p>
+<p><b>문제 9.</b><code>long var_ele(size_t n, long a[n][n], long i, long j) { return a[i][j]; }</code>가 아래처럼 컴파일되었다.</p>
+<p>빈칸을 채우고, n = 7, a = 0x3000, i = 4, j = 2일 때 읽는 주소를 구하라.</p>
+<p>또 n이 상수 8인 long fix[8][8]이면 행 시작 offset을 만드는 명령은 무엇이 되는가?</p>
 <pre class="asm"># n in %rdi, a in %rsi, i in %rdx, j in %rcx
     imulq %rdx, %rdi           <span class="cm"># (a)</span>
     leaq (%rsi,%rdi,__), %rax  <span class="cm"># (b)</span>
@@ -811,7 +816,7 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 10.</b> struct T { short s; char c; double d; int i; };에서 ① 각 member의 offset과 sizeof ② padding 총량 ③ member 순서를 d, i, s, c로 바꾼 구조체의 offset과 sizeof, 줄어든 크기를 구하라.</p>
+<p><b>문제 10.</b> struct T { short s; char c; double d; int i; };에서</p><ul><li>① 각 member의 offset과 sizeof</li><li>② padding 총량</li><li>③ member 순서를 d, i, s, c로 바꾼 구조체의 offset과 sizeof, 줄어든 크기를 구하라.</li></ul><p></p>
 <details class="pd ans"><summary>정답 보기</summary>
 <div class="pd-body">
 <ol class="steps">
@@ -824,7 +829,7 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 11.</b> struct P { char tag; double val; short n; } arr[20];가 있고 arr의 시작 주소는 0x5000이다. ① sizeof(struct P)와 arr 전체 크기 ② &amp;arr[7].n ③ <code>short get_n(int idx) { return arr[idx].n; }</code>가 아래처럼 컴파일되었을 때 빈칸 두 개와 %rax의 값(idx = 7)을 구하라.</p>
+<p><b>문제 11.</b> struct P { char tag; double val; short n; } arr[20];가 있고 arr의 시작 주소는 0x5000이다.</p><ul><li>① sizeof(struct P)와 arr 전체 크기</li><li>② &amp;arr[7].n</li><li>③ <code>short get_n(int idx) { return arr[idx].n; }</code>가 아래처럼 컴파일되었을 때 빈칸 두 개와 %rax의 값(idx = 7)을 구하라.</li></ul><p></p>
 <pre class="asm"># idx in %rdi
     leaq (%rdi,%rdi,2), %rax
     movzwl arr+__(,%rax,__), %eax
@@ -841,7 +846,7 @@ double dadd(double x, double y) { return x + y; }</pre>
 </div></div>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 12.</b> ① <code>long f(long n, double x, float y, double *p)</code>의 네 인자는 각각 어느 register로 전달되는가? ② dincr가 *p = 3.25, v = 0.75에서 실행될 때 movapd, movsd (%rdi), %xmm0, addsd, movsd %xmm1, (%rdi) 직후의 값과 반환값을 구하라. ③ %xmm0 = [1.5, 2.5, 3.5, 4.5], %xmm1 = [0.5, 0.5, 0.5, 0.5](float 4칸)일 때 addps %xmm0,%xmm1과 addss %xmm0,%xmm1을 각각 실행한 뒤의 %xmm1은?</p>
+<p><b>문제 12.</b></p><ul><li>① <code>long f(long n, double x, float y, double *p)</code>의 네 인자는 각각 어느 register로 전달되는가?</li><li>② dincr가 *p = 3.25, v = 0.75에서 실행될 때 movapd, movsd (%rdi), %xmm0, addsd, movsd %xmm1, (%rdi) 직후의 값과 반환값을 구하라.</li><li>③ %xmm0 = [1.5, 2.5, 3.5, 4.5], %xmm1 = [0.5, 0.5, 0.5, 0.5](float 4칸)일 때 addps %xmm0,%xmm1과 addss %xmm0,%xmm1을 각각 실행한 뒤의 %xmm1은?</li></ul><p></p>
 <details class="pd ans"><summary>정답 보기</summary>
 <div class="pd-body">
 <ol class="steps">

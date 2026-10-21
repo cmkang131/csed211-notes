@@ -28,14 +28,22 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 5</span>
-<p>함수 foo가 call에 의해 진입한 직후 %rsp = 0xFF8이다. 프롤로그는 다음과 같다.
+<p>함수 foo가 call에 의해 진입한 직후 %rsp = 0xFF8이다. 프롤로그는 다음과 같다. <span class="k-red">[4점]</span></p>
 <pre class="c">foo:
-    pushq %rbp
-    pushq %rbx
-    subq $24, %rsp</pre>
-(a) return address, 저장된 %rbp, 저장된 %rbx의 주소와, 프롤로그 직후의 %rsp 값을 쓰시오. <span class="k-red">[4점]</span></p>
-<p>(b) 프롤로그가 스택 포인터를 내린 총 바이트 수를 쓰시오. <span class="k-red">[2점]</span></p>
-<p>(c) 프롤로그 직후 %rsp가 16바이트 정렬 조건을 만족하는지 계산으로 보이시오. <span class="k-red">[2점]</span></p>
+<p>pushq %rbp</p>
+<p>pushq %rbx</p>
+<p>subq $24, %rsp</pre></p>
+<ul>
+<li>(a) return address, 저장된 %rbp, 저장된 %rbx의 주소와, 프롤로그 직후의 %rsp 값을 쓰시오.</li>
+</ul>
+<ul>
+<li>(b) 프롤로그가 스택 포인터를 내린 총 바이트 수를 쓰시오.</li>
+</ul>
+<p><span class="k-red">[2점]</span></p>
+<ul>
+<li>(c) 프롤로그 직후 %rsp가 16바이트 정렬 조건을 만족하는지 계산으로 보이시오.</li>
+</ul>
+<p><span class="k-red">[2점]</span></p>
 
 </div>
 </section>

@@ -851,8 +851,8 @@ show_bytes((pointer) &amp;a, sizeof(int));</pre>
 <div class="prob">
 <div class="prob-head"><span class="pid">2-6</span><span class="ptitle">항상 참인가? (종합)</span>★★★</div>
 <div class="prob-body">
-<p>32비트, two's complement, <code>int x, y; unsigned ux = x;</code> 일 때 각 명제가 항상 참인지 판정하라. 거짓이면 반례를 들라.<br>
-① x &lt; 0 ⇒ x*2 &lt; 0 ② ux &gt;= 0 ③ x &gt; 0 &amp;&amp; y &gt; 0 ⇒ x + y &gt; 0 ④ x &gt;= 0 ⇒ -x &lt;= 0 ⑤ x &lt;= 0 ⇒ -x &gt;= 0 ⑥ ux &gt;&gt; 3 == ux/8 ⑦ x &gt;&gt; 3 == x/8</p>
+<p>32비트, two's complement, <code>int x, y; unsigned ux = x;</code> 일 때 각 명제가 항상 참인지 판정하라. 거짓이면 반례를 들라.</p>
+<ul><li>① x &lt; 0 ⇒ x*2 &lt; 0</li><li>② ux &gt;= 0</li><li>③ x &gt; 0 &amp;&amp; y &gt; 0 ⇒ x + y &gt; 0</li><li>④ x &gt;= 0 ⇒ -x &lt;= 0</li><li>⑤ x &lt;= 0 ⇒ -x &gt;= 0</li><li>⑥ ux &gt;&gt; 3 == ux/8</li><li>⑦ x &gt;&gt; 3 == x/8</li></ul>
 <details class="pd hint"><summary>힌트 보기</summary>
 <div class="pd-body"><div>반례 후보는 항상 극값에서: TMin, TMax, −1. shift 문제는 음수에서 floor vs 0 방향 차이를 본다.</div></div></details>
 <details class="pd ans"><summary>정답 보기</summary>
