@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04 · Data Lab 스타일 (허용 연산자 지키기) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">04 · Data Lab 스타일 (허용 연산자 지키기)</h1>
+<p class="psub">Lec2 · 비트 연산 | Data Lab 연계 · 난이도 ★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 04</span>
+
+<p>(a) bitXor(x, y): ~와 &만 사용 (b) conditional(x, y, z): x ? y : z — ! ~ &amp; ^ | + &lt;&lt; &gt;&gt; 허용 (c) 부호 있는 int x를 8로 나눈 값(0 쪽으로 반올림)을 / 없이 (d) x × 15를 시프트와 덧셈·뺄셈으로.</p>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+De Morgan — x|y = ~(~x &amp; ~y) · 모든 비트가 0이거나 1인 마스크: (!!x &lt;&lt; 31) &gt;&gt; 31 · 음수 나눗셈은 bias를 더해야 0 쪽으로 반올림 · ×(2^k − 1) = (x&lt;&lt;k) − x.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>(a) XOR = (x|y)에서 겹치는 비트를 뺀 것. |는 De Morgan으로 만들기: <code>return ~(~x &amp; ~y) &amp; ~(x &amp; y);</code></li>
+<li>(b) x가 참이면 mask = −1(전부 1), 거짓이면 0이 되게 하고 mask로 y·z 선택: <code>int mask = (!!x &lt;&lt; 31) &gt;&gt; 31; return (mask &amp; y) | (~mask &amp; z);</code></li>
+<li>(c) 음수일 때만 bias 2³−1 = 7을 더해야 0 쪽으로 반올림됨 — (x&gt;&gt;31)&amp;7이 그 bias: <code>return (x + ((x &gt;&gt; 31) &amp; 7)) &gt;&gt; 3;</code></li>
+<li>(d) 15 = 16 − 1 → <code>(x &lt;&lt; 4) - x</code> (즉 (x&lt;&lt;4) + ~x + 1)</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) ~(~x &amp; ~y) &amp; ~(x &amp; y) (b) (!!x&lt;&lt;31)&gt;&gt;31 마스크로 선택 (c) (x + ((x&gt;&gt;31) &amp; 7)) &gt;&gt; 3 (d) (x&lt;&lt;4) − x</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-03.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-05.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

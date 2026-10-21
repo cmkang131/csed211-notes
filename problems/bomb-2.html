@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bomb Lab Phase 2 — 2배씩 커지는 수열 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; Bomb Lab</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Bomb Lab Phase 2 — 2배씩 커지는 수열</h1>
+<p class="psub">Bomb Lab · gdb disassembly 분석</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">Phase 2</span>
+<p>다음은 phase_2의 disassembly다. 폭탄을 해제하는 입력 6개를 찾아라.</p>
+<pre class="c">  callq read_six_numbers        # 정수 6개를 스택에 저장
+  cmpl $0x1, (%rsp)             # x1 = 1이어야 함
+  je   &lt;phase_2+52&gt;
+  ...
+  mov  -0x4(%rbx), %eax         # %eax = 이전 원소
+  add  %eax, %eax               # %eax = 2 × 이전 원소
+  cmp  %eax, (%rbx)             # 현재 원소와 비교
+  je   &lt;phase_2+41&gt;            # x_i = 2 × x_(i-1) 여야 함
+  add  $0x4, %rbx               # 다음 정수로
+  cmp  %rbp, %rbx
+  jne  &lt;phase_2+27&gt;            # 끝까지 반복</pre>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+read_six_numbers는 정수 6개를 스택에 연속 저장한다. 첫 원소 조건과 "현재 원소 = f(이전 원소)" 관계를 루프에서 읽는다.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>loop 구조: %rbx가 두 번째 정수부터 마지막까지 돌면서 "현재 = 2 × 이전"을 검사</li><li>x1 = 1이고 2배씩 → 1, 2, 4, 8, 16, 32</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">1 2 4 8 16 32</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="bomb-1.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="bomb-3.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

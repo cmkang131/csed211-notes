@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bomb Lab Phase 4 — 재귀 함수 func4 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; Bomb Lab</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Bomb Lab Phase 4 — 재귀 함수 func4</h1>
+<p class="psub">Bomb Lab · gdb disassembly 분석</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">Phase 4</span>
+<p>다음은 phase_4의 disassembly다. func4를 C로 복원하고 폭탄을 해제하는 입력 2개를 찾아라.</p>
+<pre class="c">  cmpl $0x2,%eax          # sscanf로 정확히 2개
+  mov 0xc(%rsp),%eax
+  sub $0x2,%eax
+  cmp $0x2,%eax           # 0 ≤ x2−2 ≤ 2 → 2 ≤ x2 ≤ 4 (unsigned jbe)
+  jbe &lt;phase_4+51&gt;
+  ...
+  mov 0xc(%rsp),%esi      # 두 번째 인자 = x2
+  mov $0x5,%edi           # 첫 번째 인자 = 5
+  callq func4
+  cmp 0x8(%rsp),%eax      # x1 = func4(5, x2) 여야 함</pre>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+재귀 함수는 반환 규칙을 C로 복원한 뒤, 원하는 반환 값이 나오는 입력을 역산한다. 종료 조건(base case)부터 확인.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>func4(5, x2) = 12·x2 이고 x1 = 12·x2 여야 함. 2 ≤ x2 ≤ 4 중 x2 = 2 → x1 = 24</li></ol>
+<pre class="c">func4(n = %edi, x = %esi):
+  if (n &lt;= 0) return 0
+  if (n == 1) return x
+  a = func4(n-1, x)
+  b = func4(n-2, x)
+  return a + x + b</pre>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">24 2</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="bomb-3.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="bomb-5.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

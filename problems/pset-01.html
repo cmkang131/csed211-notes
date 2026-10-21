@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 · while 루프 (jump-to-middle) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">01 · while 루프 (jump-to-middle)</h1>
+<p class="psub">Lec4·5 · 제어 흐름 | Bomb Lab 연계 · 난이도 ★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 01</span>
+
+<pre class="c">f:  movl $0, %eax
+    movl $0, %edx
+    jmp .L2
+.L3: addl %edx, %eax
+    addl $1, %edx
+.L2: cmpl %edi, %edx
+    jl .L3
+    ret</pre>
+<p><code>int f(int n)</code>의 C 코드를 복원하고, f(5)와 f(-3)의 값을 구하라.</p>
+<div class="nb"><div>f(4) = 0+1+2+3 = 6, f(0) = 0 (반복문이 실행되지 않음). f(5), f(-3)은 직접 계산.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+몸통 블록(.L3) 뒤에 조건 검사(.L2)가 오고, 처음엔 jmp로 조건부터 뛰는 구조는 while 루프의 컴파일 결과(jump-to-middle). <code>cmpl %edi, %edx</code>는 %edx − %edi이고, <code>jl</code>은 signed로 %edx &lt; %edi일 때 점프.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>%eax = 0, %edx = 0 — 반환값과 counter 초기화</li>
+<li>jmp .L2 — 루프 진입 전 조건부터 검사하러 이동 (while 구조의 특징)</li>
+<li>.L2에서 %edx &lt; %edi이면 .L3(몸통)으로 점프 — 조건은 i &lt; n</li>
+<li>.L3: %eax += %edx, %edx += 1 → sum += i; i++</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">int f(int n){ int sum = 0; for (int i = 0; i &lt; n; i++) sum += i; return sum; } · f(5) = 0+1+2+3+4 = 10, f(-3) = 0 (처음부터 i &lt; n이 거짓)</span></div>
+</div></details>
+</section>
+<div class="pnav"><span></span><a href="../problems.html">목차</a><a href="pset-02.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

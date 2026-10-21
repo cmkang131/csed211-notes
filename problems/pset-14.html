@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14 · C 비교 (int 32-bit, 2의 보수) — true/false? — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">14 · C 비교 (int 32-bit, 2의 보수) — true/false?</h1>
+<p class="psub">Lec2 · 비트·정수 | Data Lab 연계 · 난이도 ★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 14</span>
+
+<p>(1) -1 &lt; 0U (2) (unsigned char)300 == 44 (3) (short)0x12348000의 값 (4) INT_MIN == -INT_MIN (5) unsigned u = 3; int i = -4; 일 때 u + i &gt; 0</p>
+<div class="nb"><div>(unsigned char)258은 8비트로 잘려 2 · 32-bit에서 (unsigned)-1은 4294967295.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+한쪽이 unsigned면 다른 쪽도 unsigned로 변환 (일반 산술 변환). 작은 타입으로의 cast는 상위 비트 절단. −TMin = TMin (오버플로로 자기 자신).
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>(1) false — 0U 때문에 −1이 unsigned로 바뀌어 4294967295 &lt; 0이 됨</li>
+<li>(2) true — 300 mod 256 = 44</li>
+<li>(3) 하위 16비트 0x8000이 남아 −32768</li>
+<li>(4) true — −INT_MIN은 오버플로로 자기 자신</li>
+<li>(5) true — u + i는 unsigned 연산, 3 + (2³²−4) = 2³²−1 &gt; 0</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">(1) false (2) true (3) −32768 (4) true (5) true</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-13.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-15.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

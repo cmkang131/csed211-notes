@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Lab 연습 03 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; Data Lab</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Data Lab 연습 03</h1>
+<p class="psub">Data Lab · bitwise 연산 제한</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 3</span>
+<p>0x80과 0x0F에 대해 0x80 &amp; 0x0F, 0x80 &amp;&amp; 0x0F, !0x80, ~0x0F (8-bit 기준)를 구하라.</p>
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>0x80 &amp; 0x0F = 0x00 (겹치는 1 bit 없음)</li>
+<li>0x80 &amp;&amp; 0x0F = 1 (둘 다 0이 아님) · !0x80 = 0</li>
+<li>~0x0F = 0xF0</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">0x00 · 1 · 0 · 0xF0</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="datalab-02.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="datalab-04.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13 · asm 읽기 (cmov) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">13 · asm 읽기 (cmov)</h1>
+<p class="psub">Lec5 · 제어 흐름 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 13</span>
+
+<pre class="c">f:  cmpq %rsi, %rdi
+    movq %rsi, %rax
+    cmovl %rdi, %rax
+    ret</pre>
+<p>x = %rdi, y = %rsi (long). f는 무엇을 계산하는가?</p>
+<div class="nb"><div>cmpq %rsi,%rdi; movq %rsi,%rax; cmovg %rdi,%rax라면 x = 7, y = 4에서 결과는 7.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+<code>cmpq %rsi, %rdi</code>는 x − y로 flag를 설정. cmovCond는 조건이 맞을 때만 복사 — 분기 없는 if.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>기본값 %rax = y</li>
+<li>x &lt; y (signed, SF≠OF)이면 %rax = x로 덮어씀</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">signed min(x, y)</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-12.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-14.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

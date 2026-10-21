@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bomb Lab Phase 5 — 배열을 따라가는 루프 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; Bomb Lab</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Bomb Lab Phase 5 — 배열을 따라가는 루프</h1>
+<p class="psub">Bomb Lab · gdb disassembly 분석</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">Phase 5</span>
+<p>다음은 phase_5의 disassembly다. 폭탄을 해제하는 입력을 찾아라.</p>
+<pre class="c">  mov 0xc(%rsp),%eax
+  and $0xf,%eax           # x1의 마지막 4 bit만 남김
+  cmp $0xf,%eax
+  je  explode_bomb        # 1111이면 안 됨
+  mov $0x0,%ecx           # %ecx = 합계
+  mov $0x0,%edx           # %edx = 반복 횟수
+loop:
+  add $0x1,%edx
+  cltq
+  mov 0x402580(,%rax,4),%eax   # %eax = arr[%rax]
+  add %eax,%ecx                # 합계에 더함
+  cmp $0xf,%eax
+  jne loop                     # arr 값이 15가 되면 종료
+  cmp $0xf,%edx
+  jne explode_bomb             # 반복 횟수 = 15여야 함
+  cmp 0x8(%rsp),%ecx           # 합계 = x2 여야 함
+  je  &lt;phase_5+104&gt;</pre>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+배열 chasing: 현재 값을 다음 인덱스로 쓰는 루프. 배열 내용은 gdb x/16dw로 읽고, 루프 횟수·합계 조건을 같이 본다.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>arr[i]를 다음 index로 삼아 값이 15일 때까지 따라가는 포인터 체이스 — 입력 x1의 하위 4 bit가 시작 index</li><li>시작 5라면: 5 → 12 → 3 → 7 → 11 → 13 → 9 → 4 → 8 → 0 → 10 → 1 → 2 → 14 → 6 → 15 (정확히 15번 반복)</li><li>합계 = 12+3+7+11+13+9+4+8+0+10+1+2+14+6+15 = 115 → x1 = 5, x2 = 115</li></ol>
+<pre class="c">(gdb) x/16dw 0x402580
+arr = [10, 2, 14, 7, 8, 12, 15, 11, 0, 4, 1, 13, 3, 9, 6, 5]
+         0   1   2  3  4   5   6   7  8  9  10  11 12 13 14 15</pre>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">5 115</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="bomb-4.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="bomb-6.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

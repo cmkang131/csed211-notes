@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>16 · 인코딩 (8-bit FP) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">16 · 인코딩 (8-bit FP)</h1>
+<p class="psub">Lec3 · 부동소수점 | Data Lab 연계 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 16</span>
+
+<p>8-bit 형식: 부호 1 / 지수 4 (bias = 7) / fraction 3. (a) 6.5 (b) 0 0000 011이 나타내는 값 (c) 가장 큰 유한 양수 (d) 가장 작은 양의 정규수 (e) 가장 작은 양의 비정규수 (f) +무한대.</p>
+<div class="nb"><div>같은 형식에서 1.5 = 1.100₂ × 2⁰이므로 부호 0, 지수 0111, fraction 100 → 0 0111 100.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+V = (−1)^s × M × 2^E. exp = 0이면 비정규(E = 1−bias, M = 0.f), exp = 전부 1이면 특수(∞/NaN), 아니면 정규(E = exp−bias, M = 1.f).
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>(a) 6.5 = 110.1₂ = 1.101 × 2² → e = 2+7 = 9 = 1001, frac = 101 → 0 1001 101 (0x4D)</li>
+<li>(b) exp = 0000이라 비정규: E = 1−7 = −6, M = 3/8 → 3/8 × 2⁻⁶ = 3/512</li>
+<li>(c) 0 1110 111 = 1.875 × 2⁷ = 240</li>
+<li>(d) 0 0001 000 = 2⁻⁶</li>
+<li>(e) 0 0000 001 = 1/8 × 2⁻⁶ = 2⁻⁹</li>
+<li>(f) 0 1111 000</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) 0 1001 101 (b) 3/512 (c) 240 (d) 2⁻⁶ (e) 2⁻⁹ (f) 0 1111 000</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-15.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-17.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

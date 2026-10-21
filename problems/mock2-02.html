@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q2 · 루프 어셈블리 → C 복원 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q2 · 루프 어셈블리 → C 복원</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec5 Control — do-while 번역 유형 (강의 루프 번역 규칙 기반) · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 2</span>
+<p>다음 어셈블리를 보고 물음에 답하시오.
+<pre class="c">f:
+    movl $1, %eax
+.L2:
+    imull %edi, %eax
+    subl $1, %edi
+    jne .L2
+    ret</pre>
+(a) f의 C 코드를 복원하시오. 함수 시그니처는 int f(int n)이다. <span class="k-red">[4점]</span></p>
+<p>(b) f(4)와 f(5)의 값을 쓰시오. <span class="k-red">[2점]</span></p>
+<p>(c) f(0)을 호출하면 어떻게 되는지 반환 값과 반복 횟수 관점에서 설명하시오. <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>진입 즉시 %eax=1로 두고 본문을 먼저 실행한 뒤 조건을 검사 → do-while 구조.</li><li>본문: result *= n; n = n − 1.</li><li>subl이 세팅한 ZF로 n != 0이면 반복.<br>
+<pre class="c">int f(int n) {
+    int result = 1;
+    do {
+        result *= n;
+        n = n - 1;
+    } while (n != 0);
+    return result;
+}</pre></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>f(4) = 4·3·2·1 = 24. f(5) = 5·4·3·2·1 = 120.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보이고, 반환 값은 0.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">f(4)=24, f(5)=120 · 0 반환 (약 2^32회 반복 후 종료)</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-01.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-03.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

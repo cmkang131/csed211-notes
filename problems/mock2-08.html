@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q8 · 2차원 배열 주소 계산 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q8 · 2차원 배열 주소 계산</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec7 Data — 다차원 배열 인덱싱과 주소식 · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 8</span>
+<p>int A[3][4]의 시작 주소는 0x1000이고, i는 %rsi, j는 %rdx, A는 %rdi에 있다.
+<pre class="c">movq %rsi, %rax
+salq $4, %rax
+leaq (%rax,%rdx,4), %rax
+movl (%rdi,%rax), %eax</pre>
+(a) 이 코드가 계산하는 C 식과, &A[i][j]의 일반식을 쓰시오. <span class="k-red">[3점]</span></p>
+<p>(b) A[2][3]의 주소를 16진수로 쓰시오. <span class="k-red">[3점]</span></p>
+<p>(c) 배열 A 전체의 크기(바이트)를 쓰시오. <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>salq $4로 %rax = 16·i, leaq로 %rax = 16·i + 4·j, movl로 해당 주소의 int를 읽는다. 행 하나는 int 4개 = 16바이트이므로 &A[i][j] = A + 16·i + 4·j = A + 4·(4i + j).<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>0x1000 + 16·2 + 4·3 = 0x1000 + 44 = 0x102C.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>3 × 4 × 4바이트 = 48바이트.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">A[i][j], &A[i][j] = A + 16i + 4j · 0x102C · 48바이트</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-07.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-09.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

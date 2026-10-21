@@ -1,0 +1,8 @@
+/* CSED211 course extras — keeps template css untouched for v2 drop-in */
+.notes pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82em;background:#f7f7f7;border-left:3px solid #bbb;padding:8px 12px;margin:8px 0;overflow-x:auto;line-height:1.55}
+.notes pre.asm{border-left:3px solid #94b8f5}
+.notes pre.c{border-left:3px solid #9fd3ab}
+.notes pre .cm{color:#8a8d98}
+.notes pre .kw{color:#7c3aed}
+td.ORD{background:#eef3fd}td.BIN{background:#fdf0ee}td.OP{background:#eef7f0}td.OPEN{background:#eef7f0}td.CLOSE{background:#fdf0ee}
+mjx-container{display:inline}

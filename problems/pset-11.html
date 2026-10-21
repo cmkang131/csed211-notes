@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11 · 덧셈 Overflow(오버플로) 검출 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">11 · 덧셈 Overflow(오버플로) 검출</h1>
+<p class="psub">Lec2 · 비트 연산 | Data Lab 연계 · 난이도 ★★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 11</span>
+
+<p>int 두 개 x, y의 합이 오버플로 없이 표현되면 1, 아니면 0을 반환하는 함수를 연산자 제한 없이 작성하라.</p>
+<div class="nb"><div>(32-bit int 가정) x = 10, y = 20 → 합 30은 표현 가능 → 1 · x = INT_MAX, y = 1 → 오버플로 → 0. 일반 C에서 signed overflow 자체는 정의되지 않음.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+오버플로는 x와 y의 부호가 같고 합의 부호가 다를 때만 발생. 부호 비트는 ^와 &gt;&gt; 31로 추출.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>s = x + y (2의 보수 비트 패턴으로 계산)</li>
+<li>x ^ s의 부호 비트: x와 합의 부호가 다르면 1</li>
+<li>(x^s) &amp; (y^s)의 부호 비트가 1 = 둘 다 합과 부호가 다름 = x, y 부호가 같고 합만 다름 = 오버플로</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">int s = x + y; return !(((x ^ s) &amp; (y ^ s)) &gt;&gt; 31);</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-10.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-12.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

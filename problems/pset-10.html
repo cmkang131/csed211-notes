@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 · Stack(스택) Pointer(포인터) 추적 (x86-64) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">10 · Stack(스택) Pointer(포인터) 추적 (x86-64)</h1>
+<p class="psub">Lec6 · 프로시저 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 10</span>
+
+<p>call foo 직전 %rsp = 0x7fffffffe010. foo 안에서 pushq %rbp, subq $0x20, %rsp를 실행. 다음 시점의 %rsp는? (a) foo 첫 명령 직전 (b) push 직후 (c) sub 직후 (d) ret 직후 (정상 복귀 시, 스택 정리 완료 가정).</p>
+<div class="nb"><div>%rsp = 0x1000에서 call foo → 0x0FF8, pushq %rbp → 0x0FF0. 스택은 주소가 감소하는 방향으로 자람.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+call은 return address 8B를 push하고 ret은 pop. pushq는 −8, subq는 그 값만큼 감소. 스택은 낮은 주소 쪽으로 자람.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>(a) call이 반환 주소 8B를 push → 0x7fffffffe010 − 8 = 0x7fffffffe008</li>
+<li>(b) pushq %rbp → −8 → 0x7fffffffe000</li>
+<li>(c) subq $0x20 → 0x7fffffffe000 − 0x20 = 0x7fffffffdfe0</li>
+<li>(d) 복귀 시 sub·push를 되돌린 뒤 ret이 반환 주소를 pop → 다시 0x7fffffffe010</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) 0x7fffffffe008 (b) 0x7fffffffe000 (c) 0x7fffffffdfe0 (d) 0x7fffffffe010</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-09.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-11.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

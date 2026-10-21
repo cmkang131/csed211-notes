@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q6 · 재귀와 callee-saved 레지스터 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q6 · 재귀와 callee-saved 레지스터</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec6 Procedures — 재귀 번역 + 레지스터 저장 규약 · 10점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 6</span>
+<p>다음 어셈블리를 보고 물음에 답하시오.
+<pre class="c">fact:
+    cmpq $1, %rdi
+    jg .L2
+    movl $1, %eax
+    ret
+.L2:
+    pushq %rbx
+    movq %rdi, %rbx
+    leaq -1(%rdi), %rdi
+    call fact
+    imulq %rbx, %rax
+    popq %rbx
+    ret</pre>
+(a) fact의 C 코드를 복원하시오 (long fact(long n)). <span class="k-red">[3점]</span></p>
+<p>(b) %rbx를 push/pop하는 이유를 callee-saved 규약 관점에서 설명하시오. <span class="k-red">[3점]</span></p>
+<p>(c) main이 fact(3)을 call한 시점부터 fact(1)이 실행되는 동안, 스택이 총 몇 바이트 내려가는지 내역과 함께 쓰시오. <span class="k-red">[4점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>n ≤ 1이면 1 반환 (base case).</li><li>아니면 n을 %rbx에 보관, fact(n−1) 호출, 결과에 n을 곱함.<br>
+<pre class="c">long fact(long n) {
+    if (n <= 1) return 1;
+    return n * fact(n - 1);
+}</pre></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>재귀 호출 후에도 n이 필요한데 %rdi는 인자 레지스터(caller-saved)라 call 이후 값이 보장되지 않는다. 그래서 n을 callee-saved인 %rbx에 옮겨 보관한다. 대신 %rbx는 callee-saved이므로 사용 전 원래 값을 push로 저장하고 반환 전 pop으로 복원해 caller의 %rbx를 지켜야 한다.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>call fact(3)의 ret주소 8 + fact(3)의 pushq %rbx 8 + call fact(2)의 ret주소 8 + fact(2)의 pushq %rbx 8 + call fact(1)의 ret주소 8 = 40바이트. (fact(1)은 base case라 push 없음.)<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">n을 call 너머로 보존하려고 callee-saved %rbx를 쓰되, 규약상 원래 %rbx는 push/pop으로 보존 · 40바이트</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-05.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-07.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

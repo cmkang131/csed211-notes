@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Lab 연습 02 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; Data Lab</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Data Lab 연습 02</h1>
+<p class="psub">Data Lab · bitwise 연산 제한</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 2</span>
+<p>8-bit 값 b = 11010110에 대해 b &lt;&lt; 2, logical b &gt;&gt; 3, arithmetic b &gt;&gt; 3을 구하라.</p>
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>b &lt;&lt; 2 = 01011000 (위 2 bit 소실, 아래 0 채움)</li>
+<li>logical &gt;&gt; 3 = 00011010 (왼쪽 0 채움)</li>
+<li>arithmetic &gt;&gt; 3 = 11111010 (MSB 1 → 왼쪽 세 칸을 1로)</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">01011000 · 00011010 · 11111010</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="datalab-01.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="datalab-03.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

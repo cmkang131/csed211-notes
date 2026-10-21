@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>09 · 2차원 Array(배열) 주소 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">09 · 2차원 Array(배열) 주소</h1>
+<p class="psub">Lec7 · 데이터 | Bomb Lab 연계 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 09</span>
+
+<p>int A[5][3], A의 시작 주소 0x1000. &amp;A[3][2]의 주소는? 그리고 아래 asm은 어떤 함수인가 (M은 열 수).</p>
+<pre class="c">get: leaq (%rsi,%rsi,2), %rax
+     leaq (%rdi,%rax,4), %rax
+     movl (%rax,%rdx,4), %eax
+     ret</pre>
+<div class="nb"><div>int B[2][4]의 시작 주소가 0x1000이라면 &amp;B[1][2] = 0x1000 + (1×4+2)×4 = 0x1018. 원문 배열은 행 길이가 다름.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+row-major: 주소 = base + (i × 열 수 + j) × sizeof(원소). <code>leaq (%rsi,%rsi,2)</code> = 3×%rsi 꼴의 스케일 패턴을 열 수로 읽기.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>&amp;A[3][2] = 0x1000 + 4×(3×3 + 2) = 0x1000 + 44 = 0x102C</li>
+<li>asm 해석: %rax = 3i → %rax = A + 12i (행 하나가 3×4 = 12B) → 값 = *(A + 12i + 4j)</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">0x102C · int get(int A[][3], long i, long j){ return A[i][j]; } (i = %rsi, j = %rdx)</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-08.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-10.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>17 · 4-bit 연산 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">17 · 4-bit 연산</h1>
+<p class="psub">Lec2 · 비트·정수 | Data Lab 연계 · 난이도 ★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 17</span>
+
+<p>4-bit 정수. (a) 0110 + 0101을 signed로 해석한 결과와 오버플로 여부 (b) unsigned 1011 × 0011의 4-bit 결과 (c) TMin, TMax, UMax (d) signed −3을 8-bit로 sign extension한 값.</p>
+<div class="nb"><div>signed 0011 + 0010 = 0101은 3+2 = 5이고 오버플로 없음. 4-bit signed 표현 범위는 −8 ~ 7.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+B2T는 최상위 비트 가중치 −2^(w−1). 결과는 mod 2^w로 잘림. sign extension은 부호 비트 복사.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>(a) 0110 + 0101 = 1011 = −5 (signed). 6+5 = 11이 TMax(7)를 넘으므로 오버플로</li>
+<li>(b) 11×3 = 33, 33 mod 16 = 1 → 0001</li>
+<li>(c) TMin = −8 (1000), TMax = 7 (0111), UMax = 15</li>
+<li>(d) 1101 → 부호 비트 복사 → 11111101 (0xFD)</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) −5, 오버플로 (b) 0001 (c) −8 / 7 / 15 (d) 0xFD</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-16.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-18.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

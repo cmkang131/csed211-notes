@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>15 · 인자 전달 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">15 · 인자 전달</h1>
+<p class="psub">Lec6 · 프로시저 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 15</span>
+
+<p>long f(long a, int b, char *c, long d, long e, long g, long h). 각 인자는 어디에? 반환값은?</p>
+<div class="nb"><div>long add(long a, int b)라면 첫 인자 a는 %rdi, 둘째 b는 %esi로 전달되고 결과는 %rax로 반환.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+정수·포인터 인자는 %rdi → %rsi → %rdx → %rcx → %r8 → %r9 순서, 7번째부터는 stack. 반환값은 %rax. int 인자는 32-bit register(%esi 꼴)로 전달.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>앞 6개를 register에 순서대로: a = %rdi, b = %esi (int라 32-bit), c = %rdx, d = %rcx, e = %r8, g = %r9</li>
+<li>7번째 h는 stack — 함수 진입 시점 8(%rsp) (0(%rsp)는 return address)</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">a %rdi · b %esi · c %rdx · d %rcx · e %r8 · g %r9 · h 스택 8(%rsp) · 반환값 %rax</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-14.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-16.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q3 · switch와 점프 테이블 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q3 · switch와 점프 테이블</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec5 Control — jump table 복원 유형 · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 3</span>
+<p>다음 어셈블리를 보고 물음에 답하시오.
+<pre class="c">f:
+    cmpq $3, %rdi
+    ja .L8
+    jmp *.L4(,%rdi,8)
+.L3:
+    movl $10, %eax
+    ret
+.L5:
+    movl $20, %eax
+    addl $1, %eax
+    ret
+.L6:
+    movl $30, %eax
+    subl $5, %eax
+    ret
+.L7:
+    movl $40, %eax
+    ret
+.L8:
+    movl $-1, %eax
+    ret
+.L4:
+    .quad .L3
+    .quad .L5
+    .quad .L6
+    .quad .L7</pre>
+(a) f의 C 코드를 switch 문을 사용해 복원하시오 (반환 타입 long, 인자 long x). <span class="k-red">[4점]</span></p>
+<p>(b) 범위 검사에 jg 대신 ja를 쓰는 이유를 설명하시오. <span class="k-red">[2점]</span></p>
+<p>(c) f(2)의 반환 값을 쓰시오. <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>테이블 .L4의 i번째 항목이 case i의 목적지.</li><li>case 0 → 10, case 1 → 20+1 = 21, case 2 → 30−5 = 25, case 3 → 40, 그 외 → −1.<br>
+<pre class="c">long f(long x) {
+    switch (x) {
+        case 0: return 10;
+        case 1: return 21;
+        case 2: return 25;
+        case 3: return 40;
+        default: return -1;
+    }
+}</pre></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>인덱스 x가 음수이면 unsigned 비교(ja)에서는 매우 큰 값으로 해석되어 default(.L8)로 빠진다. jg(부호 비교)였다면 음수 인덱스가 테이블 앞의 잘못된 주소를 참조하게 된다. ja 하나로 x > 3과 x < 0을 동시에 걸러낸다.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>case 2 → 30 − 5 = 25.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">unsigned 비교로 음수 인덱스까지 한 번에 default 처리하기 위해 · 25</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-02.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-04.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

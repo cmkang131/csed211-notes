@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>20 · 8-bit 2의 보수 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">20 · 8-bit 2의 보수</h1>
+<p class="psub">Lec2 · 비트·정수 | Data Lab 연계 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 20</span>
+
+<p>x = 0xB4 (8-bit). (a) signed 값 (b) unsigned 값 (c) x &gt;&gt; 2 산술 시프트 결과(16진수와 10진수) (d) 논리 시프트 결과 (e) −x.</p>
+<div class="nb"><div>0xF0 = 11110000₂는 unsigned로 240, signed로 −16 · 산술 오른쪽 2비트 시프트는 0xFC(−4), 논리 시프트는 0x3C(60).</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+signed 해석은 최상위 비트에 −128의 가중치. 산술 시프트는 부호 비트를 복사, 논리 시프트는 0을 채움. −x = ~x + 1.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>0xB4 = 10110100₂</li>
+<li>(a) −128+32+16+4 = −76 (b) 180</li>
+<li>(c) 산술: 부호 1 복사 → 11101101 = 0xED = −19</li>
+<li>(d) 논리: 0 채움 → 00101101 = 0x2D = 45</li>
+<li>(e) ~x+1 = 01001100 = 0x4C = 76</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) −76 (b) 180 (c) 0xED = −19 (d) 0x2D = 45 (e) 0x4C = 76</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-19.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-21.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

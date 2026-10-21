@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q10 · 구조체 접근 어셈블리 → C — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q10 · 구조체 접근 어셈블리 → C</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec7 Data — struct 필드 오프셋과 포인터 따라가기 · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 10</span>
+<p>다음 구조체와 어셈블리를 보고 물음에 답하시오.
+<pre class="c">struct rec {
+    long x;
+    long arr[3];
+    struct rec *next;
+};
+f:
+    movq 32(%rdi), %rcx
+    movq (%rcx), %rax
+    movq 8(%rdi,%rsi,8), %rdx
+    addq %rdx, %rax
+    ret</pre>
+(a) f의 C 코드를 복원하시오 (long f(struct rec *p, long i)). <span class="k-red">[4점]</span></p>
+<p>(b) arr과 next의 오프셋, 그리고 sizeof(struct rec)을 쓰시오. <span class="k-red">[4점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>movq 32(%rdi), %rcx → p->next (오프셋 32).</li><li>movq (%rcx), %rax → p->next->x.</li><li>movq 8(%rdi,%rsi,8), %rdx → p->arr[i] (long이라 scale 8, arr 시작 오프셋 8).</li><li>addq → 두 값을 더해 반환.<br>
+<pre class="c">long f(struct rec *p, long i) {
+    return p->next->x + p->arr[i];
+}</pre></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>x@0 (8바이트) → arr@8 (long 3개 = 24바이트, 8~31) → next@32 (포인터 8바이트) → 총 40바이트, 8의 배수 조건도 만족.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">arr=8, next=32, sizeof=40</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-09.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-11.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

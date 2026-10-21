@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q9 · 구조체 정렬 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q9 · 구조체 정렬</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec7 Data — struct alignment과 padding · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 9</span>
+<p>다음 구조체를 보고 물음에 답하시오.
+<pre class="c">struct S {
+    char c;
+    long l;
+    int i;
+    char d;
+};</pre>
+(a) 각 필드의 오프셋을 쓰시오. <span class="k-red">[4점]</span></p>
+<p>(b) sizeof(struct S)를 쓰고, 그 크기가 되는 이유를 한 줄로 설명하시오. <span class="k-red">[2점]</span></p>
+<p>(c) 필드 순서를 바꿔 크기가 최소가 되게 재배열하고, 그 크기를 쓰시오. <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>c@0 (1바이트) → 다음 필드 long은 8바이트 정렬이라 1~7 패딩 → l@8 (8바이트) → i@16 (4바이트) → d@20 (1바이트).<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>마지막 필드가 21에서 끝나지만, 구조체 크기는 최대 정렬 요구(long의 8)의 배수여야 하므로 끝에 3바이트 패딩 → 24.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>struct S { long l; int i; char c; char d; } → l@0, i@8, c@12, d@13, 끝 패딩 2바이트 → 16.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">c=0, l=8, i=16, d=20 · 24 · 16바이트</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-08.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-10.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

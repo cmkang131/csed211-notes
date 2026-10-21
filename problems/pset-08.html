@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>08 · Condition Codes(조건 코드) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">08 · Condition Codes(조건 코드)</h1>
+<p class="psub">Lec4·5 · 제어 흐름 | Bomb Lab 연계 · 난이도 ★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 08</span>
+
+<p>%eax = 3일 때 <code>cmpl $5, %eax</code>, 그리고 %eax = 0x80000000일 때 <code>cmpl $1, %eax</code>. 각각 SF, ZF, CF, OF와 jl, jb, ja가 점프하는지 쓰라.</p>
+<div class="nb"><div>%eax = 2에서 <code>cmpl $2, %eax</code>는 2−2 = 0으로 flag만 갱신. ZF = 1이라 je는 점프함.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+<code>cmpl src, dst</code>는 dst − src의 flag만 갱신 (결과 저장 없음). signed 비교는 SF^OF, unsigned는 CF가 기준. INT_MIN − 1은 signed overflow가 일어나는 대표 케이스.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>3 − 5 = −2 → SF = 1 (음수), ZF = 0, CF = 1 (unsigned 3 &lt; 5라 borrow), OF = 0</li>
+<li>jl: SF≠OF → 점프 · jb: CF=1 → 점프 · ja: CF=1 → 점프 안 함</li>
+<li>INT_MIN − 1 = 0x7FFFFFFF (overflow) → SF = 0, ZF = 0, CF = 0, OF = 1</li>
+<li>jl: SF≠OF → 점프 (INT_MIN &lt; 1이 맞음) · jb: CF=0 → 안 함 · ja: CF=0이고 ZF=0 → 점프</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">첫째: SF1 ZF0 CF1 OF0 — jl·jb 점프, ja 안 함 · 둘째: SF0 ZF0 CF0 OF1 — jl·ja 점프, jb 안 함</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-07.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-09.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

@@ -3,28 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>중간고사 문제 풀이 — 컴퓨터 시스템</title>
-<link rel="stylesheet" href="css/style.css">
+<title>문제 풀이 — 컴퓨터 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/study-note.css">
+<link rel="stylesheet" href="assets/csed211.css">
+<link rel="stylesheet" href="assets/home.css">
 </head>
 <body>
-<header class="topbar"><div class="topbar-in">
-<div class="brand"><a href="index.html">컴퓨터 시스템<span class="sub">CSED211 · POSTECH</span></a></div>
-<nav><a href="index.html">홈</a><a href="exam-info.html">시험 정보</a><a href="summary.html">총정리</a><a href="problems.html">문제 풀이</a><a href="roadmap.html">로드맵</a><a href="plan.html">플랜</a></nav>
-</div></header>
-<main class="paper">
-<div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>문제 풀이</div>
-<h1 class="title">중간고사 문제 풀이 (중요도순)</h1>
-<p class="title-sub">Lec2–7 + LAB · 시험에 자주 나오는 유형(asm → C 복원, 제어 흐름, 재귀·스택, 배열·struct, Data Lab 비트·실수)부터 배치 — 1번부터 순서대로 풀면 됨</p>
+<div class="paper">
+<div class="course">CSED211 &middot; 컴퓨터 시스템 &middot; POSTECH</div>
+<h1>문제 풀이</h1>
+<div class="sub">자작 21 + Data Lab 8 + Bomb Lab 6 + 모의고사 2탄 12 = 47문제. 문제마다 ▸힌트 / ▸정답 토글. 외부 기출·보조 링크는 맨 아래.</div>
+<section>
 <div class="body notes">
-
-<h2><span class="n">0</span>읽기 전에</h2>
+<h2><span class="h2no">0</span>읽기 전에</h2>
 <ul>
 <li>각 문제는 먼저 풀고, 힌트·정답을 열어 확인. <b>힌트는 필요한 개념만</b>, <b>정답은 풀이와 답만</b> 들어 있음</li>
 <li>난이도: ★ 기본 / ★★ 시험 수준 / ★★★ 응용</li>
 <li>출처 표기: <b>[자작]</b> = 직접 작성한 문제 / <b>[기출]</b> = CMU 15-213 공개 기출 (CSAPP 저자 강의, 이 과목과 같은 계열) / <b>[보조]</b> = LeetCode 비트 감각용</li>
 <li>실수 자작 문제(12, 16번)의 공통 형식: 8-bit, 부호 1 / 지수 4 (bias = 7) / fraction 3</li>
 </ul>
-<div class="bx warn">
+<div class="nb">
 <ul>
 <li>CMU 옛 기출 일부는 32-bit(IA32) 코드 — 이 과목은 x86-64 기준. 레지스터 이름뿐 아니라 인자 전달·포인터 크기·스택 규약이 다를 수 있으니 해당 문제의 가정을 따를 것</li>
 <li>정수 자작 문제는 32-bit 비트벡터(Data Lab) 모델로 볼 것 — 표준 C에서 signed overflow는 undefined이므로 14·11번의 코드를 일반 C 규칙과 혼동하지 말 것</li>
@@ -34,506 +35,289 @@
 </ul>
 </div>
 
-<h2><span class="n">1</span>자작 문제 21</h2>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">01</span><span class="ptitle">while 루프 (jump-to-middle)</span><span class="stars">★★</span><span class="plab">Lec4·5 · 제어 흐름 | Bomb Lab 연계</span></div>
-<div class="prob-body">
-<pre class="c">f:  movl $0, %eax
-    movl $0, %edx
-    jmp .L2
-.L3: addl %edx, %eax
-    addl $1, %edx
-.L2: cmpl %edi, %edx
-    jl .L3
-    ret</pre>
-<p><code>int f(int n)</code>의 C 코드를 복원하고, f(5)와 f(-3)의 값을 구하라.</p>
-<div class="bx gray"><div>f(4) = 0+1+2+3 = 6, f(0) = 0 (반복문이 실행되지 않음). f(5), f(-3)은 직접 계산.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">몸통 블록(.L3) 뒤에 조건 검사(.L2)가 오고, 처음엔 jmp로 조건부터 뛰는 구조는 while 루프의 컴파일 결과(jump-to-middle). <code>cmpl %edi, %edx</code>는 %edx − %edi이고, <code>jl</code>은 signed로 %edx &lt; %edi일 때 점프.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>%eax = 0, %edx = 0 — 반환값과 counter 초기화</li>
-<li>jmp .L2 — 루프 진입 전 조건부터 검사하러 이동 (while 구조의 특징)</li>
-<li>.L2에서 %edx &lt; %edi이면 .L3(몸통)으로 점프 — 조건은 i &lt; n</li>
-<li>.L3: %eax += %edx, %edx += 1 → sum += i; i++</li>
-</ol>
-<div class="final-answer">int f(int n){ int sum = 0; for (int i = 0; i &lt; n; i++) sum += i; return sum; } · f(5) = 0+1+2+3+4 = 10, f(-3) = 0 (처음부터 i &lt; n이 거짓)</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">02</span><span class="ptitle">struct 접근 asm</span><span class="stars">★★</span><span class="plab">Lec4·7 · 배열·자료구조 | Bomb Lab 연계</span></div>
-<div class="prob-body">
-<pre class="c">struct node { long val; struct node *next; int arr[4]; };
-
-g:  movq 8(%rdi), %rax
-    movl 16(%rax,%rsi,4), %eax
-    ret
-h:  leaq 16(%rdi,%rsi,4), %rax
-    ret</pre>
-<p>(%rdi = struct node *p, %rsi = long i). g와 h의 C 코드는?</p>
-<div class="bx gray"><div>현재 node의 arr = {1,2,3,4}, 다음 node의 arr = {10,20,30,40}, i = 2라면 각 배열의 원소 값은 3과 30. g는 값을, h는 특정 원소의 주소를 돌려준다는 차이를 확인.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">struct field offset은 선언 순서대로 쌓임 — long 0, pointer 8, int[4] 16. <code>movq D(%rdi)</code>는 메모리를 읽지만 <code>leaq</code>는 주소 계산만 하고 메모리를 읽지 않음.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>offset 확정: val = 0, next = 8, arr = 16 (선언 순서, 8바이트 정렬)</li>
-<li>g 첫 명령: 8(%rdi) → p-&gt;next를 읽음. 둘째 명령: 16(%rax,%rsi,4) → next-&gt;arr[i]를 읽음</li>
-<li>h는 leaq 한 번 — 메모리 읽기 없이 &amp;p-&gt;arr[i] 주소만 계산</li>
-</ol>
-<div class="final-answer">int g(struct node *p, long i){ return p-&gt;next-&gt;arr[i]; } · int *h(struct node *p, long i){ return &amp;p-&gt;arr[i]; }</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">03</span><span class="ptitle">Recursion(재귀)과 callee-saved</span><span class="stars">★★</span><span class="plab">Lec6 · 프로시저 | Bomb Lab 연계</span></div>
-<div class="prob-body">
-<pre class="c">long fact(long n){ if (n &lt;= 1) return 1; return n * fact(n-1); }
-
-fact: cmpq $1, %rdi
-      jg .L2
-      movl $1, %eax
-      ret
-.L2:  pushq %rbx
-      movq %rdi, %rbx
-      leaq -1(%rdi), %rdi
-      call fact
-      imulq %rbx, %rax
-      popq %rbx
-      ret</pre>
-<p>(a) %rbx를 push하는 이유 (b) main이 fact(4)를 호출했을 때 가장 깊은 곳에서 스택에 쌓이는 바이트 수 (반환 주소 포함) (c) 각 frame이 저장한 %rbx의 값.</p>
-<div class="bx gray"><div>main → fact(2) → fact(1)이면 반환 주소가 두 번 저장되고 pushq %rbx는 fact(2)에서 한 번 실행됨. 사용량 8×2+8 = 24B.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">call을 가로질러 값이 살아야 하면 caller-saved register는 못 씀 — callee-saved(%rbx 등)에 옮기되 원래 값은 push/pop으로 보존. frame 크기 = return address 8B + push한 register 8B씩.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(a) n을 재귀 호출 뒤 곱셈에 써야 하는데 %rdi는 caller-saved라 call 중에 바뀜 → callee-saved인 %rbx를 쓰려면 규약상 원래 값을 저장했다가 복원해야 함</li>
-<li>(b) fact(4), fact(3), fact(2) frame은 return address 8 + 저장된 rbx 8 = 16B씩, fact(1)은 push 없이 return address 8B만 → 16×3 + 8 = 56B</li>
-<li>(c) fact(4) frame이 저장한 rbx = main의 rbx, fact(3) frame = 4, fact(2) frame = 3</li>
-</ol>
-<div class="final-answer">(a) %rdi가 caller-saved라서 (b) 56 byte (c) main의 rbx / 4 / 3 · 반환값은 4×3×2×1 = 24</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">04</span><span class="ptitle">Data Lab 스타일 (허용 연산자 지키기)</span><span class="stars">★★</span><span class="plab">Lec2 · 비트 연산 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>(a) bitXor(x, y): ~와 &만 사용 (b) conditional(x, y, z): x ? y : z — ! ~ &amp; ^ | + &lt;&lt; &gt;&gt; 허용 (c) 부호 있는 int x를 8로 나눈 값(0 쪽으로 반올림)을 / 없이 (d) x × 15를 시프트와 덧셈·뺄셈으로.</p>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">De Morgan — x|y = ~(~x &amp; ~y) · 모든 비트가 0이거나 1인 마스크: (!!x &lt;&lt; 31) &gt;&gt; 31 · 음수 나눗셈은 bias를 더해야 0 쪽으로 반올림 · ×(2^k − 1) = (x&lt;&lt;k) − x.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(a) XOR = (x|y)에서 겹치는 비트를 뺀 것. |는 De Morgan으로 만들기: <code>return ~(~x &amp; ~y) &amp; ~(x &amp; y);</code></li>
-<li>(b) x가 참이면 mask = −1(전부 1), 거짓이면 0이 되게 하고 mask로 y·z 선택: <code>int mask = (!!x &lt;&lt; 31) &gt;&gt; 31; return (mask &amp; y) | (~mask &amp; z);</code></li>
-<li>(c) 음수일 때만 bias 2³−1 = 7을 더해야 0 쪽으로 반올림됨 — (x&gt;&gt;31)&amp;7이 그 bias: <code>return (x + ((x &gt;&gt; 31) &amp; 7)) &gt;&gt; 3;</code></li>
-<li>(d) 15 = 16 − 1 → <code>(x &lt;&lt; 4) - x</code> (즉 (x&lt;&lt;4) + ~x + 1)</li>
-</ol>
-<div class="final-answer">(a) ~(~x &amp; ~y) &amp; ~(x &amp; y) (b) (!!x&lt;&lt;31)&gt;&gt;31 마스크로 선택 (c) (x + ((x&gt;&gt;31) &amp; 7)) &gt;&gt; 3 (d) (x&lt;&lt;4) − x</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">05</span><span class="ptitle">Data Lab 스타일: float_twice (floatScale2)</span><span class="stars">★★★</span><span class="plab">Lec3 · 부동소수점 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>unsigned uf를 float 비트 패턴으로 보고 2×f의 비트 패턴을 반환하라. NaN이면 인자를 그대로 반환.</p>
-<div class="bx gray"><div>uf = 0x3F800000 (1.0f) → 0x40000000 (2.0f) · uf = 0x00000000 (+0.0f) → 그대로 · uf = 0x7FC00000 (NaN) → 그대로.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">float = sign(1) + exp(8) + frac(23). exp == 0이면 비정규, exp == 0xFF면 특수(∞/NaN), 그 외 정규. 정규수에서 지수 +1 = 값 ×2. 비정규는 fraction을 한 칸 shift하면 됨.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>부호·지수·fraction을 분해: s = uf &amp; 0x80000000, e = (uf&gt;&gt;23) &amp; 0xFF, f = uf &amp; 0x7FFFFF</li>
-<li>e == 0xFF (inf·NaN) → 그대로 반환 (NaN 조건 + inf는 2배해도 inf)</li>
-<li>e == 0 (비정규) → fraction을 shift: s | (f&lt;&lt;1) — 넘치는 비트가 지수로 올라가 자연스럽게 정규수로 전환</li>
-<li>e == 0xFE → 2배하면 지수가 0xFF가 되어 ∞: s | 0x7F800000</li>
-<li>나머지 정규수 → 지수 +1: uf + 0x00800000</li>
-</ol>
-<pre class="c">unsigned s = uf &amp; 0x80000000, e = (uf &gt;&gt; 23) &amp; 0xFF, f = uf &amp; 0x7FFFFF;
-if (e == 0xFF) return uf;             // inf 또는 NaN
-if (e == 0)    return s | (f &lt;&lt; 1);   // 비정규: fraction shift
-if (e == 0xFE) return s | 0x7F800000; // 2배하면 무한대
-return uf + 0x00800000;               // 지수 +1</pre>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">06</span><span class="ptitle">Switch(스위치) / Jump table (bomb lab phase 3 유형)</span><span class="stars">★★★</span><span class="plab">Lec5 · 제어 흐름 | Bomb Lab 연계</span></div>
-<div class="prob-body">
-<pre class="c">f:    subq $10, %rdi
-      cmpq $5, %rdi
-      ja .Ldef
-      jmp *.Ltab(,%rdi,8)
-.LA:  leaq 0(,%rsi,8), %rax
-      ret
-.LB:  leaq 1(%rsi), %rax
-      ret
-.LC:  movq $-1, %rax
-      ret
-.Ldef: movl $0, %eax
-      ret
-.Ltab: .quad .LA, .LB, .Ldef, .LA, .LC, .LB</pre>
-<p>(a) C switch로 복원 (case 값 포함) (b) f(13, 5), f(9, 5), f(14, 7), f(12, 99)의 값 (c) x &lt; 10이어도 ja 하나로 처리되는 이유.</p>
-<div class="bx gray"><div>x = 6을 기준값 5만큼 빼서 jump table index를 만들면 index = 1 → 표의 1번 엔트리로 이동. 각 엔트리가 가리키는 case는 직접 대응시켜 보기.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">테이블 인덱스 = x − 최소 case. <code>.quad</code> 엔트리는 각 case 몸통의 label 주소. <code>ja</code>는 unsigned 비교라 음수 인덱스가 큰 양수로 보여 범위 검사 한 번에 걸러짐.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>index = x − 10. 표 대응: 0→A, 1→B, 2→default, 3→A, 4→C, 5→B</li>
-<li>(a) case 10·13 → 8×y (leaq 0(,%rsi,8)), case 11·15 → y+1, case 14 → −1, 나머지 → default 0 (case 12는 default)</li>
-<li>(b) f(13,5) = 8×5 = 40 · f(9,5): index = −1 → unsigned로는 매우 큼 → default 0 · f(14,7) = −1 · f(12,99) = 0</li>
-<li>(c) ja가 unsigned 비교라 음수 index가 큰 값으로 보여, 범위 검사 한 번으로 양쪽 끝을 다 처리</li>
-</ol>
-<div class="final-answer">switch(x){ case 10: case 13: return 8*y; case 11: case 15: return y+1; case 14: return -1; default: return 0; } · 40, 0, −1, 0 · ja = unsigned 비교</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">07</span><span class="ptitle">struct Alignment(정렬) (x86-64)</span><span class="stars">★★</span><span class="plab">Lec7 · 데이터</span></div>
-<div class="prob-body">
-<pre class="c">struct S { char a; int b; short c; char d; long e; char f[3]; };</pre>
-<p>(a) 각 field의 offset과 sizeof(S) (b) sizeof를 가장 작게 만드는 field 순서와 그 크기.</p>
-<div class="bx gray"><div>struct T { char a; int b; char c; };라면 offset은 a:0, b:4, c:8, sizeof(T) = 12 (일반적인 x86-64 정렬).</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">각 field offset은 자기 alignment의 배수로 올림하고, 전체 크기는 최대 alignment의 배수. 선언 순서를 바꾸면 padding이 달라짐 — 큰 타입부터 배치하면 padding이 줄어듦.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(a) a:0 (char 1B) → b는 4의 배수 필요 → 4 → c는 2의 배수 → 8 → d:10 → e는 8의 배수 → 16 → f:24–26</li>
-<li>끝이 27인데 전체 정렬이 max 8 → 8의 배수로 올림 → sizeof(S) = 32</li>
-<li>(b) 큰 것부터 e, b, c, a, d, f → offset 0, 8, 12, 14, 15, 16–18 → 끝 19 → 8의 배수 올림 → 24</li>
-</ol>
-<div class="final-answer">(a) a:0 b:4 c:8 d:10 e:16 f:24, sizeof = 32 (b) e, b, c, a, d, f 순서로 24</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">08</span><span class="ptitle">Condition Codes(조건 코드)</span><span class="stars">★★</span><span class="plab">Lec4·5 · 제어 흐름 | Bomb Lab 연계</span></div>
-<div class="prob-body">
-<p>%eax = 3일 때 <code>cmpl $5, %eax</code>, 그리고 %eax = 0x80000000일 때 <code>cmpl $1, %eax</code>. 각각 SF, ZF, CF, OF와 jl, jb, ja가 점프하는지 쓰라.</p>
-<div class="bx gray"><div>%eax = 2에서 <code>cmpl $2, %eax</code>는 2−2 = 0으로 flag만 갱신. ZF = 1이라 je는 점프함.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body"><code>cmpl src, dst</code>는 dst − src의 flag만 갱신 (결과 저장 없음). signed 비교는 SF^OF, unsigned는 CF가 기준. INT_MIN − 1은 signed overflow가 일어나는 대표 케이스.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>3 − 5 = −2 → SF = 1 (음수), ZF = 0, CF = 1 (unsigned 3 &lt; 5라 borrow), OF = 0</li>
-<li>jl: SF≠OF → 점프 · jb: CF=1 → 점프 · ja: CF=1 → 점프 안 함</li>
-<li>INT_MIN − 1 = 0x7FFFFFFF (overflow) → SF = 0, ZF = 0, CF = 0, OF = 1</li>
-<li>jl: SF≠OF → 점프 (INT_MIN &lt; 1이 맞음) · jb: CF=0 → 안 함 · ja: CF=0이고 ZF=0 → 점프</li>
-</ol>
-<div class="final-answer">첫째: SF1 ZF0 CF1 OF0 — jl·jb 점프, ja 안 함 · 둘째: SF0 ZF0 CF0 OF1 — jl·ja 점프, jb 안 함</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">09</span><span class="ptitle">2차원 Array(배열) 주소</span><span class="stars">★</span><span class="plab">Lec7 · 데이터 | Bomb Lab 연계</span></div>
-<div class="prob-body">
-<p>int A[5][3], A의 시작 주소 0x1000. &amp;A[3][2]의 주소는? 그리고 아래 asm은 어떤 함수인가 (M은 열 수).</p>
-<pre class="c">get: leaq (%rsi,%rsi,2), %rax
-     leaq (%rdi,%rax,4), %rax
-     movl (%rax,%rdx,4), %eax
-     ret</pre>
-<div class="bx gray"><div>int B[2][4]의 시작 주소가 0x1000이라면 &amp;B[1][2] = 0x1000 + (1×4+2)×4 = 0x1018. 원문 배열은 행 길이가 다름.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">row-major: 주소 = base + (i × 열 수 + j) × sizeof(원소). <code>leaq (%rsi,%rsi,2)</code> = 3×%rsi 꼴의 스케일 패턴을 열 수로 읽기.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>&amp;A[3][2] = 0x1000 + 4×(3×3 + 2) = 0x1000 + 44 = 0x102C</li>
-<li>asm 해석: %rax = 3i → %rax = A + 12i (행 하나가 3×4 = 12B) → 값 = *(A + 12i + 4j)</li>
-</ol>
-<div class="final-answer">0x102C · int get(int A[][3], long i, long j){ return A[i][j]; } (i = %rsi, j = %rdx)</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">10</span><span class="ptitle">Stack(스택) Pointer(포인터) 추적 (x86-64)</span><span class="stars">★</span><span class="plab">Lec6 · 프로시저</span></div>
-<div class="prob-body">
-<p>call foo 직전 %rsp = 0x7fffffffe010. foo 안에서 pushq %rbp, subq $0x20, %rsp를 실행. 다음 시점의 %rsp는? (a) foo 첫 명령 직전 (b) push 직후 (c) sub 직후 (d) ret 직후 (정상 복귀 시, 스택 정리 완료 가정).</p>
-<div class="bx gray"><div>%rsp = 0x1000에서 call foo → 0x0FF8, pushq %rbp → 0x0FF0. 스택은 주소가 감소하는 방향으로 자람.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">call은 return address 8B를 push하고 ret은 pop. pushq는 −8, subq는 그 값만큼 감소. 스택은 낮은 주소 쪽으로 자람.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(a) call이 반환 주소 8B를 push → 0x7fffffffe010 − 8 = 0x7fffffffe008</li>
-<li>(b) pushq %rbp → −8 → 0x7fffffffe000</li>
-<li>(c) subq $0x20 → 0x7fffffffe000 − 0x20 = 0x7fffffffdfe0</li>
-<li>(d) 복귀 시 sub·push를 되돌린 뒤 ret이 반환 주소를 pop → 다시 0x7fffffffe010</li>
-</ol>
-<div class="final-answer">(a) 0x7fffffffe008 (b) 0x7fffffffe000 (c) 0x7fffffffdfe0 (d) 0x7fffffffe010</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">11</span><span class="ptitle">덧셈 Overflow(오버플로) 검출</span><span class="stars">★★★</span><span class="plab">Lec2 · 비트 연산 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>int 두 개 x, y의 합이 오버플로 없이 표현되면 1, 아니면 0을 반환하는 함수를 연산자 제한 없이 작성하라.</p>
-<div class="bx gray"><div>(32-bit int 가정) x = 10, y = 20 → 합 30은 표현 가능 → 1 · x = INT_MAX, y = 1 → 오버플로 → 0. 일반 C에서 signed overflow 자체는 정의되지 않음.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">오버플로는 x와 y의 부호가 같고 합의 부호가 다를 때만 발생. 부호 비트는 ^와 &gt;&gt; 31로 추출.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>s = x + y (2의 보수 비트 패턴으로 계산)</li>
-<li>x ^ s의 부호 비트: x와 합의 부호가 다르면 1</li>
-<li>(x^s) &amp; (y^s)의 부호 비트가 1 = 둘 다 합과 부호가 다름 = x, y 부호가 같고 합만 다름 = 오버플로</li>
-</ol>
-<div class="final-answer">int s = x + y; return !(((x ^ s) &amp; (y ^ s)) &gt;&gt; 31);</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">12</span><span class="ptitle">반올림 (round-to-even)</span><span class="stars">★★</span><span class="plab">Lec3 · 부동소수점 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>1.0625 (= 17/16)와 1.1875 (= 19/16)를 같은 형식(8-bit, 부호 1 / 지수 4, bias 7 / fraction 3)으로 인코딩하라.</p>
-<div class="bx gray"><div>같은 형식에서 1.125 = 1.001₂는 3비트 fraction에 정확히 들어가므로 0 0111 001.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">fraction에 안 들어가는 나머지 비트가 정확히 절반(tie)이면, 올림/버림 중 마지막 비트가 짝수가 되는 쪽을 선택 (round-to-even).</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>1.0625 = 1.0001₂ — 3비트 뒤에 남는 "1"은 정확히 중간(tie) → 짝수 쪽(마지막 비트 0)인 1.000 선택 → 0 0111 000</li>
-<li>1.1875 = 1.0011₂ — 1.001|1은 tie. 1.001은 홀수 → 올림 → 1.010 = 1.25 → 0 0111 010</li>
-</ol>
-<div class="final-answer">1.0625 → 0 0111 000 · 1.1875 → 0 0111 010</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">13</span><span class="ptitle">asm 읽기 (cmov)</span><span class="stars">★</span><span class="plab">Lec5 · 제어 흐름</span></div>
-<div class="prob-body">
-<pre class="c">f:  cmpq %rsi, %rdi
-    movq %rsi, %rax
-    cmovl %rdi, %rax
-    ret</pre>
-<p>x = %rdi, y = %rsi (long). f는 무엇을 계산하는가?</p>
-<div class="bx gray"><div>cmpq %rsi,%rdi; movq %rsi,%rax; cmovg %rdi,%rax라면 x = 7, y = 4에서 결과는 7.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body"><code>cmpq %rsi, %rdi</code>는 x − y로 flag를 설정. cmovCond는 조건이 맞을 때만 복사 — 분기 없는 if.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>기본값 %rax = y</li>
-<li>x &lt; y (signed, SF≠OF)이면 %rax = x로 덮어씀</li>
-</ol>
-<div class="final-answer">signed min(x, y)</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">14</span><span class="ptitle">C 비교 (int 32-bit, 2의 보수) — true/false?</span><span class="stars">★★</span><span class="plab">Lec2 · 비트·정수 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>(1) -1 &lt; 0U (2) (unsigned char)300 == 44 (3) (short)0x12348000의 값 (4) INT_MIN == -INT_MIN (5) unsigned u = 3; int i = -4; 일 때 u + i &gt; 0</p>
-<div class="bx gray"><div>(unsigned char)258은 8비트로 잘려 2 · 32-bit에서 (unsigned)-1은 4294967295.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">한쪽이 unsigned면 다른 쪽도 unsigned로 변환 (일반 산술 변환). 작은 타입으로의 cast는 상위 비트 절단. −TMin = TMin (오버플로로 자기 자신).</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(1) false — 0U 때문에 −1이 unsigned로 바뀌어 4294967295 &lt; 0이 됨</li>
-<li>(2) true — 300 mod 256 = 44</li>
-<li>(3) 하위 16비트 0x8000이 남아 −32768</li>
-<li>(4) true — −INT_MIN은 오버플로로 자기 자신</li>
-<li>(5) true — u + i는 unsigned 연산, 3 + (2³²−4) = 2³²−1 &gt; 0</li>
-</ol>
-<div class="final-answer">(1) false (2) true (3) −32768 (4) true (5) true</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">15</span><span class="ptitle">인자 전달</span><span class="stars">★</span><span class="plab">Lec6 · 프로시저</span></div>
-<div class="prob-body">
-<p>long f(long a, int b, char *c, long d, long e, long g, long h). 각 인자는 어디에? 반환값은?</p>
-<div class="bx gray"><div>long add(long a, int b)라면 첫 인자 a는 %rdi, 둘째 b는 %esi로 전달되고 결과는 %rax로 반환.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">정수·포인터 인자는 %rdi → %rsi → %rdx → %rcx → %r8 → %r9 순서, 7번째부터는 stack. 반환값은 %rax. int 인자는 32-bit register(%esi 꼴)로 전달.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>앞 6개를 register에 순서대로: a = %rdi, b = %esi (int라 32-bit), c = %rdx, d = %rcx, e = %r8, g = %r9</li>
-<li>7번째 h는 stack — 함수 진입 시점 8(%rsp) (0(%rsp)는 return address)</li>
-</ol>
-<div class="final-answer">a %rdi · b %esi · c %rdx · d %rcx · e %r8 · g %r9 · h 스택 8(%rsp) · 반환값 %rax</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">16</span><span class="ptitle">인코딩 (8-bit FP)</span><span class="stars">★</span><span class="plab">Lec3 · 부동소수점 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>8-bit 형식: 부호 1 / 지수 4 (bias = 7) / fraction 3. (a) 6.5 (b) 0 0000 011이 나타내는 값 (c) 가장 큰 유한 양수 (d) 가장 작은 양의 정규수 (e) 가장 작은 양의 비정규수 (f) +무한대.</p>
-<div class="bx gray"><div>같은 형식에서 1.5 = 1.100₂ × 2⁰이므로 부호 0, 지수 0111, fraction 100 → 0 0111 100.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">V = (−1)^s × M × 2^E. exp = 0이면 비정규(E = 1−bias, M = 0.f), exp = 전부 1이면 특수(∞/NaN), 아니면 정규(E = exp−bias, M = 1.f).</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(a) 6.5 = 110.1₂ = 1.101 × 2² → e = 2+7 = 9 = 1001, frac = 101 → 0 1001 101 (0x4D)</li>
-<li>(b) exp = 0000이라 비정규: E = 1−7 = −6, M = 3/8 → 3/8 × 2⁻⁶ = 3/512</li>
-<li>(c) 0 1110 111 = 1.875 × 2⁷ = 240</li>
-<li>(d) 0 0001 000 = 2⁻⁶</li>
-<li>(e) 0 0000 001 = 1/8 × 2⁻⁶ = 2⁻⁹</li>
-<li>(f) 0 1111 000</li>
-</ol>
-<div class="final-answer">(a) 0 1001 101 (b) 3/512 (c) 240 (d) 2⁻⁶ (e) 2⁻⁹ (f) 0 1111 000</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">17</span><span class="ptitle">4-bit 연산</span><span class="stars">★★</span><span class="plab">Lec2 · 비트·정수 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>4-bit 정수. (a) 0110 + 0101을 signed로 해석한 결과와 오버플로 여부 (b) unsigned 1011 × 0011의 4-bit 결과 (c) TMin, TMax, UMax (d) signed −3을 8-bit로 sign extension한 값.</p>
-<div class="bx gray"><div>signed 0011 + 0010 = 0101은 3+2 = 5이고 오버플로 없음. 4-bit signed 표현 범위는 −8 ~ 7.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">B2T는 최상위 비트 가중치 −2^(w−1). 결과는 mod 2^w로 잘림. sign extension은 부호 비트 복사.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(a) 0110 + 0101 = 1011 = −5 (signed). 6+5 = 11이 TMax(7)를 넘으므로 오버플로</li>
-<li>(b) 11×3 = 33, 33 mod 16 = 1 → 0001</li>
-<li>(c) TMin = −8 (1000), TMax = 7 (0111), UMax = 15</li>
-<li>(d) 1101 → 부호 비트 복사 → 11111101 (0xFD)</li>
-</ol>
-<div class="final-answer">(a) −5, 오버플로 (b) 0001 (c) −8 / 7 / 15 (d) 0xFD</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">18</span><span class="ptitle">C의 float / double 성질 — true/false?</span><span class="stars">★★</span><span class="plab">Lec3 · 부동소수점</span></div>
-<div class="prob-body">
-<p>(1) int x = 16777217 (2²⁴+1)에서 x == (int)(float)x (2) (1e20 + -1e20) + 3.14 == 1e20 + (-1e20 + 3.14) (double) (3) 0.1 + 0.2 == 0.3 (double) (4) float f; f == -(-f)는 NaN이 아닐 때 항상 true? (5) (int)3.99와 (int)-3.99의 값.</p>
-<div class="bx gray"><div>(int)2.9는 2, (int)-2.9는 -2 · 0.5+0.25 == 0.75는 이진 부동소수점에서 참.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">float의 유효 숫자는 24비트. FP 덧셈은 결합법칙이 성립하지 않음. int 캐스트는 0 쪽으로 절단. 부호 반전은 부호 비트만 뒤집음.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>(1) false — float 유효 숫자 24비트라 2²⁴+1은 표현 불가, 2²⁴로 반올림</li>
-<li>(2) false — 왼쪽은 3.14, 오른쪽은 3.14가 −1e20에 흡수되어 0 → 결합법칙 불성립</li>
-<li>(3) false — 이진수로 정확히 표현 불가</li>
-<li>(4) true — 부호 비트만 두 번 뒤집음</li>
-<li>(5) 3과 −3 (0 쪽으로 절단)</li>
-</ol>
-<div class="final-answer">(1) false (2) false (3) false (4) true (5) 3, −3</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">19</span><span class="ptitle">Pointer(포인터) 연산</span><span class="stars">★</span><span class="plab">Lec7 · 데이터</span></div>
-<div class="prob-body">
-<p>int *p = (int *)0x1000; char *q = (char *)0x1000; long *r = (long *)0x1000. p+3, q+3, r+3의 값은? 그리고 *(p+2)와 같은 배열 표기는?</p>
-<div class="bx gray"><div>int *a = (int *)0x2000; char *b = (char *)0x2000;이면 a+2 = 0x2008, b+2 = 0x2002 — 포인터에 더할 때 자료형에 따라 이동 바이트 수가 다름.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">포인터 + n은 n × sizeof(타입) 바이트 이동. p[i] ≡ *(p+i).</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>p+3 = 0x1000 + 3×4 = 0x100C</li>
-<li>q+3 = 0x1000 + 3×1 = 0x1003</li>
-<li>r+3 = 0x1000 + 3×8 = 0x1018</li>
-</ol>
-<div class="final-answer">p+3 = 0x100C · q+3 = 0x1003 · r+3 = 0x1018 · *(p+2) = p[2]</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">20</span><span class="ptitle">8-bit 2의 보수</span><span class="stars">★</span><span class="plab">Lec2 · 비트·정수 | Data Lab 연계</span></div>
-<div class="prob-body">
-<p>x = 0xB4 (8-bit). (a) signed 값 (b) unsigned 값 (c) x &gt;&gt; 2 산술 시프트 결과(16진수와 10진수) (d) 논리 시프트 결과 (e) −x.</p>
-<div class="bx gray"><div>0xF0 = 11110000₂는 unsigned로 240, signed로 −16 · 산술 오른쪽 2비트 시프트는 0xFC(−4), 논리 시프트는 0x3C(60).</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">signed 해석은 최상위 비트에 −128의 가중치. 산술 시프트는 부호 비트를 복사, 논리 시프트는 0을 채움. −x = ~x + 1.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>0xB4 = 10110100₂</li>
-<li>(a) −128+32+16+4 = −76 (b) 180</li>
-<li>(c) 산술: 부호 1 복사 → 11101101 = 0xED = −19</li>
-<li>(d) 논리: 0 채움 → 00101101 = 0x2D = 45</li>
-<li>(e) ~x+1 = 01001100 = 0x4C = 76</li>
-</ol>
-<div class="final-answer">(a) −76 (b) 180 (c) 0xED = −19 (d) 0x2D = 45 (e) 0x4C = 76</div>
-</div></details>
-</div></div>
-
-<div class="prob">
-<div class="prob-head"><span class="pid">21</span><span class="ptitle">Register(레지스터) 분류</span><span class="stars">★</span><span class="plab">Lec6 · 프로시저</span></div>
-<div class="prob-body">
-<p>callee-saved는? 호출 후에 값이 바뀔 수 있는 것은? — %rax, %rbx, %rcx, %rdx, %rsi, %rdi, %rbp, %r8~%r11, %r12~%r15, %rsp</p>
-<div class="bx gray"><div>함수 호출 전 %rbx = 9이고 호출된 함수가 작업 중 %rbx = 4로 바꿨더라도, callee-saved 규약을 지키면 정상 반환 시 호출자는 %rbx = 9를 관찰함.</div></div>
-<details class="tgl hint"><summary>힌트</summary>
-<div class="tgl-body">호출된 함수가 마음대로 바꿔도 되는 것 = caller-saved · 반드시 보존(쓰려면 저장·복원)해야 하는 것 = callee-saved.</div>
-</details>
-<details class="tgl ans"><summary>정답</summary>
-<div class="tgl-body">
-<ol class="steps">
-<li>callee-saved: %rbx, %rbp, %r12~%r15 (%rsp는 특수 — 복귀 시 원래 값)</li>
-<li>caller-saved (호출로 바뀔 수 있음): %rax, %rcx, %rdx, %rsi, %rdi, %r8~%r11</li>
-</ol>
-<div class="final-answer">callee-saved — %rbx %rbp %r12–%r15 · caller-saved — %rax %rcx %rdx %rsi %rdi %r8–%r11</div>
-</div></details>
-</div></div>
-
-<h2><span class="n">2</span>기출 문제 (CMU 15-213)</h2>
+</section>
+<section>
+<h2>자작 문제 세트</h2>
+<a class="card" href="problems/pset-01.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">01</span>while 루프 (jump-to-middle)</div>
+<div class="card-m">Lec4·5 · 제어 흐름 | Bomb Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-02.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">02</span>struct 접근 asm</div>
+<div class="card-m">Lec4·7 · 배열·자료구조 | Bomb Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-03.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">03</span>Recursion(재귀)과 callee-saved</div>
+<div class="card-m">Lec6 · 프로시저 | Bomb Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-04.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">04</span>Data Lab 스타일 (허용 연산자 지키기)</div>
+<div class="card-m">Lec2 · 비트 연산 | Data Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-05.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">05</span>Data Lab 스타일: float_twice (floatScale2)</div>
+<div class="card-m">Lec3 · 부동소수점 | Data Lab 연계 · ★★★</div>
+</a>
+<a class="card" href="problems/pset-06.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">06</span>Switch(스위치) / Jump table (bomb lab phase 3 유형)</div>
+<div class="card-m">Lec5 · 제어 흐름 | Bomb Lab 연계 · ★★★</div>
+</a>
+<a class="card" href="problems/pset-07.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">07</span>struct Alignment(정렬) (x86-64)</div>
+<div class="card-m">Lec7 · 데이터 · ★★</div>
+</a>
+<a class="card" href="problems/pset-08.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">08</span>Condition Codes(조건 코드)</div>
+<div class="card-m">Lec4·5 · 제어 흐름 | Bomb Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-09.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">09</span>2차원 Array(배열) 주소</div>
+<div class="card-m">Lec7 · 데이터 | Bomb Lab 연계 · ★</div>
+</a>
+<a class="card" href="problems/pset-10.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">10</span>Stack(스택) Pointer(포인터) 추적 (x86-64)</div>
+<div class="card-m">Lec6 · 프로시저 · ★</div>
+</a>
+<a class="card" href="problems/pset-11.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">11</span>덧셈 Overflow(오버플로) 검출</div>
+<div class="card-m">Lec2 · 비트 연산 | Data Lab 연계 · ★★★</div>
+</a>
+<a class="card" href="problems/pset-12.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">12</span>반올림 (round-to-even)</div>
+<div class="card-m">Lec3 · 부동소수점 | Data Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-13.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">13</span>asm 읽기 (cmov)</div>
+<div class="card-m">Lec5 · 제어 흐름 · ★</div>
+</a>
+<a class="card" href="problems/pset-14.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">14</span>C 비교 (int 32-bit, 2의 보수) — true/false?</div>
+<div class="card-m">Lec2 · 비트·정수 | Data Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-15.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">15</span>인자 전달</div>
+<div class="card-m">Lec6 · 프로시저 · ★</div>
+</a>
+<a class="card" href="problems/pset-16.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">16</span>인코딩 (8-bit FP)</div>
+<div class="card-m">Lec3 · 부동소수점 | Data Lab 연계 · ★</div>
+</a>
+<a class="card" href="problems/pset-17.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">17</span>4-bit 연산</div>
+<div class="card-m">Lec2 · 비트·정수 | Data Lab 연계 · ★★</div>
+</a>
+<a class="card" href="problems/pset-18.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">18</span>C의 float / double 성질 — true/false?</div>
+<div class="card-m">Lec3 · 부동소수점 · ★★</div>
+</a>
+<a class="card" href="problems/pset-19.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">19</span>Pointer(포인터) 연산</div>
+<div class="card-m">Lec7 · 데이터 · ★</div>
+</a>
+<a class="card" href="problems/pset-20.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">20</span>8-bit 2의 보수</div>
+<div class="card-m">Lec2 · 비트·정수 | Data Lab 연계 · ★</div>
+</a>
+<a class="card" href="problems/pset-21.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">21</span>Register(레지스터) 분류</div>
+<div class="card-m">Lec6 · 프로시저 · ★</div>
+</a>
+</section>
+<section>
+<h2>Data Lab 연습</h2>
+<a class="card" href="problems/datalab-01.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">01</span>~와 &amp;만 사용해 x | y를 구현하라. 연산 개수는?</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-02.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">02</span>8-bit 값 b = 11010110에 대해 b &lt;&lt; 2, logical b &gt;&gt; 3,</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-03.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">03</span>0x80과 0x0F에 대해 0x80 &amp; 0x0F, 0x80 &amp;&amp; 0x0F, !0x80,</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-04.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">04</span>- 없이 x의 부호를 바꾼 값(negate)을 반환하는 식을 쓰고, x = 5일 때 32-bit hex로 결</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-05.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">05</span>addOK 식 !(((x ^ s) &amp; (y ^ s)) &gt;&gt; 31)에 x = 0x600000</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-06.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">06</span>logicalShift(0x80000000, 31)의 mask와 결과를 구하라.</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-07.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">07</span>−10.25를 IEEE single precision bit pattern(hex)으로 나타내라.</div>
+<div class="card-m">Data Lab</div>
+</a>
+<a class="card" href="problems/datalab-08.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">08</span>Tiny float (s 1, exp 4 bias 7, frac 3)에서 0 0110 010과 0 0000 </div>
+<div class="card-m">Data Lab</div>
+</a>
+</section>
+<section>
+<h2>Bomb Lab phases</h2>
+<a class="card" href="problems/bomb-1.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">P1</span>Phase 1 — 문자열 비교</div>
+<div class="card-m">Bomb Lab</div>
+</a>
+<a class="card" href="problems/bomb-2.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">P2</span>Phase 2 — 2배씩 커지는 수열</div>
+<div class="card-m">Bomb Lab</div>
+</a>
+<a class="card" href="problems/bomb-3.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">P3</span>Phase 3 — jump table (switch)</div>
+<div class="card-m">Bomb Lab</div>
+</a>
+<a class="card" href="problems/bomb-4.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">P4</span>Phase 4 — 재귀 함수 func4</div>
+<div class="card-m">Bomb Lab</div>
+</a>
+<a class="card" href="problems/bomb-5.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">P5</span>Phase 5 — 배열을 따라가는 루프</div>
+<div class="card-m">Bomb Lab</div>
+</a>
+<a class="card" href="problems/bomb-6.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">P6</span>Phase 6 — 링크드 리스트 재배열</div>
+<div class="card-m">Bomb Lab</div>
+</a>
+</section>
+<section>
+<h2>모의고사 2탄</h2>
+<a class="card" href="problems/mock2-01.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q1</span>조건 코드 (Condition Codes)</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-02.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q2</span>루프 어셈블리 → C 복원</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-03.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q3</span>switch와 점프 테이블</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-04.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q4</span>프로시저 인자 전달</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-05.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q5</span>스택 프레임 계산</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-06.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q6</span>재귀와 callee-saved 레지스터</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-07.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q7</span>호출 규약 위반 찾기</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-08.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q8</span>2차원 배열 주소 계산</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-09.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q9</span>구조체 정렬</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-10.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q10</span>구조체 접근 어셈블리 → C</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-11.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q11</span>Data Lab 스타일 — 연산자 제한 구현</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+<a class="card" href="problems/mock2-12.html">
+<span class="go">→</span>
+<div class="card-t"><span class="no">Q12</span>Bomb Lab 스타일 — 수열 phase 해독</div>
+<div class="card-m">모의고사 2탄</div>
+</a>
+</section>
+<div class="body notes">
+<h2><span class="h2no">A</span>기출 문제 (CMU 15-213)</h2>
 <p>강의별로 어떤 문제를 풀지 정리한 것. 문제 번호는 PDF에서 직접 확인한 것. 링크가 안 열리면 <a href="https://www.cs.cmu.edu/~213/exams.html">CMU 15-213 시험 모음 페이지</a>에서 해당 학기를 찾기.</p>
-<div class="grid">
-<div class="card"><div class="c-t">F12 전체 (70분 타이머 추천)</div><div class="c-d">P1 객관식 10문제(Lec2/4/6/7 워밍업) · P2 정수 인코딩 · P3 FP · P4 루프 asm→C · P5 struct 정렬 · P6 struct 접근 · P7 switch · P8 스택 규약. P9 캐시는 범위 밖.</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12-sol.txt">해설</a></div></div>
-<div class="card"><div class="c-t">F11</div><div class="c-d">P2 정수 · P3 FP · P4 함수 · P5 스택(재귀) · P6 struct · P7 switch. P8~9 캐시는 범위 밖.</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f11.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f11-sol.txt">해설</a></div></div>
-<div class="card"><div class="c-t">S11-v1</div><div class="c-d">P2 bits · P3 floats · P6 스택. P7 캐시는 범위 밖.</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-s11-v1.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-s11-v1-sol.txt">해설</a></div></div>
-<div class="card"><div class="c-t">F10</div><div class="c-d">P2 FP · P3 배열 접근 · P4 struct 정렬 · P5 struct 접근 · P6 switch 인코딩 · P7 스택 규약.</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f10-a.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f10-sol.txt">해설</a></div></div>
-<div class="card"><div class="c-t">S10</div><div class="c-d">P4 struct · P7 x86-64 asm → C. P6 (버퍼 오버플로 공격)는 Lec8에서 다뤘으니 풀어 볼 것.</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-s10.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-s10-solutions.txt">해설</a></div></div>
-<div class="card"><div class="c-t">F09</div><div class="c-d">P3 FP 인코딩 · P8 배열 (H와 J 상수).</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f09-v1.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f09-v1-sol.txt">해설</a></div></div>
-<div class="card"><div class="c-t">Practice exam</div><div class="c-d">기말용이라 캐시·메모리·네트워크 등 범위 밖 문제가 많음 — 해당 부분만 풀기.</div><div class="c-m"><a href="https://www.cs.cmu.edu/~213/practiceexam/15213-practice-exam.pdf">문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/practiceexam/15213-practice-exam-sol.pdf">해설</a></div></div>
-<div class="card"><div class="c-t">CS:APP 학생 사이트</div><div class="c-d">코드 예제와 웹 부록.</div><div class="c-m"><a href="https://csapp.cs.cmu.edu/3e/students.html">학생 사이트</a> · <a href="https://csapp.cs.cmu.edu/3e/labs.html">랩 목록</a></div></div>
+
+<div class="notice"><b>F12 전체 (70분 타이머 추천)</b><br>P1 객관식 10문제(Lec2/4/6/7 워밍업) · P2 정수 인코딩 · P3 FP · P4 루프 asm→C · P5 struct 정렬 · P6 struct 접근 · P7 switch · P8 스택 규약. P9 캐시는 범위 밖.</div>
+<div class="notice"><b>F11</b><br>P2 정수 · P3 FP · P4 함수 · P5 스택(재귀) · P6 struct · P7 switch. P8~9 캐시는 범위 밖.</div>
+<div class="notice"><b>S11-v1</b><br>P2 bits · P3 floats · P6 스택. P7 캐시는 범위 밖.</div>
+<div class="notice"><b>F10</b><br>P2 FP · P3 배열 접근 · P4 struct 정렬 · P5 struct 접근 · P6 switch 인코딩 · P7 스택 규약.</div>
+<div class="notice"><b>S10</b><br>P4 struct · P7 x86-64 asm → C. P6 (버퍼 오버플로 공격)는 Lec8에서 다뤘으니 풀어 볼 것.</div>
+<div class="notice"><b>F09</b><br>P3 FP 인코딩 · P8 배열 (H와 J 상수).</div>
+<div class="notice"><b>Practice exam</b><br>기말용이라 캐시·메모리·네트워크 등 범위 밖 문제가 많음 — 해당 부분만 풀기.</div>
+<div class="notice"><b>CS:APP 학생 사이트</b><br>코드 예제와 웹 부록.</div>
 </div>
 
-<h2><span class="n">3</span>LeetCode 보조 (비트 감각)</h2>
+<h2><span class="h2no">B</span>LeetCode 보조 (비트 감각)</h2>
 <p>Lec2 / Data Lab 연계. 풀이에 +, 곱셈을 쓸 수 있어 Data Lab 제약과는 다름.</p>
-<div class="grid">
-<a class="card" href="https://leetcode.com/problems/number-of-1-bits/"><div class="c-t">Number of 1 Bits</div></a>
-<a class="card" href="https://leetcode.com/problems/power-of-two/"><div class="c-t">Power of Two</div></a>
-<a class="card" href="https://leetcode.com/problems/single-number/"><div class="c-t">Single Number</div></a>
-<a class="card" href="https://leetcode.com/problems/missing-number/"><div class="c-t">Missing Number</div></a>
-<a class="card" href="https://leetcode.com/problems/counting-bits/"><div class="c-t">Counting Bits</div></a>
-<a class="card" href="https://leetcode.com/problems/bitwise-and-of-numbers-range/"><div class="c-t">Bitwise AND of Numbers Range</div></a>
-<a class="card" href="https://leetcode.com/problems/reverse-bits/"><div class="c-t">Reverse Bits</div></a>
-<a class="card" href="https://leetcode.com/problems/sum-of-two-integers/"><div class="c-t">Sum of Two Integers</div><div class="c-d">+ 없이 덧셈 — Data Lab 연습으로 제일 좋은 문제</div></a>
+
+<div class="notice"><a href="https://leetcode.com/problems/number-of-1-bits/">Number of 1 Bits</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/power-of-two/">Power of Two</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/single-number/">Single Number</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/missing-number/">Missing Number</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/counting-bits/">Counting Bits</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/bitwise-and-of-numbers-range/">Bitwise AND of Numbers Range</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/reverse-bits/">Reverse Bits</a></div>
+<div class="notice"><a href="https://leetcode.com/problems/sum-of-two-integers/">Sum of Two Integers</div><div class="c-d">+ 없이 덧셈 — Data Lab 연습으로 제일 좋은 문제</a></div>
 </div>
 
-<h2><span class="n">4</span>LAB 복습 메모 (시험에 나올 수 있다고 한 부분)</h2>
-<div class="bx concept"><p class="bx-lead">Data Lab (= Lec2, Lec3)</p>
+<h2><span class="h2no">C</span>LAB 복습 메모 (시험에 나올 수 있다고 한 부분)</h2>
+<div class="bx"><p class="bx-h"><b>Data Lab (= Lec2, Lec3)</b></p>
 <ul>
 <li>직접 연습용: 위 04, 05, 11번. 랩에서 막혔던 함수가 있으면 허용 연산자 제한을 다시 걸고 새로 풀어보기</li>
 <li>체크리스트: ~, ^로 부정·마스크 만들기 ((x &lt;&lt; 31) &gt;&gt; 31) · 산술 시프트와 논리 시프트 차이 · TMin 특수 케이스 (−TMin == TMin) · float의 e = 0 / e = 0xFF 케이스</li>
 </ul>
 </div>
-<div class="bx concept"><p class="bx-lead">Bomb Lab (= Lec4~7)</p>
+<div class="bx"><p class="bx-h"><b>Bomb Lab (= Lec4~7)</b></p>
 <ul>
 <li>유형 대응: 06번(switch 점프 테이블) = phase 3 · 03번(재귀) = phase 4 · 09·02번(배열/struct 접근) = phase 5, 6 (배열, 링크드 리스트)</li>
 <li>asm 복원 연습 순서 (시험 풀이 순서와 같음): (1) 인자가 어떤 register인지 (2) 비교·점프로 만들어지는 구조 (3) 메모리 접근의 offset과 scale을 순서대로 적고 C로 복원</li>
@@ -542,6 +326,9 @@ return uf + 0x00800000;               // 지수 +1</pre>
 </div>
 
 </div>
-</main>
+<div class="foot">문제 풀이의 자작 문제는 강의 노트와 CS:APP/15-213 유형을 바탕으로 직접 만든 것(기출 아님). 외부 링크의 해설은 각 사이트 소유.</div>
+
+</div>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
 </body>
 </html>

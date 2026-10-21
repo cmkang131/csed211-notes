@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q5 · 스택 프레임 계산 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q5 · 스택 프레임 계산</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec6 Procedures — 스택 프레임 구조와 16바이트 정렬 · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 5</span>
+<p>함수 foo가 call에 의해 진입한 직후 %rsp = 0xFF8이다. 프롤로그는 다음과 같다.
+<pre class="c">foo:
+    pushq %rbp
+    pushq %rbx
+    subq $24, %rsp</pre>
+(a) return address, 저장된 %rbp, 저장된 %rbx의 주소와, 프롤로그 직후의 %rsp 값을 쓰시오. <span class="k-red">[4점]</span></p>
+<p>(b) 프롤로그가 스택 포인터를 내린 총 바이트 수를 쓰시오. <span class="k-red">[2점]</span></p>
+<p>(c) 프롤로그 직후 %rsp가 16바이트 정렬 조건을 만족하는지 계산으로 보이시오. <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>call이 return address를 push → 0xFF8에 있음.</li><li>pushq %rbp → %rsp = 0xFF0, %rbp는 0xFF0에 저장.</li><li>pushq %rbx → %rsp = 0xFE8, %rbx는 0xFE8에 저장.</li><li>subq $24 → %rsp = 0xFE8 − 24 = 0xFD0.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>8 + 8 + 24 = 40바이트.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>0xFD0 = 4048 = 16 × 253, 나머지 0 → 16바이트 정렬 만족. (call 직전 %rsp가 16 정렬이었다면 진입 직후는 ≡ 8 (mod 16); 여기서 40 ≡ 8 (mod 16)을 빼면 다시 16의 배수.)<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">ret@0xFF8, %rbp@0xFF0, %rbx@0xFE8, %rsp=0xFD0 · 40바이트 · 만족한다 (0xFD0 = 16 × 253)</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-04.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-06.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

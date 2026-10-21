@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bomb Lab Phase 3 — jump table (switch) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; Bomb Lab</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Bomb Lab Phase 3 — jump table (switch)</h1>
+<p class="psub">Bomb Lab · gdb disassembly 분석</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">Phase 3</span>
+<p>다음은 phase_3의 disassembly와 gdb로 읽은 jump table이다. 폭탄을 해제하는 입력 2개를 찾아라.</p>
+<pre class="c">  callq __isoc99_sscanf         # 정수 2개 (개수 %eax로 반환)
+  cmp  $0x1, %eax
+  jg   &lt;phase_3+39&gt;            # 2개 이상 입력해야 함
+  cmpl $0x7, 0xc(%rsp)          # x1 ≤ 7 (unsigned)
+  ja   explode_bomb
+  mov  0xc(%rsp), %eax
+  jmpq *0x402540(,%rax,8)       # x1 값으로 jump table 분기</pre>
+<div class="tblwrap"><table>
+<thead><tr><th>index (x1)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead>
+<tbody><tr><td>목적지</td><td>+64</td><td>+57</td><td>+76</td><td>+88</td><td>+100</td><td>+112</td><td>+124</td><td>+136</td></tr></tbody>
+</table></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+switch는 jump table — jmp *base(,%rax,8). gdb x/8gx base로 테이블 엔트리(각 case 주소)를 읽고, case별 상수 연산을 추적해 마지막 cmp 조건 두 개를 모두 맞춘다.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li><code>x/8gx 0x402540</code>으로 테이블을 읽음 — 각 엔트리가 case 몸통의 주소</li><li>각 case는 mov $0, %eax → add/sub 상수의 조합으로 %eax를 만듦. x1 = 4 (+100)면 <code>mov $0x0,%eax; add $0x3ac,%eax</code> → %eax = 0x3ac… 이어서 sub $0x3ac → %eax = 0</li><li>마지막에 cmpl $0x5, 0xc(%rsp) (x1 ≤ 5)와 cmp 0x8(%rsp),%eax (x2 = %eax)를 통과해야 함 → x1 = 4, x2 = 0</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">4 0</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="bomb-2.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="bomb-4.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

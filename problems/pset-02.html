@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 · struct 접근 asm — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">02 · struct 접근 asm</h1>
+<p class="psub">Lec4·7 · 배열·자료구조 | Bomb Lab 연계 · 난이도 ★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 02</span>
+
+<pre class="c">struct node { long val; struct node *next; int arr[4]; };
+
+g:  movq 8(%rdi), %rax
+    movl 16(%rax,%rsi,4), %eax
+    ret
+h:  leaq 16(%rdi,%rsi,4), %rax
+    ret</pre>
+<p>(%rdi = struct node *p, %rsi = long i). g와 h의 C 코드는?</p>
+<div class="nb"><div>현재 node의 arr = {1,2,3,4}, 다음 node의 arr = {10,20,30,40}, i = 2라면 각 배열의 원소 값은 3과 30. g는 값을, h는 특정 원소의 주소를 돌려준다는 차이를 확인.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+struct field offset은 선언 순서대로 쌓임 — long 0, pointer 8, int[4] 16. <code>movq D(%rdi)</code>는 메모리를 읽지만 <code>leaq</code>는 주소 계산만 하고 메모리를 읽지 않음.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>offset 확정: val = 0, next = 8, arr = 16 (선언 순서, 8바이트 정렬)</li>
+<li>g 첫 명령: 8(%rdi) → p-&gt;next를 읽음. 둘째 명령: 16(%rax,%rsi,4) → next-&gt;arr[i]를 읽음</li>
+<li>h는 leaq 한 번 — 메모리 읽기 없이 &amp;p-&gt;arr[i] 주소만 계산</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">int g(struct node *p, long i){ return p-&gt;next-&gt;arr[i]; } · int *h(struct node *p, long i){ return &amp;p-&gt;arr[i]; }</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-01.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-03.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

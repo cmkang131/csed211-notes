@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q12 · Bomb Lab 스타일 — 수열 phase 해독 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q12 · Bomb Lab 스타일 — 수열 phase 해독</h1>
+<p class="psub">모의고사 2탄 · 자작 · Bomb Lab phase_2 구조 변형 · LAB 유형 · 10점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 12</span>
+<p>다음 disassembly를 보고 물음에 답하시오.
+<pre class="c">phase:
+    callq read_six_numbers    # 정수 6개를 (%rsp)~20(%rsp)에 저장
+    cmpl $3, (%rsp)
+    jne explode_bomb
+    leaq 4(%rsp), %rbx
+.L5:
+    movl -4(%rbx), %eax
+    leal 1(%rax,%rax), %eax
+    cmpl %eax, (%rbx)
+    jne explode_bomb
+    addq $4, %rbx
+    leaq 24(%rsp), %rax
+    cmpq %rax, %rbx
+    jne .L5</pre>
+(a) 폭탄을 해제하는 입력 6개를 쓰시오. <span class="k-red">[6점]</span></p>
+<p>(b) 수열의 규칙을 한 줄로 쓰시오. <span class="k-red">[2점]</span></p>
+<p>(c) leal 1(%rax,%rax), %eax 이 무엇을 계산하는지, 그리고 왜 leal을 쓰는지(플래그 관점에서) 설명하시오. <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>첫 수는 3으로 고정 (cmpl $3).</li><li>루프는 이전 원소 prev = -4(%rbx)에 대해 2·prev + 1을 계산해 현재 원소 (%rbx)와 비교.</li><li>%rbx는 4(%rsp)에서 시작해 4씩 증가, 24(%rsp)가 되면 종료 → x2~x6 다섯 개를 검사.</li><li>3 → 7 → 15 → 31 → 63 → 127 (2·3+1=7, 2·7+1=15, 2·15+1=31, 2·31+1=63, 2·63+1=127).<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>x₁ = 3, x_i = 2·x_{i−1} + 1.<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(c)</span>
+<ol class="steps"><li>%rax + %rax + 1 = 2·prev + 1을 계산한다. leal은 주소 계산 명령을 산술에 쓴 것으로 조건 코드를 전혀 바꾸지 않는다. 직후 cmpl이 세팅하는 플래그만으로 분기해야 하므로, 중간 계산에서 플래그를 오염시키지 않는 leal이 적합하다.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">3 7 15 31 63 127 · 첫 항 3, 이후 각 항은 이전 항의 2배 + 1 · 2·prev + 1 계산; leal은 플래그를 바꾸지 않아 뒤의 cmpl/jne 흐름을 깨끗하게 유지</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-11.html">&larr; 이전</a><a href="../problems.html">목차</a><span></span></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

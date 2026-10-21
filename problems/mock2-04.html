@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q4 · 프로시저 인자 전달 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">Q4 · 프로시저 인자 전달</h1>
+<p class="psub">모의고사 2탄 · 자작 · Lec6 Procedures — x86-64 호출 규약 (레지스터 6개 + 스택 인자) · 8점</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 4</span>
+<p>long f(long a, long b, long c, long d, long e, long f, long g, long h) 를 호출한다.
+(a) 인자 a~h가 각각 어디로 전달되는지 모두 쓰시오. 기준 시점은 callee(f) 진입 직후이다. <span class="k-red">[6점]</span></p>
+<p>(b) callee가 pushq %rbp 를 실행한 직후, 인자 g는 %rsp 기준 몇 바이트 오프셋에 있는가? <span class="k-red">[2점]</span></p>
+
+</div>
+</section>
+<section>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<span class="sol-tag">풀이</span>
+<div class="subpart first">
+<span class="part">(a)</span>
+<ol class="steps"><li>첫 6개 인자는 레지스터: a→%rdi, b→%rsi, c→%rdx, d→%rcx, e→%r8, f→%r9.</li><li>나머지는 caller가 스택에 push: g가 먼저(낮은 주소), h가 그 위.</li><li>callee 진입 시 (%rsp)에는 return address가 있으므로 첫 스택 인자는 8(%rsp).<br></li></ol>
+</div>
+<div class="subpart">
+<span class="part">(b)</span>
+<ol class="steps"><li>pushq %rbp로 %rsp가 8 내려가므로 g는 16(%rsp)가 된다.<br></li></ol>
+</div>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">a→%rdi, b→%rsi, c→%rdx, d→%rcx, e→%r8, f→%r9, g→8(%rsp), h→16(%rsp) · 16(%rsp)</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="mock2-03.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="mock2-05.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

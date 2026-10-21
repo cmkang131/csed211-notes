@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 · Data Lab 스타일: float_twice (floatScale2) — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">05 · Data Lab 스타일: float_twice (floatScale2)</h1>
+<p class="psub">Lec3 · 부동소수점 | Data Lab 연계 · 난이도 ★★★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 05</span>
+
+<p>unsigned uf를 float 비트 패턴으로 보고 2×f의 비트 패턴을 반환하라. NaN이면 인자를 그대로 반환.</p>
+<div class="nb"><div>uf = 0x3F800000 (1.0f) → 0x40000000 (2.0f) · uf = 0x00000000 (+0.0f) → 그대로 · uf = 0x7FC00000 (NaN) → 그대로.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+float = sign(1) + exp(8) + frac(23). exp == 0이면 비정규, exp == 0xFF면 특수(∞/NaN), 그 외 정규. 정규수에서 지수 +1 = 값 ×2. 비정규는 fraction을 한 칸 shift하면 됨.
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>부호·지수·fraction을 분해: s = uf &amp; 0x80000000, e = (uf&gt;&gt;23) &amp; 0xFF, f = uf &amp; 0x7FFFFF</li>
+<li>e == 0xFF (inf·NaN) → 그대로 반환 (NaN 조건 + inf는 2배해도 inf)</li>
+<li>e == 0 (비정규) → fraction을 shift: s | (f&lt;&lt;1) — 넘치는 비트가 지수로 올라가 자연스럽게 정규수로 전환</li>
+<li>e == 0xFE → 2배하면 지수가 0xFF가 되어 ∞: s | 0x7F800000</li>
+<li>나머지 정규수 → 지수 +1: uf + 0x00800000</li></ol>
+<pre class="c">unsigned s = uf &amp; 0x80000000, e = (uf &gt;&gt; 23) &amp; 0xFF, f = uf &amp; 0x7FFFFF;
+if (e == 0xFF) return uf;             // inf 또는 NaN
+if (e == 0)    return s | (f &lt;&lt; 1);   // 비정규: fraction shift
+if (e == 0xFE) return s | 0x7F800000; // 2배하면 무한대
+return uf + 0x00800000;               // 지수 +1</pre>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">0x3F800000(1.0f) → 0x40000000(2.0f) · NaN·inf·±0은 그대로 · 비정규는 fraction shift</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-04.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-06.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>

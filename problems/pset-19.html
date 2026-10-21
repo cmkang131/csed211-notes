@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>19 · Pointer(포인터) 연산 — 컴퓨터 시스템 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/study-note.css">
+<link rel="stylesheet" href="../assets/csed211.css">
+</head>
+<body>
+<article class="paper prob-page">
+<div class="phead">
+  <a class="to-home" href="../problems.html">&larr; 문제 목록</a>
+  <span class="phead-c">문제 풀이 &middot; 자작 연습문제</span>
+  <span class="phead-r">CSED211 &middot; 2026 가을</span>
+</div>
+<h1 class="pagetitle">19 · Pointer(포인터) 연산</h1>
+<p class="psub">Lec7 · 데이터 · 난이도 ★</p>
+<div class="body notes">
+<section>
+<div class="problem">
+<span class="prob-no">문제 19</span>
+
+<p>int *p = (int *)0x1000; char *q = (char *)0x1000; long *r = (long *)0x1000. p+3, q+3, r+3의 값은? 그리고 *(p+2)와 같은 배열 표기는?</p>
+<div class="nb"><div>int *a = (int *)0x2000; char *b = (char *)0x2000;이면 a+2 = 0x2008, b+2 = 0x2002 — 포인터에 더할 때 자료형에 따라 이동 바이트 수가 다름.</div></div>
+</div>
+</section>
+<section>
+<details class="pd"><summary>힌트 보기</summary>
+<div class="pd-body"><div class="bx">
+<div class="bx-h">개념 정리</div>
+포인터 + n은 n × sizeof(타입) 바이트 이동. p[i] ≡ *(p+i).
+</div></div>
+</details>
+<details class="pd"><summary>정답 보기</summary>
+<div class="pd-body">
+<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
+<span class="sol-tag">풀이</span>
+<ol class="steps"><li>p+3 = 0x1000 + 3×4 = 0x100C</li>
+<li>q+3 = 0x1000 + 3×1 = 0x1003</li>
+<li>r+3 = 0x1000 + 3×8 = 0x1018</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val">p+3 = 0x100C · q+3 = 0x1003 · r+3 = 0x1018 · *(p+2) = p[2]</span></div>
+</div></details>
+</section>
+<div class="pnav"><a href="pset-18.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-20.html">다음 &rarr;</a></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+</body>
+</html>
