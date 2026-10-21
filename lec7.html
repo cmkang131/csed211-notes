@@ -21,7 +21,7 @@
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
   <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Lecture 7 · Machine-Level Programming IV: Data(데이터)</h1>
+<h1 class="pagetitle">Lecture 7 · Machine-Level Programming IV: Data</h1>
 <p class="psub">10/15 (목) · 슬라이드 "Lecture 7 Data" + 수업 녹취. 슬라이드 14~35(multi-level 배열, N×N 행렬, struct, alignment, floating point)는 녹화가 없어 슬라이드만 보고 10/17에 추가 정리</p>
 <div class="body notes">
 
@@ -29,7 +29,7 @@
 <h2><span class="h2no">1</span>데이터 파트의 시작</h2>
 <div class="bx">
 <p class="bx-h"><b>오늘의 범위: array 먼저, struct는 그다음</b></p>
-지금까지는 기본 data type을 하나씩만 다뤘음: <code>char</code> 1byte, <code>short</code> 2byte, <code>int</code> 4byte, <code>long</code>·포인터·<code>double</code> 8byte. 이제는 같은 종류의 값을 모아 저장하는 <b>array(배열)</b>와 서로 다른 type을 묶는 <b>struct(구조체)</b>를 다룸.
+지금까지는 기본 data type을 하나씩만 다뤘음: <code>char</code> 1byte, <code>short</code> 2byte, <code>int</code> 4byte, <code>long</code>·포인터·<code>double</code> 8byte. 이제는 같은 종류의 값을 모아 저장하는 <b>array</b>와 서로 다른 type을 묶는 <b>struct</b>를 다룸.
 </div>
 <ul>
 <li>아키텍처가 하는 일은 최소한: 64bit register를 통째로, 절반, 1/4로 쓸 수 있어서 8·4·2·1 byte 기본 type을 표현할 수 있을 뿐</li>
@@ -423,7 +423,7 @@ int var_ele(size_t n, int a[n][n], int i, int j) { return a[i][j]; }
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">첫 node의 a[1]과 둘째 node의 a[3]이 9로 바뀜. 각 node에서 어느 칸을 쓸지는 그 node의 i가 정함</span></div>
 </div>
 
-<h2><span class="h2no">8</span>struct alignment(정렬)</h2>
+<h2><span class="h2no">8</span>struct alignment</h2>
 <h3>정렬 원칙</h3>
 <ul>
 <li><b>Aligned data</b>: 기본 data type이 B byte를 요구하면 주소는 B의 배수. 일부 machine에서는 필수, x86-64에서는 권장(advised)</li>
@@ -554,7 +554,7 @@ short get_j(int idx) {
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">절약이 생기는 경우: 작은 type 사이에 큰 type이 끼어 안쪽 padding이 커질 때. S1(24) → S2(24)는 순서를 바꿔도 그대로였음</span></div>
 </div>
 
-<h2><span class="h2no">10</span>Floating point(부동소수점)</h2>
+<h2><span class="h2no">10</span>Floating point</h2>
 <h3>배경: x87, SSE, AVX</h3>
 <ul>
 <li><b>x87 FP</b>: 오래된(legacy) 방식. 슬라이드 표현으로 "very ugly"</li>

@@ -28,17 +28,25 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 2</span>
-<p>다음 어셈블리를 보고 물음에 답하시오.
+<p>다음 어셈블리를 보고 물음에 답하시오. <span class="k-red">[4점]</span></p>
 <pre class="c">f:
-    movl $1, %eax
-.L2:
-    imull %edi, %eax
-    subl $1, %edi
-    jne .L2
-    ret</pre>
-(a) f의 C 코드를 복원하시오. 함수 시그니처는 int f(int n)이다. <span class="k-red">[4점]</span></p>
-<p>(b) f(4)와 f(5)의 값을 쓰시오. <span class="k-red">[2점]</span></p>
-<p>(c) f(0)을 호출하면 어떻게 되는지 반환 값과 반복 횟수 관점에서 설명하시오. <span class="k-red">[2점]</span></p>
+<p>movl $1, %eax</p>
+<p>.L2:</p>
+<p>imull %edi, %eax</p>
+<p>subl $1, %edi</p>
+<p>jne .L2</p>
+<p>ret</pre></p>
+<ul>
+<li>(a) f의 C 코드를 복원하시오. 함수 시그니처는 int f(int n)이다.</li>
+</ul>
+<ul>
+<li>(b) f(4)와 f(5)의 값을 쓰시오.</li>
+</ul>
+<p><span class="k-red">[2점]</span></p>
+<ul>
+<li>(c) f(0)을 호출하면 어떻게 되는지 반환 값과 반복 횟수 관점에서 설명하시오.</li>
+</ul>
+<p><span class="k-red">[2점]</span></p>
 
 </div>
 </section>

@@ -21,7 +21,7 @@
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
   <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Lecture 5 · Machine-Level Programming II: Control(제어)</h1>
+<h1 class="pagetitle">Lecture 5 · Machine-Level Programming II: Control</h1>
 <p class="psub">10/8 (목) · 10/13 (녹화) · 슬라이드 "Lecture 5 Control" (전체) + 10/8 수업 녹취 + 10/13 녹화 강의 (조건 코드 ~ switch)</p>
 <div class="body notes">
 
@@ -45,7 +45,7 @@
 연산 결과로 flag가 세팅됨 → 특정 조건이 만족되면 %rip를 특정 위치로 갱신(jump). 어디로 갈지는 직전 연산이 세팅한 조건 코드(CF, ZF, SF, OF)가 결정 → %rip와 조건 코드는 밀접하게 연결됨. 루프 안의 점프, switch 상태 이동이 모두 이 조합으로 구현된다.
 </div>
 
-<h2><span class="h2no">2</span>Condition Codes(조건 코드)</h2>
+<h2><span class="h2no">2</span>Condition Codes</h2>
 <h3>네 가지 flag (모두 1-bit 레지스터)</h3>
 <div class="tblwrap"><table>
 <thead><tr><th>flag</th><th>이름</th><th>set 조건</th><th>주 해석</th></tr></thead>
@@ -194,7 +194,7 @@ setl = SF ^ OF = 1 → -128 &lt; 1 맞게 판정</pre>
 </ul>
 </div>
 
-<h2><span class="h2no">4</span>Conditional Branch(조건 분기)</h2>
+<h2><span class="h2no">4</span>Conditional Branch</h2>
 <h3>jX 명령</h3>
 <ul>
 <li><code>jX</code>: 조건 코드에 따라 다른 위치로 점프 · <code>jmp</code>는 조건 없이 항상 점프 (unconditional)</li>
@@ -250,7 +250,7 @@ Done:</pre>
 <li>then과 else를 별도 코드 영역으로 만들고 조건에 맞는 쪽만 실행. absdiff는 각 블록에서 바로 return했지만 실제로는 if/else 뒤에 코드가 이어지므로 then 끝에서 goto Done으로 합류 지점에 점프 (else는 끝나면 그대로 Done으로 흘러감, 점프 불필요)</li>
 </ul>
 
-<h2><span class="h2no">5</span>Conditional Move(조건부 이동)</h2>
+<h2><span class="h2no">5</span>Conditional Move</h2>
 <h3>왜 분기를 피하는가: 파이프라인</h3>
 <ul>
 <li>명령어 하나는 여러 단계로 나뉨 (명령 해석 → 데이터 읽기 → 연산 → 메모리 쓰기). 빨래 비유: 세탁 → 건조 → 개기. 1번 빨래가 건조기로 가면 세탁기가 비니까 2번 빨래를 바로 세탁 시작</li>
@@ -309,7 +309,7 @@ Done:</pre>
 </ul>
 </div>
 
-<h2><span class="h2no">6</span>Loop(반복문)</h2>
+<h2><span class="h2no">6</span>Loop</h2>
 <h3>do-while</h3>
 <ul>
 <li>do-while은 body를 최소 한 번 실행한 뒤 조건 검사, while은 조건부터 검사</li>
@@ -353,7 +353,7 @@ Done:</pre>
 <li>예제 pcount_for: WSIZE = 8×sizeof(long) = 64, (x &gt;&gt; i) &amp; 0x1로 i번째 비트 확인. −O1에서는 처음 guard가 사라짐. i = 0이고 WSIZE = 64라 첫 검사는 무조건 참 (x = 0이어도 각 비트가 0이라 result가 안 바뀔 뿐 정확성에 문제 없음)</li>
 </ul>
 
-<h2><span class="h2no">7</span>Switch(스위치) 문</h2>
+<h2><span class="h2no">7</span>Switch 문</h2>
 <h3>switch_eg 예제</h3>
 <pre class="c">long switch_eg(long x, long y, long z) {
     long w = 1;

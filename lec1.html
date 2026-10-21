@@ -120,7 +120,7 @@
 ⇒ 가까이 붙은(on-package) 작은 메모리가 훨씬 빠름 → 뒤에서 배울 <b>memory hierarchy</b>의 예고
 </div>
 
-<h3>System Software Programmer(시스템 소프트웨어 프로그래머)의 관점: 코드</h3>
+<h3>System Software Programmer의 관점: 코드</h3>
 <ul>
 <li>슬라이드 예시: 배열 100개 원소의 합을 구하는 loop. 왼쪽 hex = machine code, 오른쪽 = assembly code (사람이 읽는 텍스트 표현)</li>
 </ul>
@@ -141,7 +141,7 @@ x03F8 BRn array_sum_loop</pre>
 <li><code>ADD R4, R3, R4</code> 한 줄: "R3와 R4를 더해 R4에 저장". <b>무엇을</b> 하는지만 보여주고 data가 내부에서 어떻게 움직이는지는 숨김</li>
 </ul>
 <div class="nb">
-<p class="bx-h"><b>손계산 2 · Machine Code(머신 코드) 한 줄 해독 (보충)</b></p>
+<p class="bx-h"><b>손계산 2 · Machine Code 한 줄 해독 (보충)</b></p>
 <ul>
 <li>슬라이드 ISA는 교육용 LC-4 형식으로 보임 (16-bit instruction, 앞 4 bit = opcode) (추정)</li>
 <li><code>x18C4</code> = 0001 1000 1100 0100 → <code>ADD R4, R3, R4</code> &nbsp;(0001=ADD · 100=Rd(R4) · 011=Rs(R3) · 000 · 100=Rt(R4))</li>
@@ -150,7 +150,7 @@ x03F8 BRn array_sum_loop</pre>
 ⇒ machine code = bit로 인코딩된 instruction, assembly = 그것의 텍스트 표현
 </div>
 
-<h3>Abstraction(추상화)의 정의와 프로그램 코드의 계층</h3>
+<h3>Abstraction의 정의와 프로그램 코드의 계층</h3>
 <div class="bx">
 <p class="bx-h"><b>정의 · Abstraction</b></p>
 하위 수준의 구현 세부를 숨기고 <b>interface만 제공</b>하는 것 → complexity를 다룰 수 있게 해준다.
@@ -201,7 +201,7 @@ user는 "how"가 아니라 "what"에 관심을 갖는다 (hardware가 어떻게 
 </ul>
 
 <h2><span class="h2no">4</span>학습 방법</h2>
-<h3>Learning Pyramid(학습 피라미드)</h3>
+<h3>Learning Pyramid</h3>
 <figure class="fig">
 <svg viewBox="0 0 720 284" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
   <polygon points="360,14 300,58 420,58" fill="#f2f2f2"/>

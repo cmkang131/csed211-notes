@@ -20,12 +20,12 @@
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
   <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Lecture 8 · Advanced Topics(심화 주제)</h1>
+<h1 class="pagetitle">Lecture 8 · Advanced Topics</h1>
 <p class="psub">10/20 (화) · 슬라이드 "Lecture 8 Advanced Topics" + 수업 녹취 (14:04~14:53, ASR 누락 다수. 슬라이드 11~16의 disassembly walkthrough는 녹취가 거의 없어 슬라이드만으로 정리)</p>
 <div class="body notes">
 
 
-<h2><span class="h2no">1</span>Memory layout(메모리 레이아웃)</h2>
+<h2><span class="h2no">1</span>Memory layout</h2>
 <h3>x86-64 address space의 다섯 영역</h3>
 <figure class="fig" style="--figw:560px">
 <svg viewBox="0 0 560 300" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
@@ -62,7 +62,7 @@ p2 = malloc(1L&lt;&lt;8);       /* 256 B */     p4 = malloc(1L&lt;&lt;8);   /* 2
 <li>ASLR이 켜져 있으면 실행마다 stack 주소가 달라짐 (아래 Defenses)</li>
 </ul>
 
-<h2><span class="h2no">2</span>Buffer overflow(버퍼 오버플로)</h2>
+<h2><span class="h2no">2</span>Buffer overflow</h2>
 <h3>struct_t 예제: array 범위를 넘으면</h3>
 <pre class="c">struct_t { int a[2]; double d; }      // a[0] offset 0, a[1] offset 4, d offset 8
 
@@ -121,7 +121,7 @@ void echo() {
     gets(buf);              // return address A를 다른 code S의 주소로 덮으면
 }                           // Q가 ret할 때 A 대신 S로 점프
 
-void smash() { printf("I've been smashed!\n"); exit(0); }</pre>
+void smash() { printf("I've been smashed!\n"); exit; }</pre>
 <figure class="fig" style="--figw:620px">
 <svg viewBox="0 0 620 180" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
   <text x="24" y="22" font-size="12.5" font-weight="800" fill="#1a1a1a">attack string = 64바이트 filler + 8바이트 주소 (0x4006fb = smash)</text>
@@ -143,7 +143,7 @@ void smash() { printf("I've been smashed!\n"); exit(0); }</pre>
 <li>실제 사례: 원격 machine에서 arbitrary code 실행 가능. Internet Worm (1988), IM Wars (1999), Twilight hack on Wii. Lab 4 Attack Lab에서 직접 실습</li>
 </ul>
 
-<h2><span class="h2no">4</span>Defenses(방어)</h2>
+<h2><span class="h2no">4</span>Defenses</h2>
 <h3>code 수준(길이 제한 함수)</h3>
 <ul>
 <li><code>gets(buf)</code> → <code>fgets(buf, 4, stdin)</code>: 최대 3문자 + null · <code>strcpy</code> → <code>strncpy</code> · <code>scanf %s</code> → fgets 또는 <code>%ns</code> (n은 buffer 크기)</li>
@@ -222,7 +222,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 우회하지 못함</b>. gadget의 code도 return address를 덮어야 도달할 수 있기 때문.
 </div>
 
-<h2><span class="h2no">6</span>Union(유니언)</h2>
+<h2><span class="h2no">6</span>Union</h2>
 <h3>struct와 union의 배치</h3>
 <figure class="fig" style="--figw:620px">
 <svg viewBox="0 0 620 210" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
@@ -256,7 +256,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>IEEE 754 float의 sign·exponent·fraction을 확인할 때 사용</li>
 </ul>
 
-<h2><span class="h2no">7</span>Byte ordering(바이트 순서)</h2>
+<h2><span class="h2no">7</span>Byte ordering</h2>
 <ul>
 <li>short/int/long: memory에 2/4/8개의 연속 byte. 어느 byte가 가장 낮은 주소에 오는가가 endian</li>
 </ul>
@@ -311,7 +311,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <h2><span class="h2no">9</span>연습문제</h2>
 
 <div class="prob"><div class="prob-body">
-<p><b>문제 1.</b> struct_t에서 fun(2)와 fun(3)이 3.14가 아닌 값이 나오는 이유를 offset으로 설명하라.</p>
+<p><b>문제 1.</b> struct_t에서 fun와 fun이 3.14가 아닌 값이 나오는 이유를 offset으로 설명하라.</p>
 <details class="pd ans"><summary>정답 보기</summary>
 <div class="pd-body">
 <ol class="steps">

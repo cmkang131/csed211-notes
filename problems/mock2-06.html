@@ -28,23 +28,31 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 6</span>
-<p>다음 어셈블리를 보고 물음에 답하시오.
+<p>다음 어셈블리를 보고 물음에 답하시오. <span class="k-red">[3점]</span></p>
 <pre class="c">fact:
-    cmpq $1, %rdi
-    jg .L2
-    movl $1, %eax
-    ret
-.L2:
-    pushq %rbx
-    movq %rdi, %rbx
-    leaq -1(%rdi), %rdi
-    call fact
-    imulq %rbx, %rax
-    popq %rbx
-    ret</pre>
-(a) fact의 C 코드를 복원하시오 (long fact(long n)). <span class="k-red">[3점]</span></p>
-<p>(b) %rbx를 push/pop하는 이유를 callee-saved 규약 관점에서 설명하시오. <span class="k-red">[3점]</span></p>
-<p>(c) main이 fact(3)을 call한 시점부터 fact(1)이 실행되는 동안, 스택이 총 몇 바이트 내려가는지 내역과 함께 쓰시오. <span class="k-red">[4점]</span></p>
+<p>cmpq $1, %rdi</p>
+<p>jg .L2</p>
+<p>movl $1, %eax</p>
+<p>ret</p>
+<p>.L2:</p>
+<p>pushq %rbx</p>
+<p>movq %rdi, %rbx</p>
+<p>leaq -1(%rdi), %rdi</p>
+<p>call fact</p>
+<p>imulq %rbx, %rax</p>
+<p>popq %rbx</p>
+<p>ret</pre></p>
+<ul>
+<li>(a) fact의 C 코드를 복원하시오 (long fact(long n)).</li>
+</ul>
+<ul>
+<li>(b) %rbx를 push/pop하는 이유를 callee-saved 규약 관점에서 설명하시오.</li>
+</ul>
+<p><span class="k-red">[3점]</span></p>
+<ul>
+<li>(c) main이 fact(3)을 call한 시점부터 fact(1)이 실행되는 동안, 스택이 총 몇 바이트 내려가는지 내역과 함께 쓰시오.</li>
+</ul>
+<p><span class="k-red">[4점]</span></p>
 
 </div>
 </section>

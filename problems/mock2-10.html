@@ -28,20 +28,25 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 10</span>
-<p>다음 구조체와 어셈블리를 보고 물음에 답하시오.
+<p>다음 구조체와 어셈블리를 보고 물음에 답하시오. <span class="k-red">[4점]</span></p>
 <pre class="c">struct rec {
-    long x;
-    long arr[3];
-    struct rec *next;
-};
-f:
-    movq 32(%rdi), %rcx
-    movq (%rcx), %rax
-    movq 8(%rdi,%rsi,8), %rdx
-    addq %rdx, %rax
-    ret</pre>
-(a) f의 C 코드를 복원하시오 (long f(struct rec *p, long i)). <span class="k-red">[4점]</span></p>
-<p>(b) arr과 next의 오프셋, 그리고 sizeof(struct rec)을 쓰시오. <span class="k-red">[4점]</span></p>
+<p>long x;</p>
+<p>long arr[3];</p>
+<p>struct rec *next;</p>
+<p>};</p>
+<p>f:</p>
+<p>movq 32(%rdi), %rcx</p>
+<p>movq (%rcx), %rax</p>
+<p>movq 8(%rdi,%rsi,8), %rdx</p>
+<p>addq %rdx, %rax</p>
+<p>ret</pre></p>
+<ul>
+<li>(a) f의 C 코드를 복원하시오 (long f(struct rec *p, long i)).</li>
+</ul>
+<ul>
+<li>(b) arr과 next의 오프셋, 그리고 sizeof(struct rec)을 쓰시오.</li>
+</ul>
+<p><span class="k-red">[4점]</span></p>
 
 </div>
 </section>

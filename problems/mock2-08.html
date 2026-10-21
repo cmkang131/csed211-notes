@@ -28,14 +28,22 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 8</span>
-<p>int A[3][4]의 시작 주소는 0x1000이다. i는 %rsi, j는 %rdx, A는 %rdi에 있다.
+<p>int A[3][4]의 시작 주소는 0x1000이다. i는 %rsi, j는 %rdx, A는 %rdi에 있다. <span class="k-red">[3점]</span></p>
 <pre class="c">movq %rsi, %rax
-salq $4, %rax
-leaq (%rax,%rdx,4), %rax
-movl (%rdi,%rax), %eax</pre>
-(a) 이 코드가 계산하는 C 식과, &A[i][j]의 일반식을 쓰시오. <span class="k-red">[3점]</span></p>
-<p>(b) A[2][3]의 주소를 16진수로 쓰시오. <span class="k-red">[3점]</span></p>
-<p>(c) 배열 A 전체의 크기(바이트)를 쓰시오. <span class="k-red">[2점]</span></p>
+<p>salq $4, %rax</p>
+<p>leaq (%rax,%rdx,4), %rax</p>
+<p>movl (%rdi,%rax), %eax</pre></p>
+<ul>
+<li>(a) 이 코드가 계산하는 C 식과, &A[i][j]의 일반식을 쓰시오.</li>
+</ul>
+<ul>
+<li>(b) A[2][3]의 주소를 16진수로 쓰시오.</li>
+</ul>
+<p><span class="k-red">[3점]</span></p>
+<ul>
+<li>(c) 배열 A 전체의 크기(바이트)를 쓰시오.</li>
+</ul>
+<p><span class="k-red">[2점]</span></p>
 
 </div>
 </section>
