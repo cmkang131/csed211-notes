@@ -14,7 +14,7 @@
 <main class="paper">
 <div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>Lecture 8</div>
 <h1 class="title">Lecture 8 · Advanced Topics(심화 주제)</h1>
-<p class="title-sub"><span class="chip blue">10/20 (화)</span>슬라이드 "Lecture 8 Advanced Topics" + 수업 녹취 (14:04–14:53, ASR 누락 다수 — 슬라이드 11–16의 disassembly walkthrough는 녹취가 거의 없어 슬라이드만으로 정리)</p>
+<p class="title-sub">10/20 (화) · 슬라이드 "Lecture 8 Advanced Topics" + 수업 녹취 (14:04–14:53, ASR 누락 다수 — 슬라이드 11–16의 disassembly walkthrough는 녹취가 거의 없어 슬라이드만으로 정리)</p>
 <div class="body notes">
 
 <h2><span class="n">1</span>Memory layout(메모리 레이아웃)</h2>
@@ -69,7 +69,7 @@ fun(i) { s.d = 3.14; s.a[i] = 1073741824; return s.d; }</pre>
 <tr><td>fun(6)</td><td>Segmentation fault</td><td>critical state / return address까지 침범</td></tr>
 </tbody></table></div>
 <div class="bx warn">
-<span class="bx-tag">결과가 시스템마다 다르다</span>
+<p class="bx-lead">결과가 시스템마다 다르다</p>
 struct padding과 stack 배치가 compiler·OS마다 다르기 때문에 같은 코드도 다른 결과가 나올 수 있음.
 </div>
 <h3>왜 큰 문제인가</h3>
@@ -210,7 +210,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 <figcaption>여러 gadget이 stack을 아래로 침범하며 이어짐</figcaption>
 </figure>
 <div class="bx warn">
-<span class="bx-tag">무엇을 우회하고 무엇을 못 우회하나</span>
+<p class="bx-lead">무엇을 우회하고 무엇을 못 우회하나</p>
 ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 우회하지 못함</b> — gadget의 code도 return address를 덮어야 도달할 수 있기 때문.
 </div>
 
@@ -283,7 +283,6 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 
 <h2><span class="n">8</span>시험 포인트</h2>
 <div class="bx tip">
-<span class="bx-tag">시험 포인트</span>
 <ul>
 <li>memory layout: Text 0x400000 근처 · Data (global·static·string constant) · Heap (malloc, 위로 자람) · Shared Libraries · Stack 0x7FFFFFFFFFFF 근처 (기본 8 MiB, 아래로 자람)</li>
 <li>struct_t: a[0] offset 0, a[1] offset 4, d offset 8 → a[2]부터 d를 덮음 · 결과는 시스템마다 다를 수 있음 (padding·stack 배치가 compiler·OS에 따라 다름)</li>
@@ -339,7 +338,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 </div></div>
 
 <div class="bx warn">
-<span class="bx-tag">남은 질문 (출처 불명확)</span>
+<p class="bx-lead">남은 질문 (출처 불명확)</p>
 슬라이드 11–16의 disassembly walkthrough는 수업 녹취(ASR)가 거의 없어 슬라이드만으로 정리함 — 교수님이 강조한 debugging 포인트가 있었다면 이 노트에 없을 수 있음.
 </div>
 

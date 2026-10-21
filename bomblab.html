@@ -14,11 +14,11 @@
 <main class="paper">
 <div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>Bomb Lab</div>
 <h1 class="title">Bomb Lab(봄 랩) — phase별 disassembly 분석</h1>
-<p class="title-sub"><span class="chip blue">실습</span>gdb로 disassembly를 읽고 각 phase의 입력 조건을 찾아 폭탄을 해제하는 lab — 시험의 asm → C 복원 문제와 풀이 순서가 같음</p>
+<p class="title-sub">실습 · gdb로 disassembly를 읽고 각 phase의 입력 조건을 찾아 폭탄을 해제하는 lab — 시험의 asm → C 복원 문제와 풀이 순서가 같음</p>
 <div class="body notes">
 
 <h2><span class="n">1</span>풀이 도구와 순서</h2>
-<div class="bx"><span class="bx-tag">gdb 명령</span>
+<div class="bx"><p class="bx-lead">gdb 명령</p>
 <ul>
 <li><code>break explode_bomb</code> — 폭발 직전에 멈춤 (안전장치) · <code>disas</code> (함수 disassemble) · <code>stepi</code> / <code>nexti</code> (한 명령씩)</li>
 <li><code>x/s ADDR</code> — 주소의 문자열 읽기 (phase 1) · <code>x/8gx ADDR</code> — 8바이트씩 8개 (jump table) · <code>x/16dw ADDR</code> — 4바이트 10진수 16개 (배열) · <code>info registers</code></li>
@@ -174,7 +174,7 @@ arr = [10, 2, 14, 7, 8, 12, 15, 11, 0, 4, 1, 13, 3, 9, 6, 5]
 <div class="final-answer">4 2 3 6 1 5</div>
 
 <h2><span class="n">8</span>분석 중 헷갈렸던 포인트 (수정 메모)</h2>
-<div class="bx"><span class="bx-tag">처음에 잘못 읽었다가 고친 것 — 시험에서도 같은 실수 조심</span>
+<div class="bx"><p class="bx-lead">처음에 잘못 읽었다가 고친 것 — 시험에서도 같은 실수 조심</p>
 <ul>
 <li><code>mov 0x30(%rsp,%rax,4), %eax</code> → 주소 자체가 아니라 Memory[%rsp + 48 + 4×%rax]의 값을 읽음</li>
 <li><code>cmp %eax, 0x0(%rbp)</code> → %rbp는 입력값이 아니라 입력값의 주소 — 입력값끼리 비교하는 것</li>

@@ -14,7 +14,7 @@
 <main class="paper">
 <div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>Lecture 5</div>
 <h1 class="title">Lecture 5 · Machine-Level Programming II — Control(제어)</h1>
-<p class="title-sub"><span class="chip blue">10/8 (목) · 10/13 (녹화)</span>슬라이드 "Lecture 5 Control" (전체) + 10/8 수업 녹취 + 10/13 녹화 강의 (조건 코드 ~ switch)</p>
+<p class="title-sub">10/8 (목) · 10/13 (녹화) · 슬라이드 "Lecture 5 Control" (전체) + 10/8 수업 녹취 + 10/13 녹화 강의 (조건 코드 ~ switch)</p>
 <div class="body notes">
 
 <h2><span class="n">1</span>제어 흐름과 프로세서 상태</h2>
@@ -32,7 +32,7 @@
 <li><b>CF ZF SF OF</b>: condition codes, 최근 연산 결과의 상태</li>
 </ul>
 <div class="bx concept">
-<span class="bx-tag"><span class="ico">💡</span>핵심 — condition code + %rip = 조건 분기</span>
+<p class="bx-lead">핵심 — condition code + %rip = 조건 분기</p>
 연산 결과로 flag가 세팅됨 → 특정 조건이 만족되면 %rip를 특정 위치로 갱신(jump). 어디로 갈지는 직전 연산이 세팅한 조건 코드(CF, ZF, SF, OF)가 결정 → %rip와 조건 코드는 밀접하게 연결됨. 루프 안의 점프, switch 상태 이동이 모두 이 조합으로 구현된다.
 </div>
 
@@ -60,11 +60,11 @@
 <li><span class="kr">leaq는 flag를 바꾸지 않음</span> (주소 계산 전용)</li>
 </ul>
 <div class="bx concept">
-<span class="bx-tag"><span class="ico">💡</span>해석은 사용자의 몫</span>
+<p class="bx-lead">해석은 사용자의 몫</p>
 하드웨어는 덧셈이 signed인지 unsigned인지 모름 → CF와 OF를 <b>둘 다</b> 계산해서 세팅. unsigned 덧셈으로 볼지 signed 덧셈으로 볼지는 프로그래머·컴파일러의 해석. unsigned로 보면 CF를, signed로 보면 OF를 본다. 같은 flag 비트가 상황에 따라 두 가지 의미로 쓰인다는 것을 기억할 것.
 </div>
 <div class="bx ex">
-<span class="bx-tag"><span class="ico">✏️</span>손계산 1 · 8-bit 덧셈의 flag (python 검증)</span>
+<p class="bx-lead">손계산 1 · 8-bit 덧셈의 flag (python 검증)</p>
 <div class="tblwrap"><table class="tbl">
 <thead><tr><th>연산</th><th>결과 (hex → 값)</th><th>CF</th><th>ZF</th><th>SF</th><th>OF</th><th>해석</th></tr></thead>
 <tbody>
@@ -122,7 +122,7 @@
 <li>쉬운 것: sete — cmp로 <svg style="vertical-align: -0.186ex;" xmlns="http://www.w3.org/2000/svg" width="4.933ex" height="1.756ex" role="img" focusable="false" viewBox="0 -694 2180.4 776" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-422-TEX-I-1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"></path><path id="MJX-422-TEX-N-2212" d="M84 237T84 250T98 270H679Q694 262 694 250T679 230H98Q84 237 84 250Z"></path><path id="MJX-422-TEX-I-1D44F" d="M73 647Q73 657 77 670T89 683Q90 683 161 688T234 694Q246 694 246 685T212 542Q204 508 195 472T180 418L176 399Q176 396 182 402Q231 442 283 442Q345 442 383 396T422 280Q422 169 343 79T173 -11Q123 -11 82 27T40 150V159Q40 180 48 217T97 414Q147 611 147 623T109 637Q104 637 101 637H96Q86 637 83 637T76 640T73 647ZM336 325V331Q336 405 275 405Q258 405 240 397T207 376T181 352T163 330L157 322L136 236Q114 150 114 114Q114 66 138 42Q154 26 178 26Q211 26 245 58Q270 81 285 114T318 219Q336 291 336 325Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><use data-c="1D44E" xlink:href="#MJX-422-TEX-I-1D44E"></use></g><g data-mml-node="mo" transform="translate(751.2,0)"><use data-c="2212" xlink:href="#MJX-422-TEX-N-2212"></use></g><g data-mml-node="mi" transform="translate(1751.4,0)"><use data-c="1D44F" xlink:href="#MJX-422-TEX-I-1D44F"></use></g></g></g></svg> 계산 → 같으면 0 → ZF=1 → dst = 1. sets — 결과가 음수 → SF=1 → dst = 1.</li>
 </ul>
 <div class="bx concept">
-<span class="bx-tag"><span class="ico">💡</span>핵심 — setl = SF ^ OF</span>
+<p class="bx-lead">핵심 — setl = SF ^ OF</p>
 signed less <svg style="vertical-align: -0.09ex;" xmlns="http://www.w3.org/2000/svg" width="5.185ex" height="1.661ex" role="img" focusable="false" viewBox="0 -694 2291.6 734" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-423-TEX-I-1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"></path><path id="MJX-423-TEX-N-3C" d="M694 -11T694 -19T688 -33T678 -40Q671 -40 524 29T234 166L90 235Q83 240 83 250Q83 261 91 266Q664 540 678 540Q681 540 687 534T694 519T687 505Q686 504 417 376L151 250L417 124Q686 -4 687 -5Q694 -11 694 -19Z"></path><path id="MJX-423-TEX-I-1D44F" d="M73 647Q73 657 77 670T89 683Q90 683 161 688T234 694Q246 694 246 685T212 542Q204 508 195 472T180 418L176 399Q176 396 182 402Q231 442 283 442Q345 442 383 396T422 280Q422 169 343 79T173 -11Q123 -11 82 27T40 150V159Q40 180 48 217T97 414Q147 611 147 623T109 637Q104 637 101 637H96Q86 637 83 637T76 640T73 647ZM336 325V331Q336 405 275 405Q258 405 240 397T207 376T181 352T163 330L157 322L136 236Q114 150 114 114Q114 66 138 42Q154 26 178 26Q211 26 245 58Q270 81 285 114T318 219Q336 291 336 325Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><use data-c="1D44E" xlink:href="#MJX-423-TEX-I-1D44E"></use></g><g data-mml-node="mo" transform="translate(806.8,0)"><use data-c="3C" xlink:href="#MJX-423-TEX-N-3C"></use></g><g data-mml-node="mi" transform="translate(1862.6,0)"><use data-c="1D44F" xlink:href="#MJX-423-TEX-I-1D44F"></use></g></g></g></svg> 판정에 SF와 OF를 함께 봄. SF만 보면 안 되는 이유: overflow가 나면 결과의 부호가 뒤집힘.
 <ul>
 <li>경우 ① overflow 없음 (OF=0) → 결과 부호가 그대로 맞음 → SF=1이면 <svg style="vertical-align: -0.09ex;" xmlns="http://www.w3.org/2000/svg" width="5.185ex" height="1.661ex" role="img" focusable="false" viewBox="0 -694 2291.6 734" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-424-TEX-I-1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"></path><path id="MJX-424-TEX-N-3C" d="M694 -11T694 -19T688 -33T678 -40Q671 -40 524 29T234 166L90 235Q83 240 83 250Q83 261 91 266Q664 540 678 540Q681 540 687 534T694 519T687 505Q686 504 417 376L151 250L417 124Q686 -4 687 -5Q694 -11 694 -19Z"></path><path id="MJX-424-TEX-I-1D44F" d="M73 647Q73 657 77 670T89 683Q90 683 161 688T234 694Q246 694 246 685T212 542Q204 508 195 472T180 418L176 399Q176 396 182 402Q231 442 283 442Q345 442 383 396T422 280Q422 169 343 79T173 -11Q123 -11 82 27T40 150V159Q40 180 48 217T97 414Q147 611 147 623T109 637Q104 637 101 637H96Q86 637 83 637T76 640T73 647ZM336 325V331Q336 405 275 405Q258 405 240 397T207 376T181 352T163 330L157 322L136 236Q114 150 114 114Q114 66 138 42Q154 26 178 26Q211 26 245 58Q270 81 285 114T318 219Q336 291 336 325Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><use data-c="1D44E" xlink:href="#MJX-424-TEX-I-1D44E"></use></g><g data-mml-node="mo" transform="translate(806.8,0)"><use data-c="3C" xlink:href="#MJX-424-TEX-N-3C"></use></g><g data-mml-node="mi" transform="translate(1862.6,0)"><use data-c="1D44F" xlink:href="#MJX-424-TEX-I-1D44F"></use></g></g></g></svg></li>
@@ -131,7 +131,7 @@ signed less <svg style="vertical-align: -0.09ex;" xmlns="http://www.w3.org/2000/
 </ul>
 </div>
 <div class="bx ex">
-<span class="bx-tag"><span class="ico">✏️</span>손계산 2 · cmp 4, 2 → setl (수업 예시)</span>
+<p class="bx-lead">손계산 2 · cmp 4, 2 → setl (수업 예시)</p>
 <p>cmpb $4, %al, %al = 2 → <svg style="vertical-align: -0.186ex;" xmlns="http://www.w3.org/2000/svg" width="12.978ex" height="1.756ex" role="img" focusable="false" viewBox="0 -694 5736.4 776" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-428-TEX-I-1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"></path><path id="MJX-428-TEX-N-2212" d="M84 237T84 250T98 270H679Q694 262 694 250T679 230H98Q84 237 84 250Z"></path><path id="MJX-428-TEX-I-1D44F" d="M73 647Q73 657 77 670T89 683Q90 683 161 688T234 694Q246 694 246 685T212 542Q204 508 195 472T180 418L176 399Q176 396 182 402Q231 442 283 442Q345 442 383 396T422 280Q422 169 343 79T173 -11Q123 -11 82 27T40 150V159Q40 180 48 217T97 414Q147 611 147 623T109 637Q104 637 101 637H96Q86 637 83 637T76 640T73 647ZM336 325V331Q336 405 275 405Q258 405 240 397T207 376T181 352T163 330L157 322L136 236Q114 150 114 114Q114 66 138 42Q154 26 178 26Q211 26 245 58Q270 81 285 114T318 219Q336 291 336 325Z"></path><path id="MJX-428-TEX-N-3D" d="M56 347Q56 360 70 367H707Q722 359 722 347Q722 336 708 328L390 327H72Q56 332 56 347ZM56 153Q56 168 72 173H708Q722 163 722 153Q722 140 707 133H70Q56 140 56 153Z"></path><path id="MJX-428-TEX-N-32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z"></path><path id="MJX-428-TEX-N-34" d="M462 0Q444 3 333 3Q217 3 199 0H190V46H221Q241 46 248 46T265 48T279 53T286 61Q287 63 287 115V165H28V211L179 442Q332 674 334 675Q336 677 355 677H373L379 671V211H471V165H379V114Q379 73 379 66T385 54Q393 47 442 46H471V0H462ZM293 211V545L74 212L183 211H293Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><use data-c="1D44E" xlink:href="#MJX-428-TEX-I-1D44E"></use></g><g data-mml-node="mo" transform="translate(751.2,0)"><use data-c="2212" xlink:href="#MJX-428-TEX-N-2212"></use></g><g data-mml-node="mi" transform="translate(1751.4,0)"><use data-c="1D44F" xlink:href="#MJX-428-TEX-I-1D44F"></use></g><g data-mml-node="mo" transform="translate(2458.2,0)"><use data-c="3D" xlink:href="#MJX-428-TEX-N-3D"></use></g><g data-mml-node="mn" transform="translate(3514,0)"><use data-c="32" xlink:href="#MJX-428-TEX-N-32"></use></g><g data-mml-node="mo" transform="translate(4236.2,0)"><use data-c="2212" xlink:href="#MJX-428-TEX-N-2212"></use></g><g data-mml-node="mn" transform="translate(5236.4,0)"><use data-c="34" xlink:href="#MJX-428-TEX-N-34"></use></g></g></g></svg>, <svg style="vertical-align: -0.09ex;" xmlns="http://www.w3.org/2000/svg" width="5.28ex" height="1.622ex" role="img" focusable="false" viewBox="0 -677 2333.6 717" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-429-TEX-N-32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z"></path><path id="MJX-429-TEX-N-3C" d="M694 -11T694 -19T688 -33T678 -40Q671 -40 524 29T234 166L90 235Q83 240 83 250Q83 261 91 266Q664 540 678 540Q681 540 687 534T694 519T687 505Q686 504 417 376L151 250L417 124Q686 -4 687 -5Q694 -11 694 -19Z"></path><path id="MJX-429-TEX-N-34" d="M462 0Q444 3 333 3Q217 3 199 0H190V46H221Q241 46 248 46T265 48T279 53T286 61Q287 63 287 115V165H28V211L179 442Q332 674 334 675Q336 677 355 677H373L379 671V211H471V165H379V114Q379 73 379 66T385 54Q393 47 442 46H471V0H462ZM293 211V545L74 212L183 211H293Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mn"><use data-c="32" xlink:href="#MJX-429-TEX-N-32"></use></g><g data-mml-node="mo" transform="translate(777.8,0)"><use data-c="3C" xlink:href="#MJX-429-TEX-N-3C"></use></g><g data-mml-node="mn" transform="translate(1833.6,0)"><use data-c="34" xlink:href="#MJX-429-TEX-N-34"></use></g></g></g></svg>이므로 setl 결과가 1이어야 함.</p>
 <div class="steps">
 <div class="step">2 = 00000010, 4 = 00000100. 뺄셈 = 덧셈 + two's complement: <svg style="vertical-align: -0.566ex;" xmlns="http://www.w3.org/2000/svg" width="8.549ex" height="2.262ex" role="img" focusable="false" viewBox="0 -750 3778.4 1000" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-430-TEX-N-32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z"></path><path id="MJX-430-TEX-N-2B" d="M56 237T56 250T70 270H369V420L370 570Q380 583 389 583Q402 583 409 568V270H707Q722 262 722 250T707 230H409V-68Q401 -82 391 -82H389H387Q375 -82 369 -68V230H70Q56 237 56 250Z"></path><path id="MJX-430-TEX-N-28" d="M94 250Q94 319 104 381T127 488T164 576T202 643T244 695T277 729T302 750H315H319Q333 750 333 741Q333 738 316 720T275 667T226 581T184 443T167 250T184 58T225 -81T274 -167T316 -220T333 -241Q333 -250 318 -250H315H302L274 -226Q180 -141 137 -14T94 250Z"></path><path id="MJX-430-TEX-N-2212" d="M84 237T84 250T98 270H679Q694 262 694 250T679 230H98Q84 237 84 250Z"></path><path id="MJX-430-TEX-N-34" d="M462 0Q444 3 333 3Q217 3 199 0H190V46H221Q241 46 248 46T265 48T279 53T286 61Q287 63 287 115V165H28V211L179 442Q332 674 334 675Q336 677 355 677H373L379 671V211H471V165H379V114Q379 73 379 66T385 54Q393 47 442 46H471V0H462ZM293 211V545L74 212L183 211H293Z"></path><path id="MJX-430-TEX-N-29" d="M60 749L64 750Q69 750 74 750H86L114 726Q208 641 251 514T294 250Q294 182 284 119T261 12T224 -76T186 -143T145 -194T113 -227T90 -246Q87 -249 86 -250H74Q66 -250 63 -250T58 -247T55 -238Q56 -237 66 -225Q221 -64 221 250T66 725Q56 737 55 738Q55 746 60 749Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mn"><use data-c="32" xlink:href="#MJX-430-TEX-N-32"></use></g><g data-mml-node="mo" transform="translate(722.2,0)"><use data-c="2B" xlink:href="#MJX-430-TEX-N-2B"></use></g><g data-mml-node="mo" transform="translate(1722.4,0)"><use data-c="28" xlink:href="#MJX-430-TEX-N-28"></use></g><g data-mml-node="mo" transform="translate(2111.4,0)"><use data-c="2212" xlink:href="#MJX-430-TEX-N-2212"></use></g><g data-mml-node="mn" transform="translate(2889.4,0)"><use data-c="34" xlink:href="#MJX-430-TEX-N-34"></use></g><g data-mml-node="mo" transform="translate(3389.4,0)"><use data-c="29" xlink:href="#MJX-430-TEX-N-29"></use></g></g></g></svg></div>
@@ -142,7 +142,7 @@ signed less <svg style="vertical-align: -0.09ex;" xmlns="http://www.w3.org/2000/
 <p class="final-answer">setl = SF ^ OF = 1 ^ 0 = 1 → less 조건 만족 · setb = CF = 1 → unsigned로도 2 &lt; 4</p>
 </div>
 <div class="bx ex">
-<span class="bx-tag"><span class="ico">✏️</span>손계산 3 · overflow가 끼는 비교 (8-bit, cmp b, a 기준 a − b)</span>
+<p class="bx-lead">손계산 3 · overflow가 끼는 비교 (8-bit, cmp b, a 기준 a − b)</p>
 <div class="tblwrap"><table class="tbl">
 <thead><tr><th>a, b</th><th>8-bit 결과</th><th>SF</th><th>OF</th><th>ZF</th><th>CF</th><th>setl</th><th>판정</th></tr></thead>
 <tbody>
@@ -171,7 +171,7 @@ setl = SF ^ OF = 1 → -128 &lt; 1 맞게 판정</pre>
 <li>예: <code>movzbl %al, %eax</code> — %rax = 0x123456789ABCDE01 → %rax = 0x0000000000000001</li>
 </ul>
 <div class="bx ex">
-<span class="bx-tag"><span class="ico">✏️</span>손계산 4 · C → assembly, gt</span>
+<p class="bx-lead">손계산 4 · C → assembly, gt</p>
 <pre class="c">int gt(long x, long y) { return x &gt; y; }</pre>
 <pre class="asm">gt:
     cmpq  %rsi, %rdi  <span class="cm"># x − y 로 flag 세팅 (x:y 비교)</span>
@@ -271,7 +271,7 @@ Done:</pre>
 <li>장점: 점프가 없어 파이프라인 손실 없음 · 단점: 둘 중 하나만 필요한데 둘 다 계산 → then/else 계산이 얼마나 가벼운지에 달림</li>
 </ul>
 <div class="bx warn">
-<span class="bx-tag"><span class="ico">⚠️</span>cmov를 쓰면 안 되는 경우 — GCC는 안전하다고 확신할 때만 사용</span>
+<p class="bx-lead">cmov를 쓰면 안 되는 경우 — GCC는 안전하다고 확신할 때만 사용</p>
 <ul>
 <li><b>비싼 계산</b>: val = test(x) ? hard1(x) : hard2(x) → 둘 다 계산하므로 손해, 계산이 아주 간단할 때만 이득</li>
 <li><b>위험한 계산</b>: val = p ? *p : 0 → p가 null이어도 *p를 계산해버림 → null pointer 역참조</li>
@@ -280,7 +280,7 @@ Done:</pre>
 </ul>
 </div>
 <div class="bx ex">
-<span class="bx-tag"><span class="ico">✏️</span>손계산 5 · flag 추적 (슬라이드 Exercise) — 각 명령 후 %rax, SF·CF·OF·ZF</span>
+<p class="bx-lead">손계산 5 · flag 추적 (슬라이드 Exercise) — 각 명령 후 %rax, SF·CF·OF·ZF</p>
 <div class="tblwrap"><table class="tbl">
 <thead><tr><th>명령</th><th>%rax</th><th>SF</th><th>CF</th><th>OF</th><th>ZF</th></tr></thead>
 <tbody>
@@ -444,13 +444,12 @@ Done:</pre>
 <li>.L7 (case 5, 6): w = 1 초기화 후 w −= z — 테이블에서 x=5, x=6 엔트리가 둘 다 .L7 · .L8 (default): w = 2</li>
 </ul>
 <div class="bx concept">
-<span class="bx-tag"><span class="ico">💡</span>정리와 jump table의 다른 쓰임</span>
+<p class="bx-lead">정리와 jump table의 다른 쓰임</p>
 C의 for, switch 문법은 사람이 읽기 쉽지만 어셈블리에는 그런 문법이 없음 → 기본 명령어 + 조건 코드 + 점프로 구현. loop은 do-while 또는 jump-to-middle로, 큰 switch는 jump table로, 드문드문한(sparse) switch는 decision tree(if-else 연쇄)로 변환될 수 있음. jump table은 위험한 기법이 아니라 효율적이고 필수적인 기법 — OS의 interrupt handler table(키보드·마우스·디스크 이벤트마다 번호 → handler 주소)도 같은 구조. 새 장치 추가 = 테이블에 엔트리 하나 추가.
 </div>
 
 <h2><span class="n">8</span>시험 포인트</h2>
 <div class="bx tip">
-<span class="bx-tag"><span class="ico">⭐</span>시험 포인트</span>
 <ul>
 <li>CF는 unsigned overflow(carry/borrow), OF는 signed overflow, SF는 결과 MSB, ZF는 결과 0</li>
 <li>하드웨어는 CF와 OF를 항상 둘 다 세팅 → signed/unsigned 해석은 사용자 몫</li>
