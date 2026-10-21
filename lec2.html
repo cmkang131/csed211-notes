@@ -62,7 +62,7 @@
 <li>C에서는 <code>0x</code> 접두사, 대소문자 구분 없음: <code>0xFA1D37B</code> = <code>0xfa1d37b</code></li>
 </ul></li>
 </ul>
-<div class="tblwrap"><table class="tbl small">
+<div class="tblwrap"><table class="tbl small tbl-fit">
 <thead><tr><th class="c">Hex</th><th class="c">0</th><th class="c">1</th><th class="c">2</th><th class="c">3</th><th class="c">4</th><th class="c">5</th><th class="c">6</th><th class="c">7</th><th class="c">8</th><th class="c">9</th><th class="c">A</th><th class="c">B</th><th class="c">C</th><th class="c">D</th><th class="c">E</th><th class="c">F</th></tr></thead>
 <tbody><tr><td><b>Binary</b></td><td>0000</td><td>0001</td><td>0010</td><td>0011</td><td>0100</td><td>0101</td><td>0110</td><td>0111</td><td>1000</td><td>1001</td><td>1010</td><td>1011</td><td>1100</td><td>1101</td><td>1110</td><td>1111</td></tr></tbody>
 </table></div>
@@ -290,8 +290,8 @@ a는 MSB가 0 → logical과 arithmetic 결과 동일. b는 MSB가 1 → arithme
     <text x="280" y="242" fill="#b91c1c">−8</text><text x="246" y="235" fill="#b91c1c">−7</text><text x="218" y="216" fill="#b91c1c">−6</text><text x="199" y="188" fill="#b91c1c">−5</text>
     <text x="192" y="154" fill="#b91c1c">−4</text><text x="199" y="120" fill="#b91c1c">−3</text><text x="218" y="92" fill="#b91c1c">−2</text><text x="246" y="73" fill="#b91c1c">−1</text>
   </g>
-  <path d="M 349 226 A 92 92 0 0 1 280 242" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
-  <text x="330" y="252" font-size="10.5" fill="#b91c1c" font-weight="700">wrap: TMax+1 = TMin</text>
+  <path d="M 349 226 A 92 92 0 0 1 293 241" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+  <text x="416" y="282" font-size="10.5" fill="#b91c1c" font-weight="700">wrap: TMax+1 = TMin</text>
   <text x="280" y="146" text-anchor="middle" font-size="11.5" fill="#8a8d98">시계 방향으로 +1</text>
   <text x="280" y="160" text-anchor="middle" font-size="11.5" fill="#8a8d98">(모듈로 16)</text>
 </svg>
@@ -394,16 +394,16 @@ uy = ty;            // implicit (대입)</pre>
     <rect x="284" y="22" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="304" y="45" fill="#1e40af">0</text>
     <rect x="328" y="22" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="348" y="45" fill="#1e40af">1</text>
     <rect x="372" y="22" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="392" y="45" fill="#1e40af">1</text>
-    <text x="420" y="45" font-size="13" fill="#4b4e57">= −5 (4비트)</text>
+    <text x="424" y="45" font-size="13" fill="#4b4e57" text-anchor="start">= −5 (4비트)</text>
     <rect x="108" y="102" width="40" height="34" rx="7" fill="#fff1f0" stroke="#f6c8c4"/><text x="128" y="125" fill="#b91c1c" font-weight="800">1</text>
     <rect x="152" y="102" width="40" height="34" rx="7" fill="#fff1f0" stroke="#f6c8c4"/><text x="172" y="125" fill="#b91c1c" font-weight="800">1</text>
     <rect x="196" y="102" width="40" height="34" rx="7" fill="#fff1f0" stroke="#f6c8c4"/><text x="216" y="125" fill="#b91c1c" font-weight="800">1</text>
     <rect x="240" y="102" width="40" height="34" rx="7" fill="#fff1f0" stroke="#f6c8c4"/><text x="260" y="125" fill="#b91c1c" font-weight="800">1</text>
-    <rect x="284" y="102" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="304" y="125" fill="#1e40af">0</text>
-    <rect x="328" y="102" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="348" y="125" fill="#1e40af">1</text>
+    <rect x="284" y="102" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="304" y="125" fill="#1e40af">1</text>
+    <rect x="328" y="102" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="348" y="125" fill="#1e40af">0</text>
     <rect x="372" y="102" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="392" y="125" fill="#1e40af">1</text>
     <rect x="416" y="102" width="40" height="34" rx="7" fill="#eef4ff" stroke="#c3d7fb"/><text x="436" y="125" fill="#1e40af">1</text>
-    <text x="474" y="125" font-size="13" fill="#4b4e57">= −5 (8비트)</text>
+    <text x="468" y="125" font-size="13" fill="#4b4e57" text-anchor="start">= −5 (8비트)</text>
   </g>
   <line x1="260" y1="56" x2="260" y2="80" stroke="#8a8d98" stroke-width="1.4"/>
   <path d="M 260 80 C 200 84 150 90 128 100" fill="none" stroke="#8a8d98" stroke-width="1.4" marker-end="url(#ar4)"/>
@@ -646,8 +646,8 @@ for (i = cnt-2; i &lt; cnt; i--)
 <b>Little Endian(리틀 엔디언)</b>: least significant byte가 가장 낮은 address (x86, Android · iOS · Windows를 돌리는 ARM)<br>
 암기법: <b>L</b>ittle endian = <b>L</b>east significant byte at <b>L</b>owest address
 </div>
-<figure class="fig" style="--figw:680px">
-<svg viewBox="0 0 680 210" width="680" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+<figure class="fig" style="--figw:700px">
+<svg viewBox="0 0 760 210" width="700" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
   <text x="20" y="24" font-size="13" font-weight="800" fill="#22242a">0x01234567 at 0x100</text>
   <g font-family="JetBrains Mono,monospace">
     <text x="20" y="58" font-size="12" fill="#8a8d98">주소</text>

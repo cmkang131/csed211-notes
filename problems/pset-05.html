@@ -31,13 +31,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 float = sign(1) + exp(8) + frac(23). exp == 0이면 비정규, exp == 0xFF면 특수(∞/NaN), 그 외 정규. 정규수에서 지수 +1 = 값 ×2. 비정규는 fraction을 한 칸 shift하면 됨.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>부호·지수·fraction을 분해: s = uf &amp; 0x80000000, e = (uf&gt;&gt;23) &amp; 0xFF, f = uf &amp; 0x7FFFFF</li>
 <li>e == 0xFF (inf·NaN) → 그대로 반환 (NaN 조건 + inf는 2배해도 inf)</li>

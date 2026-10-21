@@ -39,13 +39,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 몸통 블록(.L3) 뒤에 조건 검사(.L2)가 오고, 처음엔 jmp로 조건부터 뛰는 구조는 while 루프의 컴파일 결과(jump-to-middle). <code>cmpl %edi, %edx</code>는 %edx − %edi이고, <code>jl</code>은 signed로 %edx &lt; %edi일 때 점프.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>%eax = 0, %edx = 0 — 반환값과 counter 초기화</li>
 <li>jmp .L2 — 루프 진입 전 조건부터 검사하러 이동 (while 구조의 특징)</li>

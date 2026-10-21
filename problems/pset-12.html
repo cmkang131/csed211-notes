@@ -31,13 +31,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 fraction에 안 들어가는 나머지 비트가 정확히 절반(tie)이면, 올림/버림 중 마지막 비트가 짝수가 되는 쪽을 선택 (round-to-even).
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>1.0625 = 1.0001₂ — 3비트 뒤에 남는 "1"은 정확히 중간(tie) → 짝수 쪽(마지막 비트 0)인 1.000 선택 → 0 0111 000</li>
 <li>1.1875 = 1.0011₂ — 1.001|1은 tie. 1.001은 홀수 → 올림 → 1.010 = 1.25 → 0 0111 010</li></ol>

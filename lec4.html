@@ -57,8 +57,8 @@
 </ul>
 
 <h3>Memory Hierarchy(메모리 계층)와 Register(레지스터)</h3>
-<figure class="fig" style="--figw:600px">
-<svg viewBox="0 0 600 250" width="600" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+<figure class="fig" style="--figw:700px">
+<svg viewBox="0 0 740 250" width="700" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
   <polygon points="300,18 240,66 360,66" fill="#fde2e0"/>
   <polygon points="240,66 180,114 420,114 360,66" fill="#fff0a6"/>
   <polygon points="180,114 120,162 480,162 360,114" fill="#d8e8fb"/>
@@ -126,9 +126,9 @@
   <rect x="10" y="24" width="130" height="44" rx="9" fill="#eef4ff" stroke="#c3d7fb"/><text x="75" y="43" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1e40af">p1.c p2.c</text><text x="75" y="59" text-anchor="middle" font-size="10.5" fill="#4b4e57">C source (text)</text>
   <line x1="145" y1="46" x2="185" y2="46" stroke="#8a8d98" stroke-width="1.6" marker-end="url(#ar5)"/><text x="165" y="36" text-anchor="middle" font-size="10.5" fill="#8a8d98">compiler</text><text x="165" y="64" text-anchor="middle" font-size="10.5" fill="#8a8d98">gcc -S</text>
   <rect x="190" y="24" width="130" height="44" rx="9" fill="#f4f1fe" stroke="#d8cdf7"/><text x="255" y="43" text-anchor="middle" font-size="12.5" font-weight="700" fill="#6d28d9">p1.s p2.s</text><text x="255" y="59" text-anchor="middle" font-size="10.5" fill="#4b4e57">assembly (text)</text>
-  <line x1="325" y1="46" x2="365" y2="46" stroke="#8a8d98" stroke-width="1.6" marker-end="url(#ar5)"/><text x="345" y="36" text-anchor="middle" font-size="10.5" fill="#8a8d98">assembler</text><text x="345" y="64" text-anchor="middle" font-size="10.5" fill="#8a8d98">gcc / as</text>
+  <line x1="325" y1="46" x2="365" y2="46" stroke="#8a8d98" stroke-width="1.6" marker-end="url(#ar5)"/><text x="341" y="36" text-anchor="middle" font-size="10.5" fill="#8a8d98">assembler</text><text x="345" y="64" text-anchor="middle" font-size="10.5" fill="#8a8d98">gcc / as</text>
   <rect x="370" y="24" width="130" height="44" rx="9" fill="#fffae8" stroke="#ecd9a0"/><text x="435" y="43" text-anchor="middle" font-size="12.5" font-weight="700" fill="#92600a">p1.o p2.o</text><text x="435" y="59" text-anchor="middle" font-size="10.5" fill="#4b4e57">object (binary)</text>
-  <line x1="505" y1="46" x2="545" y2="46" stroke="#8a8d98" stroke-width="1.6" marker-end="url(#ar5)"/><text x="525" y="36" text-anchor="middle" font-size="10.5" fill="#8a8d98">linker</text><text x="525" y="64" text-anchor="middle" font-size="10.5" fill="#8a8d98">gcc / ld + lib</text>
+  <line x1="505" y1="46" x2="545" y2="46" stroke="#8a8d98" stroke-width="1.6" marker-end="url(#ar5)"/><text x="525" y="36" text-anchor="middle" font-size="10.5" fill="#8a8d98">linker</text><text x="525" y="64" text-anchor="middle" font-size="10.5" fill="#8a8d98">gcc / ld</text>
   <rect x="550" y="24" width="130" height="44" rx="9" fill="#f0faf2" stroke="#c2e8cd"/><text x="615" y="43" text-anchor="middle" font-size="12.5" font-weight="700" fill="#15803d">p (실행 파일)</text><text x="615" y="59" text-anchor="middle" font-size="10.5" fill="#4b4e57">executable (binary)</text>
 </svg>
 <figcaption><code>gcc -Og p1.c p2.c -o p</code> 한 번에 전부 수행. −Og: 기본적인 최적화만 (디버깅·읽기 쉬운 assembly)</figcaption>

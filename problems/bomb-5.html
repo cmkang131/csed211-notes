@@ -46,13 +46,11 @@ loop:
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 배열 chasing: 현재 값을 다음 인덱스로 쓰는 루프. 배열 내용은 gdb x/16dw로 읽고, 루프 횟수·합계 조건을 같이 본다.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>arr[i]를 다음 index로 삼아 값이 15일 때까지 따라가는 포인터 체이스 — 입력 x1의 하위 4 bit가 시작 index</li><li>시작 5라면: 5 → 12 → 3 → 7 → 11 → 13 → 9 → 4 → 8 → 0 → 10 → 1 → 2 → 14 → 6 → 15 (정확히 15번 반복)</li><li>합계 = 12+3+7+11+13+9+4+8+0+10+1+2+14+6+15 = 115 → x1 = 5, x2 = 115</li></ol>
 <pre class="c">(gdb) x/16dw 0x402580

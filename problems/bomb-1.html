@@ -26,7 +26,7 @@
 <p>다음은 phase_1의 disassembly다. 폭탄을 해제하는 입력을 찾아라.</p>
 <pre class="c">phase_1:
   sub  $0x8, %rsp
-  mov  $0x4024c0, %esi      # 비교할 문자열 주소를 %rsi에
+  mov  $0x4024c0, %esi      # 비교할 문자열 주소를 %esi에
   callq strings_not_equal   # %eax = 같으면 0, 다르면 1
   test %eax, %eax           # %eax = 0이면 ZF=1
   je   0x400f07             # ZF=1이면 폭발 건너뜀
@@ -36,13 +36,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 strings_not_equal은 두 문자열이 같으면 %eax = 0. 비교 대상 문자열의 주소는 mov $ADDR, %esi로 싣는다. gdb의 x/s ADDR로 메모리 속 문자열을 그대로 읽을 수 있다.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>입력 문자열이 0x4024c0의 문자열과 같아야 함 → <code>x/s 0x4024c0</code>로 읽으면 끝</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">"Current frameworks are mainly designed for a solo training case."</span></div>

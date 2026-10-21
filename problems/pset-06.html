@@ -38,19 +38,17 @@
       ret
 .Ltab: .quad .LA, .LB, .Ldef, .LA, .LC, .LB</pre>
 <p>(a) C switch로 복원 (case 값 포함) (b) f(13, 5), f(9, 5), f(14, 7), f(12, 99)의 값 (c) x &lt; 10이어도 ja 하나로 처리되는 이유.</p>
-<div class="nb"><div>x = 6을 기준값 5만큼 빼서 jump table index를 만들면 index = 1 → 표의 1번 엔트리로 이동. 각 엔트리가 가리키는 case는 직접 대응시켜 보기.</div></div>
+<div class="nb"><div>x = 11을 기준값 10만큼 빼서 jump table index를 만들면 index = 1 → 표의 1번 엔트리로 이동. 각 엔트리가 가리키는 case는 직접 대응시켜 보기.</div></div>
 </div>
 </section>
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 테이블 인덱스 = x − 최소 case. <code>.quad</code> 엔트리는 각 case 몸통의 label 주소. <code>ja</code>는 unsigned 비교라 음수 인덱스가 큰 양수로 보여 범위 검사 한 번에 걸러짐.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>index = x − 10. 표 대응: 0→A, 1→B, 2→default, 3→A, 4→C, 5→B</li>
 <li>(a) case 10·13 → 8×y (leaq 0(,%rsi,8)), case 11·15 → y+1, case 14 → −1, 나머지 → default 0 (case 12는 default)</li>

@@ -31,13 +31,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 정수·포인터 인자는 %rdi → %rsi → %rdx → %rcx → %r8 → %r9 순서, 7번째부터는 stack. 반환값은 %rax. int 인자는 32-bit register(%esi 꼴)로 전달.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>앞 6개를 register에 순서대로: a = %rdi, b = %esi (int라 32-bit), c = %rdx, d = %rcx, e = %r8, g = %r9</li>
 <li>7번째 h는 stack — 함수 진입 시점 8(%rsp) (0(%rsp)는 return address)</li></ol>

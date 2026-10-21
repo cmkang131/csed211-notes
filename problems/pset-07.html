@@ -32,13 +32,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 각 field offset은 자기 alignment의 배수로 올림하고, 전체 크기는 최대 alignment의 배수. 선언 순서를 바꾸면 padding이 달라짐 — 큰 타입부터 배치하면 padding이 줄어듦.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>(a) a:0 (char 1B) → b는 4의 배수 필요 → 4 → c는 2의 배수 → 8 → d:10 → e는 8의 배수 → 16 → f:24–26</li>
 <li>끝이 27인데 전체 정렬이 max 8 → 8의 배수로 올림 → sizeof(S) = 32</li>

@@ -30,13 +30,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 De Morgan — x|y = ~(~x &amp; ~y) · 모든 비트가 0이거나 1인 마스크: (!!x &lt;&lt; 31) &gt;&gt; 31 · 음수 나눗셈은 bias를 더해야 0 쪽으로 반올림 · ×(2^k − 1) = (x&lt;&lt;k) − x.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>(a) XOR = (x|y)에서 겹치는 비트를 뺀 것. |는 De Morgan으로 만들기: <code>return ~(~x &amp; ~y) &amp; ~(x &amp; y);</code></li>
 <li>(b) x가 참이면 mask = −1(전부 1), 거짓이면 0이 되게 하고 mask로 y·z 선택: <code>int mask = (!!x &lt;&lt; 31) &gt;&gt; 31; return (mask &amp; y) | (~mask &amp; z);</code></li>

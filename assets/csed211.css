@@ -6,3 +6,6 @@
 .notes pre .kw{color:#7c3aed}
 td.ORD{background:#eef3fd}td.BIN{background:#fdf0ee}td.OP{background:#eef7f0}td.OPEN{background:#eef7f0}td.CLOSE{background:#fdf0ee}
 mjx-container{display:inline}
+
+/* dense tables that must fit the column without horizontal scroll */
+.tbl-fit th,.tbl-fit td{padding:4px 5px;font-size:11px;white-space:nowrap}

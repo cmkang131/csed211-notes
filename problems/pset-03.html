@@ -44,13 +44,11 @@ fact: cmpq $1, %rdi
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 call을 가로질러 값이 살아야 하면 caller-saved register는 못 씀 — callee-saved(%rbx 등)에 옮기되 원래 값은 push/pop으로 보존. frame 크기 = return address 8B + push한 register 8B씩.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>(a) n을 재귀 호출 뒤 곱셈에 써야 하는데 %rdi는 caller-saved라 call 중에 바뀜 → callee-saved인 %rbx를 쓰려면 규약상 원래 값을 저장했다가 복원해야 함</li>
 <li>(b) fact(4), fact(3), fact(2) frame은 return address 8 + 저장된 rbx 8 = 16B씩, fact(1)은 push 없이 return address 8B만 → 16×3 + 8 = 56B</li>

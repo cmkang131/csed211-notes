@@ -35,13 +35,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 row-major: 주소 = base + (i × 열 수 + j) × sizeof(원소). <code>leaq (%rsi,%rsi,2)</code> = 3×%rsi 꼴의 스케일 패턴을 열 수로 읽기.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>&amp;A[3][2] = 0x1000 + 4×(3×3 + 2) = 0x1000 + 44 = 0x102C</li>
 <li>asm 해석: %rax = 3i → %rax = A + 12i (행 하나가 3×4 = 12B) → 값 = *(A + 12i + 4j)</li></ol>

@@ -31,13 +31,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 <code>cmpl src, dst</code>는 dst − src의 flag만 갱신 (결과 저장 없음). signed 비교는 SF^OF, unsigned는 CF가 기준. INT_MIN − 1은 signed overflow가 일어나는 대표 케이스.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>3 − 5 = −2 → SF = 1 (음수), ZF = 0, CF = 1 (unsigned 3 &lt; 5라 borrow), OF = 0</li>
 <li>jl: SF≠OF → 점프 · jb: CF=1 → 점프 · ja: CF=1 → 점프 안 함</li>

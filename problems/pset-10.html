@@ -31,13 +31,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 call은 return address 8B를 push하고 ret은 pop. pushq는 −8, subq는 그 값만큼 감소. 스택은 낮은 주소 쪽으로 자람.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>(a) call이 반환 주소 8B를 push → 0x7fffffffe010 − 8 = 0x7fffffffe008</li>
 <li>(b) pushq %rbp → −8 → 0x7fffffffe000</li>

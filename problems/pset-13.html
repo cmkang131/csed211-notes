@@ -35,13 +35,11 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-<div class="bx-h">개념 정리</div>
 <code>cmpq %rsi, %rdi</code>는 x − y로 flag를 설정. cmovCond는 조건이 맞을 때만 복사 — 분기 없는 if.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
-<p class="ans-ref">개념 정리는 위 힌트 보기에 있음</p>
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>기본값 %rax = y</li>
 <li>x &lt; y (signed, SF≠OF)이면 %rax = x로 덮어씀</li></ol>
