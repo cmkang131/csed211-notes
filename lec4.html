@@ -32,7 +32,7 @@
 <li><b>x86</b>: Intel 프로세서 계열의 ISA, laptop·desktop·server 시장을 지배
 <ul>
 <li>evolutionary design: 1978년 8086까지 backward compatible 유지 + 시간이 지나며 기능 추가</li>
-<li>모바일은 다른 생태계 → Qualcomm Snapdragon 등 ARM 계열 (Microsoft laptop에도 Snapdragon 탑재)</li>
+<li>모바일은 다른 생태계 → Qualcomm Snapdragon 등 ARM 계열</li>
 </ul></li>
 <li>서버/데스크톱과 모바일은 trade-off가 다름: 서버는 가능한 한 빠르게 (performance), 모바일은 에너지 효율 (배터리)</li>
 </ul>
@@ -40,24 +40,20 @@
 <thead><tr><th></th><th>CISC (Complex Instruction Set Computer)</th><th>RISC (Reduced Instruction Set Computer)</th></tr></thead>
 <tbody>
 <tr><td><b>명령어</b></td><td>형식이 제각각인 아주 많은 명령어, 가변 길이 1~16 byte</td><td>단순하고 형식이 고정된 명령어 (앞쪽 몇 bit가 opcode)</td></tr>
-<tr><td><b>예</b></td><td>즉시값(immediate)을 메모리에 바로 저장하는 명령어 하나</td><td>즉시값을 먼저 register에 넣고 → 메모리에 store, 2단계</td></tr>
-<tr><td><b>특징</b></td><td>코드 줄 수는 적지만 하드웨어(decoder) 설계가 복잡. 실제 Linux 프로그램은 그중 일부만 사용</td><td>이해하기 쉬움 → 컴퓨터구조 과목은 MIPS → 지금은 RISC-V로 가르침</td></tr>
+<tr><td><b>예</b></td><td>immediate를 메모리에 바로 저장하는 명령어 하나</td><td>immediate를 먼저 register에 넣고 → 메모리에 store, 2단계</td></tr>
+<tr><td><b>특징</b></td><td>코드 줄 수는 적지만 하드웨어(decoder) 설계가 복잡. 실제 Linux 프로그램은 그중 일부만 사용</td><td>이해하기 쉬움</td></tr>
 </tbody></table></div>
 <ul>
-<li>CISC는 RISC 성능을 따라가기 어렵다고 여겨졌지만 Intel은 microarchitecture 기법(더 큰 cache 등)으로 따라잡음. 속도 면에서는 성공, 전력 소모 면에서는 덜 성공</li>
 </ul>
 
 <h3>Transistor 수와 Multi-core 전환</h3>
 <ul>
-<li>주요 프로세서: 8086 (1978, 29K, 첫 16-bit, 1MB 주소 공간) → 386 (1985, 275K, 첫 32-bit = IA32, flat addressing) → Pentium 4E (2004, 125M, 첫 64-bit = x86-64) → Core 2 (2006, 291M, 첫 multi-core) → Core i7 (2008, 731M, 4 cores) → Skylake (2015) 1.9B, Core i9 (2019) 3.5B</li>
-<li>이름보다 <b>트랜지스터 수</b>에 주목 → 공정 기술 발전으로 같은 면적에 더 많은 트랜지스터 → 더 복잡한 설계</li>
+<li><b>트랜지스터 수</b>에 주목 → 공정 기술 발전으로 같은 면적에 더 많은 트랜지스터 → 더 복잡한 설계</li>
 <li><b>Moore's law</b>: 트랜지스터 수(성능)가 주기적으로 두 배 → 예전에는 기다리기만 하면 single-thread 프로그램이 빨라졌음</li>
 <li>clock speed 상승의 한계 (내부 로직 복잡, 전력, 신호 간섭) → <span class="hl">clock 올리기를 포기하고 core 수를 늘리는 방향으로 전환</span>
 <ul>
-<li>소프트웨어 입장에서는 골칫거리 → multi-thread 간 통신·동기화 overhead, straggler, 버그</li>
 </ul></li>
-<li>추가된 기능들: multimedia 연산 명령어 (Pentium/MMX), 조건부 연산 명령어, 32→64-bit 전환, 최근에는 남는 면적에 특정 workload용 가속 기능 (vector, matrix multiplication 등 AI 연산)</li>
-<li><b>backward compatibility</b>가 중요한 이유: 소프트웨어 전환은 하드웨어보다 훨씬 느림. 64-bit OS에서도 기존 32-bit application이 그대로 돌아야 함 (개발자가 사라져 고칠 사람이 없는 legacy도 존재)</li>
+<li><b>backward compatibility</b>가 중요한 이유: 소프트웨어 전환은 하드웨어보다 훨씬 느림. 64-bit OS에서도 기존 32-bit application이 그대로 돌아야 함</li>
 </ul>
 
 <h3>Memory Hierarchy와 Register</h3>
@@ -86,12 +82,10 @@
 </figure>
 <ul>
 <li>register: 가장 빠르고 가장 작은 "cache"로 볼 수 있음. 1 cycle 접근, x86-64 기준 8 byte짜리 16개</li>
-<li>2018년 Coffee Lake 예: mobile Core i7 (2.2~3.2 GHz, 45 W), desktop Core i7 (35~95 W, integrated graphics), server Xeon E (multi-socket). CPU 안에 가속기 통합 추세, multi-socket 간 통신은 QPI, 각 core는 local memory controller + remote memory 접근 가능</li>
 </ul>
 
 <h3>AMD와 x86-64의 탄생</h3>
 <ul>
-<li>AMD: 역사적으로 Intel보다 조금 느리지만 훨씬 저렴. Opteron (Pentium 4의 경쟁자), ca. 2019 Ryzen부터 경쟁력 회복, GPU에서도 NVIDIA 다음</li>
 <li>Intel의 64-bit 역사
 <ul>
 <li>2001: IA32 → IA64 (Itanium)로 급진적 전환 시도 → 완전히 다른 구조, IA32는 legacy로만 실행, 성능 실망</li>
@@ -110,7 +104,7 @@
 <b>microarchitecture</b>: ISA의 실제 구현 (cache 크기, core 주파수, register가 칩의 어디에 있는지). 프로그래머에게 숨겨짐.
 </div>
 <ul>
-<li>ISA 예: Intel x86, IA32, Itanium, x86-64 (CISC 계열) · ARM (거의 모든 휴대폰) · RISC-V (새로운 open-source ISA)</li>
+<li>ISA 예: Intel x86, IA32, Itanium, x86-64 (CISC 계열) · ARM · RISC-V (새로운 open-source ISA)</li>
 </ul>
 <h3>Assembly 프로그래머가 보는 상태</h3>
 <div class="bx">
@@ -300,7 +294,7 @@ salq $2, %rax             <span class="cm"># return t &lt;&lt; 2 = 4t</span></pr
 </ul>
 <h3>명령어 Suffix</h3>
 <ul>
-<li>대부분의 x86 명령어는 suffix 있이/없이 모두 표기 가능: <code>imul %rcx, %rax</code> = <code>imulq %rcx, %rax</code></li>
+<li>대부분의 x86 명령어는 suffix를 붙이거나 생략한 두 형태 모두 표기 가능: <code>imul %rcx, %rax</code> = <code>imulq %rcx, %rax</code></li>
 <li>suffix = 연산 크기: <b>b = byte (1), w = short (2), l = int (4), q = long (8)</b>. suffix가 있으면 register 이름과 크기를 맞춤</li>
 <li>compiler 출력(<code>gcc -S</code>)은 보통 suffix 있음 · disassembly(<code>objdump -d</code>, gdb disas)는 보통 생략 · Intel 매뉴얼은 항상 생략</li>
 </ul>
