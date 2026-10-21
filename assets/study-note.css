@@ -17,9 +17,9 @@
    ============================================================ */
 :root{
   --ink:#1a1a1a; --gray:#666; --rule:#1a1a1a;
-  --blue:#2456c4; --blue-bg:#eef3fd; --blue-bd:#c9d8f6; --blue-ink:#1d4bb5;
-  --red:#b03a32;  --red-bg:#fdf0ee;  --red-bd:#efc9c4;  --red-ink:#a33227;
-  --green:#2e7d4f;--green-bg:#eef7f0;--green-bd:#c9e5d2;--green-ink:#256e44;
+  --blue:#1a1a1a;  --blue-bg:#f2f2f2;--blue-bd:#d9d9d9; --blue-ink:#1a1a1a;
+  --red:#9e2b25;   --red-bg:#ffffff; --red-bd:#d9d9d9;  --red-ink:#9e2b25;
+  --green:#1a1a1a; --green-bg:#f2f2f2;--green-bd:#d9d9d9;--green-ink:#1a1a1a;
   --hl:#fff1a8;
   --card-bd:#e6e3da;
   --shadow:0 1px 2px rgba(26,26,26,.05),0 2px 8px rgba(26,26,26,.04);
@@ -117,11 +117,11 @@ h1.pagetitle{font-size:25px;font-weight:900;letter-spacing:-0.01em;margin:22px 0
 .stat{flex:1;min-width:120px;border:1px solid var(--blue-bd);background:var(--blue-bg);border-radius:8px;padding:10px 14px;text-align:center}
 .stat .v{font-size:23px;font-weight:700;color:var(--blue-ink);line-height:1.25;font-variant-numeric:tabular-nums}
 .stat .v small{font-size:14px;font-weight:700}
-.stat .l{font-size:12.5px;color:#4a5a7a;margin-top:2px}
+.stat .l{font-size:12.5px;color:#666666;margin-top:2px}
 .stat.warn2{background:var(--red-bg);border-color:var(--red-bd)}
-.stat.warn2 .v{color:var(--red-ink)} .stat.warn2 .l{color:#7a4a44}
+.stat.warn2 .v{color:var(--red-ink)} .stat.warn2 .l{color:#666666}
 .stat.green2{background:var(--green-bg);border-color:var(--green-bd)}
-.stat.green2 .v{color:var(--green-ink)} .stat.green2 .l{color:#3f6b4f}
+.stat.green2 .v{color:var(--green-ink)} .stat.green2 .l{color:#666666}
 
 /* 그림 */
 figure{margin:16px 0;text-align:center}
@@ -148,15 +148,15 @@ figcaption{font-size:13px;color:#666;margin-top:8px}
 .xl-bar .cell-name{font-family:ui-monospace,Menlo,'Noto Sans KR',monospace;background:#fff;border:1px solid #d8d5cc;border-radius:4px;padding:1px 8px;font-size:12px;color:#333}
 .xl-bar .fx{font-weight:700;font-style:italic;color:#888}
 .xl-fx{font-family:ui-monospace,Menlo,'Noto Sans KR',monospace;font-size:13.5px;padding:7px 12px;border-bottom:1px solid #eeeee8;color:#1a1a1a;background:#fff;overflow-x:auto;white-space:nowrap}
-.xl-fx .sel{background:#fff2c2;border-radius:2px;padding:0 2px}
+.xl-fx .sel{background:#fff1a8;border-radius:2px;padding:0 2px}
 .xl table{border-collapse:collapse;width:100%;font-size:13.5px;font-family:ui-monospace,Menlo,'Noto Sans KR',monospace}
 .xl th,.xl td{border:1px solid #e4e2db;padding:4px 9px;text-align:right;white-space:nowrap;font-weight:400}
 .xl th{background:#f6f6f3;color:#666;font-size:12px;text-align:center;font-weight:400}
 .xl td.l,.xl th.l{text-align:left}
 .xl td.c{text-align:center}
-.xl td.selcell{background:#fff2c2;font-weight:700}
-.xl td.hlcell{background:#eaf1fd;font-weight:700;color:var(--blue-ink)}
-.xl td.warn{background:#fdeceb;color:var(--red-ink);font-weight:700}
+.xl td.selcell{background:#fff1a8;font-weight:700}
+.xl td.hlcell{background:#f2f2f2;font-weight:700;color:var(--blue-ink)}
+.xl td.warn{background:#ffffff;color:var(--red-ink);font-weight:700}
 .xl-cap{font-size:13px;color:#666;padding:8px 12px;border-top:1px solid #eeeee8;background:#fbfaf7;text-align:left}
 .xl .rowhdr{background:#f6f6f3;color:#666;text-align:center;font-size:12px}
 
@@ -167,7 +167,7 @@ figcaption{font-size:13px;color:#666;margin-top:8px}
 .dlg-row{display:flex;align-items:baseline;gap:8px;margin:7px 0}
 .dlg-row .k{flex:none;width:96px;color:#444;text-align:right;font-size:13px}
 .dlg-row .v{flex:1;border:1px solid #c9c6bc;border-radius:4px;background:#fff;padding:3px 8px;font-family:ui-monospace,Menlo,'Noto Sans KR',monospace;font-size:13px}
-.dlg-row .v.sel{background:#fff2c2;font-weight:700}
+.dlg-row .v.sel{background:#fff1a8;font-weight:700}
 .dlg-row .opt{display:flex;gap:14px;font-size:13px}
 .dlg-row .opt .on{font-weight:700}
 .dlg-row .opt .on::before{content:"●";color:var(--blue);margin-right:4px;font-size:10px}

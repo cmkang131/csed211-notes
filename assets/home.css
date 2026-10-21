@@ -1,6 +1,6 @@
 /* home (목차) v2 — 카드는 박스가 아니라 얇은 가로선으로 구분된 링크 */
-:root{--ink:#1a1a1a;--red:#b03a32;--gray:#666;--blue:#2456c4;--rule:#1a1a1a;
-  --blue-bg:#eef3fd;--blue-bd:#c9d8f6;--blue-ink:#1d4bb5;--card-bd:#e6e3da}
+:root{--ink:#1a1a1a;--red:#9e2b25;--gray:#666;--blue:#1a1a1a;--rule:#1a1a1a;
+  --blue-bg:#f2f2f2;--blue-bd:#d9d9d9;--blue-ink:#1a1a1a;--card-bd:#e6e3da}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:'Noto Sans KR','Apple SD Gothic Neo',system-ui,sans-serif;background:#fff;color:var(--ink);-webkit-tap-highlight-color:transparent}
@@ -31,3 +31,6 @@ a.card:hover .go{color:var(--blue);transform:translateX(3px)}
   .go{display:none}
   a.card{border-top-color:#999}
 }
+
+/* 본문 안 일반 링크: 기본 파랑 대신 잉크 */
+.sub a,.notice a,.foot a{color:var(--ink);text-decoration-color:#999;text-underline-offset:2px}

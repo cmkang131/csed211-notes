@@ -9,3 +9,6 @@ mjx-container{display:inline}
 
 /* dense tables that must fit the column without horizontal scroll */
 .tbl-fit th,.tbl-fit td{padding:4px 5px;font-size:11px;white-space:nowrap}
+
+/* 본문 안 일반 링크: 기본 파랑 대신 잉크 + 회색 밑줄 */
+.notes a,.body a,.psub a,.notice a{color:var(--ink);text-decoration-color:#999;text-underline-offset:2px}
