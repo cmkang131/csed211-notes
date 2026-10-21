@@ -11,11 +11,12 @@ h1{font-size:28px;font-weight:900;letter-spacing:-0.01em;color:var(--ink);line-h
 section{margin-top:36px;border-top:1.5px solid var(--rule);padding-top:18px}
 h2{font-size:17px;font-weight:900;color:var(--ink);margin-bottom:6px}
 h2 .h2no{color:var(--blue);margin-right:.3em}
-a.card{display:block;position:relative;text-decoration:none;color:var(--ink);border:none;border-top:1px solid #d9d9d9;padding:14px 34px 14px 4px;cursor:pointer;background:#fff}
-a.card:hover .card-t{color:var(--blue)}
-a.card:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-.go{position:absolute;right:4px;top:14px;color:#aaa;font-size:17px;transition:transform .12s,color .12s}
-a.card:hover .go{color:var(--blue);transform:translateX(3px)}
+a.card{display:block;position:relative;text-decoration:none;color:var(--ink);border:1px solid #d9d9d9;border-radius:6px;padding:11px 44px 11px 16px;margin:8px 0;cursor:pointer;background:#fff;transition:background .12s,border-color .12s,transform .12s}
+a.card:hover{background:#f2f2f2;border-color:#555}
+a.card:active{transform:translateY(1px)}
+a.card:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.go{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:15px;transition:transform .12s,color .12s}
+a.card:hover .go{color:var(--ink);transform:translateY(-50%) translateX(3px)}
 .card-t{font-weight:700;font-size:16.5px}
 .card-t .no{color:var(--blue);margin-right:.3em}
 .card-d{font-size:14.5px;color:#444;margin-top:6px;line-height:1.55}
@@ -34,3 +35,11 @@ a.card:hover .go{color:var(--blue);transform:translateX(3px)}
 
 /* 본문 안 일반 링크: 기본 파랑 대신 잉크 */
 .sub a,.notice a,.foot a{color:var(--ink);text-decoration-color:#999;text-underline-offset:2px}
+
+/* v4 phead (index/problems 공통 헤더) */
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--gray);margin-bottom:6px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.phead a{color:inherit}
+.phead-c{font-weight:700;color:var(--ink);font-size:13.5px;text-align:center}
+.phead-r{font-size:12.5px;white-space:nowrap}
+.to-home{text-decoration:none}
+.to-home:hover{text-decoration:underline}

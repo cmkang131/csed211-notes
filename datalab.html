@@ -16,7 +16,7 @@
 <div class="phead">
   <a class="to-home" href="index.html">&larr; 목차</a>
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
-  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목)</span>
+  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Data Lab(데이터 랩) — bitwise 연산만으로 함수 구현하기</h1>
 <p class="psub">DL1·DL2 규칙과 비트/부동소수점 접근법 정리 · 연습 문제는 문제 풀이 페이지에</p>
@@ -63,7 +63,7 @@ MSB = 1 → signed int로 보면 음수</pre>
 <h3>Bitwise(비트 연산) vs Logical(논리) operator — 혼동 금지</h3>
 <ul>
 <li>bitwise (~ &amp; | ^)는 bit pattern의 각 bit에 적용 / logical (&amp;&amp; || !)는 결과가 항상 0 또는 1</li>
-<li>예: bitwise 0x69 &amp; 0x55 = 0x41 이지만 logical 0x69 &amp;&amp; 0x55 = 1 · ~0x55 = 0xAA (8-bit) 이지만 !0x55 = 0</li>
+<li class="exrow">예: bitwise 0x69 &amp; 0x55 = 0x41 이지만 logical 0x69 &amp;&amp; 0x55 = 1 · ~0x55 = 0xAA (8-bit) 이지만 !0x55 = 0</li>
 <li>assignment 버전: &amp;= |= ^= &lt;&lt;= &gt;&gt;= (a &amp;= b → a = a &amp; b)</li>
 </ul>
 <div class="tblwrap"><table>

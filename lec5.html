@@ -16,7 +16,7 @@
 <div class="phead">
   <a class="to-home" href="index.html">&larr; 목차</a>
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
-  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목)</span>
+  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Lecture 5 · Machine-Level Programming II: Control(제어)</h1>
 <p class="psub">10/8 (목) · 10/13 (녹화) · 슬라이드 "Lecture 5 Control" (전체) + 10/8 수업 녹취 + 10/13 녹화 강의 (조건 코드 ~ switch)</p>
@@ -174,7 +174,7 @@ setl = SF ^ OF = 1 → -128 &lt; 1 맞게 판정</pre>
 <li>setX는 byte 레지스터 하나에 씀. 모든 정수 레지스터는 최하위 byte를 이름으로 참조 가능: %al, %bl … (%rax 64bit, %eax 32bit, %ax 16bit, %ah/%al 상위/하위 8bit)</li>
 <li><b>setX하면 앞의 56-bit는 그대로 남음</b> → %al=1은 되지만 %rax=1은 아님 → 보통 <code>movzbl</code>로 마무리</li>
 <li><b>movzbl</b>: byte → 32-bit zero extension (1바이트 값을 4바이트로 확장하며 나머지를 0으로 채움). 32-bit 명령은 64-bit 레지스터의 상위 32 bit도 0으로 만듦 → %rax 전체가 0 또는 1</li>
-<li>예: <code>movzbl %al, %eax</code>: %rax = 0x123456789ABCDE01 → %rax = 0x0000000000000001</li>
+<li class="exrow">예: <code>movzbl %al, %eax</code>: %rax = 0x123456789ABCDE01 → %rax = 0x0000000000000001</li>
 </ul>
 <div class="nb">
 <p class="bx-h"><b>손계산 4 · C → assembly, gt</b></p>

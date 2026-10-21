@@ -16,7 +16,7 @@
 <div class="phead">
   <a class="to-home" href="index.html">&larr; 목차</a>
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
-  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목)</span>
+  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Lecture 8 · Advanced Topics(심화 주제)</h1>
 <p class="psub">10/20 (화) · 슬라이드 "Lecture 8 Advanced Topics" + 수업 녹취 (14:04~14:53, ASR 누락 다수. 슬라이드 11~16의 disassembly walkthrough는 녹취가 거의 없어 슬라이드만으로 정리)</p>
@@ -191,7 +191,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 <ul>
 <li>배경: stack randomization + non-executable stack → code injection이 어려워짐. 대안: <b>이미 존재하는 code/library code를 재사용</b>해 fragment(gadget)를 이어 붙임</li>
 <li><b>gadget</b>: ret(0xc3)으로 끝나는 instruction sequence. code 위치는 fixed, executable</li>
-<li>예: ab_plus_c gadget (0x4004d4): <code>imul %rsi,%rdi; lea (%rdi,%rdx,1),%rax; ret</code> · setval gadget (0x4004dc): 바이트열 c7 07 d4 48 89 c7 안에 48 89 c7 (movq %rax,%rdi)이 숨어 있고 뒤에 c3 (ret)이 이어짐. 중간 지점부터 실행하면 gadget이 됨</li>
+<li class="exrow">예: ab_plus_c gadget (0x4004d4): <code>imul %rsi,%rdi; lea (%rdi,%rdx,1),%rax; ret</code> · setval gadget (0x4004dc): 바이트열 c7 07 d4 48 89 c7 안에 48 89 c7 (movq %rax,%rdi)이 숨어 있고 뒤에 c3 (ret)이 이어짐. 중간 지점부터 실행하면 gadget이 됨</li>
 </ul>
 <figure class="fig" style="--figw:560px">
 <svg viewBox="0 0 560 220" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
