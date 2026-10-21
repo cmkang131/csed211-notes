@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="pset-02.html">
+<link rel="next" href="pset-04.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -46,7 +49,7 @@ fact: cmpq $1, %rdi
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-call을 가로질러 값이 살아야 하면 caller-saved register는 못 씀 — callee-saved(%rbx 등)에 옮기되 원래 값은 push/pop으로 보존. frame 크기 = return address 8B + push한 register 8B씩.
+call을 가로질러 값이 살아야 하면 caller-saved register는 못 씀: callee-saved(%rbx 등)에 옮기되 원래 값은 push/pop으로 보존. frame 크기 = return address 8B + push한 register 8B씩.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>

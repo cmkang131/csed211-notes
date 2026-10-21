@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="mock2-01.html">
+<link rel="next" href="mock2-03.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -20,7 +23,7 @@
   <span class="phead-r">CSED211 &middot; 2026 가을 &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Q2 · 루프 어셈블리 → C 복원</h1>
-<p class="psub">모의고사 2탄 · 자작 · Lec5 Control — do-while 번역 유형 (강의 루프 번역 규칙 기반) · 8점</p>
+<p class="psub">모의고사 2탄 · 자작 · Lec5 Control: do-while 번역 유형 (강의 루프 번역 규칙 기반) · 8점</p>
 <div class="body notes">
 <section>
 <div class="problem">
@@ -61,7 +64,7 @@
 </div>
 <div class="subpart">
 <span class="part">(c)</span>
-<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보이고, 반환 값은 0.<br></li></ol>
+<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보인다. 반환 값은 0.<br></li></ol>
 </div>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">f(4)=24, f(5)=120 · 0 반환 (약 2^32회 반복 후 종료)</span></div>
 </div></details>

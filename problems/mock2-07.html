@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="mock2-06.html">
+<link rel="next" href="mock2-08.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -20,7 +23,7 @@
   <span class="phead-r">CSED211 &middot; 2026 가을 &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Q7 · 호출 규약 위반 찾기</h1>
-<p class="psub">모의고사 2탄 · 자작 · Lec6 Procedures — caller-saved vs callee-saved 규약 · 6점</p>
+<p class="psub">모의고사 2탄 · 자작 · Lec6 Procedures: caller-saved vs callee-saved 규약 · 6점</p>
 <div class="body notes">
 <section>
 <div class="problem">
@@ -36,7 +39,7 @@
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li>(1) %rbx는 callee-saved 레지스터다. 사용하려면 프롤로그에서 pushq %rbx, 에필로그에서 popq %rbx로 caller의 값을 보존해야 한다. 그냥 덮어쓰면 bad를 호출한 함수의 %rbx가 망가진다. [3점]</li><li>(2) %r10은 caller-saved 레지스터다. call other가 %r10을 덮어쓸 수 있으므로 call을 가로질러 값을 유지하려면 (저장 후) callee-saved 레지스터를 쓰거나 스택에 보관해야 한다. [3점]<br></li></ol>
+<ol class="steps"><li>(1) %rbx는 callee-saved 레지스터다. 사용할 때는 프롤로그에서 pushq %rbx, 에필로그에서 popq %rbx로 caller의 값을 보존한다. 그냥 덮어쓰면 bad를 호출한 함수의 %rbx가 망가진다. [3점]</li><li>(2) %r10은 caller-saved 레지스터다. call other가 %r10을 덮어쓸 수 있으므로 call을 가로질러 값을 유지할 때는 (저장 후) callee-saved 레지스터를 쓰거나 스택에 보관해야 한다. [3점]<br></li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">(1) callee-saved(%rbx) 미보존 → push/pop 추가, (2) caller-saved(%r10)를 call 너머로 신뢰 → callee-saved 또는 스택 사용</span></div>
 </div></details>
 </section>

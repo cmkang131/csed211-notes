@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="pset-06.html">
+<link rel="next" href="pset-08.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -34,15 +37,15 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-각 field offset은 자기 alignment의 배수로 올림하고, 전체 크기는 최대 alignment의 배수. 선언 순서를 바꾸면 padding이 달라짐 — 큰 타입부터 배치하면 padding이 줄어듦.
+각 field offset은 자기 alignment의 배수로 올림하고, 전체 크기는 최대 alignment의 배수. 선언 순서를 바꾸면 padding이 달라짐: 큰 타입부터 배치하면 padding이 줄어듦.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li>(a) a:0 (char 1B) → b는 4의 배수 필요 → 4 → c는 2의 배수 → 8 → d:10 → e는 8의 배수 → 16 → f:24–26</li>
+<ol class="steps"><li>(a) a:0 (char 1B) → b는 4의 배수 필요 → 4 → c는 2의 배수 → 8 → d:10 → e는 8의 배수 → 16 → f:24~26</li>
 <li>끝이 27인데 전체 정렬이 max 8 → 8의 배수로 올림 → sizeof(S) = 32</li>
-<li>(b) 큰 것부터 e, b, c, a, d, f → offset 0, 8, 12, 14, 15, 16–18 → 끝 19 → 8의 배수 올림 → 24</li></ol>
+<li>(b) 큰 것부터 e, b, c, a, d, f → offset 0, 8, 12, 14, 15, 16~18 → 끝 19 → 8의 배수 올림 → 24</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) a:0 b:4 c:8 d:10 e:16 f:24, sizeof = 32 (b) e, b, c, a, d, f 순서로 24</span></div>
 </div></details>
 </section>

@@ -4,12 +4,15 @@
 <script src="../assets/theme.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bomb Lab Phase 3 — jump table (switch) — 컴퓨터 시스템 문제</title>
+<title>Bomb Lab Phase 3: jump table (switch) — 컴퓨터 시스템 문제</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="bomb-2.html">
+<link rel="next" href="bomb-4.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -19,7 +22,7 @@
   <span class="phead-c">문제 풀이 &middot; Bomb Lab</span>
   <span class="phead-r">CSED211 &middot; 2026 가을 &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Bomb Lab Phase 3 — jump table (switch)</h1>
+<h1 class="pagetitle">Bomb Lab Phase 3: jump table (switch)</h1>
 <p class="psub">Bomb Lab · gdb disassembly 분석</p>
 <div class="body notes">
 <section>
@@ -42,13 +45,13 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-switch는 jump table — jmp *base(,%rax,8). gdb x/8gx base로 테이블 엔트리(각 case 주소)를 읽고, case별 상수 연산을 추적해 마지막 cmp 조건 두 개를 모두 맞춘다.
+switch는 jump table: jmp *base(,%rax,8). gdb x/8gx base로 테이블 엔트리(각 case 주소)를 읽고, case별 상수 연산을 추적해 마지막 cmp 조건 두 개를 모두 맞춘다.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li><code>x/8gx 0x402540</code>으로 테이블을 읽음 — 각 엔트리가 case 몸통의 주소</li><li>각 case는 mov $0, %eax → add/sub 상수의 조합으로 %eax를 만듦. x1 = 4 (+100)면 <code>mov $0x0,%eax; add $0x3ac,%eax</code> → %eax = 0x3ac… 이어서 sub $0x3ac → %eax = 0</li><li>마지막에 cmpl $0x5, 0xc(%rsp) (x1 ≤ 5)와 cmp 0x8(%rsp),%eax (x2 = %eax)를 통과해야 함 → x1 = 4, x2 = 0</li></ol>
+<ol class="steps"><li><code>x/8gx 0x402540</code>으로 테이블을 읽음: 각 엔트리가 case 몸통의 주소</li><li>각 case는 mov $0, %eax → add/sub 상수의 조합으로 %eax를 만듦. x1 = 4 (+100)면 <code>mov $0x0,%eax; add $0x3ac,%eax</code> → %eax = 0x3ac… 이어서 sub $0x3ac → %eax = 0</li><li>마지막에 cmpl $0x5, 0xc(%rsp) (x1 ≤ 5)와 cmp 0x8(%rsp),%eax (x2 = %eax)를 통과해야 함 → x1 = 4, x2 = 0</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">4 0</span></div>
 </div></details>
 </section>

@@ -12,3 +12,8 @@ mjx-container{display:inline}
 
 /* 본문 안 일반 링크: 기본 파랑 대신 잉크 + 회색 밑줄 */
 .notes a,.body a,.psub a,.notice a{color:var(--ink);text-decoration-color:#999;text-underline-offset:2px}
+
+/* roadmap a.tap 리스트 행: 마커 제거 */
+.notes ul li:has(>a.tap){padding-left:0}
+.notes ul li:has(>a.tap)::before{content:none}
+.notes li:has(>a.tap)>a.tap{margin:2px 0}

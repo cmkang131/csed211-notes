@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="next" href="pset-02.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -47,9 +49,9 @@ f(4) = 0+1+2+3 = 6, f(0) = 0 (반복문이 실행되지 않음). 몸통 블록(.
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li>%eax = 0, %edx = 0 — 반환값과 counter 초기화</li>
-<li>jmp .L2 — 루프 진입 전 조건부터 검사하러 이동 (while 구조의 특징)</li>
-<li>.L2에서 %edx &lt; %edi이면 .L3(몸통)으로 점프 — 조건은 i &lt; n</li>
+<ol class="steps"><li>%eax = 0, %edx = 0: 반환값과 counter 초기화</li>
+<li>jmp .L2: 루프 진입 전 조건부터 검사하러 이동 (while 구조의 특징)</li>
+<li>.L2에서 %edx &lt; %edi이면 .L3(몸통)으로 점프: 조건은 i &lt; n</li>
 <li>.L3: %eax += %edx, %edx += 1 → sum += i; i++</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">int f(int n){ int sum = 0; for (int i = 0; i &lt; n; i++) sum += i; return sum; } · f(5) = 0+1+2+3+4 = 10, f(-3) = 0 (처음부터 i &lt; n이 거짓)</span></div>
 </div></details>

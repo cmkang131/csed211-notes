@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="pset-14.html">
+<link rel="next" href="pset-16.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -40,7 +43,7 @@
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>앞 6개를 register에 순서대로: a = %rdi, b = %esi (int라 32-bit), c = %rdx, d = %rcx, e = %r8, g = %r9</li>
-<li>7번째 h는 stack — 함수 진입 시점 8(%rsp) (0(%rsp)는 return address)</li></ol>
+<li>7번째 h는 stack: 함수 진입 시점 8(%rsp) (0(%rsp)는 return address)</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">a %rdi · b %esi · c %rdx · d %rcx · e %r8 · g %r9 · h 스택 8(%rsp) · 반환값 %rax</span></div>
 </div></details>
 </section>

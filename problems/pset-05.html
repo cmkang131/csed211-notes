@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="pset-04.html">
+<link rel="next" href="pset-06.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -41,7 +44,7 @@ float = sign(1) + exp(8) + frac(23). exp == 0이면 비정규, exp == 0xFF면 �
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>부호·지수·fraction을 분해: s = uf &amp; 0x80000000, e = (uf&gt;&gt;23) &amp; 0xFF, f = uf &amp; 0x7FFFFF</li>
 <li>e == 0xFF (inf·NaN) → 그대로 반환 (NaN 조건 + inf는 2배해도 inf)</li>
-<li>e == 0 (비정규) → fraction을 shift: s | (f&lt;&lt;1) — 넘치는 비트가 지수로 올라가 자연스럽게 정규수로 전환</li>
+<li>e == 0 (비정규) → fraction을 shift: s | (f&lt;&lt;1): 넘치는 비트가 지수로 올라가 자연스럽게 정규수로 전환</li>
 <li>e == 0xFE → 2배하면 지수가 0xFF가 되어 ∞: s | 0x7F800000</li>
 <li>나머지 정규수 → 지수 +1: uf + 0x00800000</li></ol>
 <pre class="c">unsigned s = uf &amp; 0x80000000, e = (uf &gt;&gt; 23) &amp; 0xFF, f = uf &amp; 0x7FFFFF;

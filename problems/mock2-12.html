@@ -4,12 +4,14 @@
 <script src="../assets/theme.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Q12 · Bomb Lab 스타일 — 수열 phase 해독 — 컴퓨터 시스템 문제</title>
+<title>Q12 · Bomb Lab 스타일: 수열 phase 해독 — 컴퓨터 시스템 문제</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="mock2-11.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -19,7 +21,7 @@
   <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
   <span class="phead-r">CSED211 &middot; 2026 가을 &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Q12 · Bomb Lab 스타일 — 수열 phase 해독</h1>
+<h1 class="pagetitle">Q12 · Bomb Lab 스타일: 수열 phase 해독</h1>
 <p class="psub">모의고사 2탄 · 자작 · Bomb Lab phase_2 구조 변형 · LAB 유형 · 10점</p>
 <div class="body notes">
 <section>
@@ -60,7 +62,7 @@
 </div>
 <div class="subpart">
 <span class="part">(c)</span>
-<ol class="steps"><li>%rax + %rax + 1 = 2·prev + 1을 계산한다. leal은 주소 계산 명령을 산술에 쓴 것으로 조건 코드를 전혀 바꾸지 않는다. 직후 cmpl이 세팅하는 플래그만으로 분기해야 하므로, 중간 계산에서 플래그를 오염시키지 않는 leal이 적합하다.<br></li></ol>
+<ol class="steps"><li>%rax + %rax + 1 = 2·prev + 1을 계산한다. leal은 주소 계산 명령을 산술에 쓴 것으로 조건 코드를 전혀 바꾸지 않는다. 직후 cmpl이 세팅하는 플래그만으로 분기해야 하므로 중간 계산에서 플래그를 오염시키지 않는 leal이 적합하다.<br></li></ol>
 </div>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">3 7 15 31 63 127 · 첫 항 3, 이후 각 항은 이전 항의 2배 + 1 · 2·prev + 1 계산; leal은 플래그를 바꾸지 않아 뒤의 cmpl/jne 흐름을 깨끗하게 유지</span></div>
 </div></details>

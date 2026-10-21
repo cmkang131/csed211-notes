@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="pset-11.html">
+<link rel="next" href="pset-13.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -39,8 +42,8 @@ fraction에 안 들어가는 나머지 비트가 정확히 절반(tie)이면, �
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li>1.0625 = 1.0001₂ — 3비트 뒤에 남는 "1"은 정확히 중간(tie) → 짝수 쪽(마지막 비트 0)인 1.000 선택 → 0 0111 000</li>
-<li>1.1875 = 1.0011₂ — 1.001|1은 tie. 1.001은 홀수 → 올림 → 1.010 = 1.25 → 0 0111 010</li></ol>
+<ol class="steps"><li>1.0625 = 1.0001₂: 3비트 뒤에 남는 "1"은 정확히 중간(tie) → 짝수 쪽(마지막 비트 0)인 1.000 선택 → 0 0111 000</li>
+<li>1.1875 = 1.0011₂: 1.001|1은 tie. 1.001은 홀수 → 올림 → 1.010 = 1.25 → 0 0111 010</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">1.0625 → 0 0111 000 · 1.1875 → 0 0111 010</span></div>
 </div></details>
 </section>

@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="mock2-07.html">
+<link rel="next" href="mock2-09.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -20,12 +23,12 @@
   <span class="phead-r">CSED211 &middot; 2026 가을 &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Q8 · 2차원 배열 주소 계산</h1>
-<p class="psub">모의고사 2탄 · 자작 · Lec7 Data — 다차원 배열 인덱싱과 주소식 · 8점</p>
+<p class="psub">모의고사 2탄 · 자작 · Lec7 Data: 다차원 배열 인덱싱과 주소식 · 8점</p>
 <div class="body notes">
 <section>
 <div class="problem">
 <span class="prob-no">문제 8</span>
-<p>int A[3][4]의 시작 주소는 0x1000이고, i는 %rsi, j는 %rdx, A는 %rdi에 있다.
+<p>int A[3][4]의 시작 주소는 0x1000이다. i는 %rsi, j는 %rdx, A는 %rdi에 있다.
 <pre class="c">movq %rsi, %rax
 salq $4, %rax
 leaq (%rax,%rdx,4), %rax

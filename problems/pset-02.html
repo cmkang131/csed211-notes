@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/study-note.css">
 <link rel="stylesheet" href="../assets/csed211.css">
+<link rel="prev" href="pset-01.html">
+<link rel="next" href="pset-03.html">
+
 <link rel="stylesheet" href="../assets/v5-layer.css">
 </head>
 <body>
@@ -40,7 +43,7 @@ h:  leaq 16(%rdi,%rsi,4), %rax
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-struct field offset은 선언 순서대로 쌓임 — long 0, pointer 8, int[4] 16. <code>movq D(%rdi)</code>는 메모리를 읽지만 <code>leaq</code>는 주소 계산만 하고 메모리를 읽지 않음.
+struct field offset은 선언 순서대로 쌓임: long 0, pointer 8, int[4] 16. <code>movq D(%rdi)</code>는 메모리를 읽지만 <code>leaq</code>는 주소 계산만 하고 메모리를 읽지 않음.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
@@ -48,7 +51,7 @@ struct field offset은 선언 순서대로 쌓임 — long 0, pointer 8, int[4] 
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>offset 확정: val = 0, next = 8, arr = 16 (선언 순서, 8바이트 정렬)</li>
 <li>g 첫 명령: 8(%rdi) → p-&gt;next를 읽음. 둘째 명령: 16(%rax,%rsi,4) → next-&gt;arr[i]를 읽음</li>
-<li>h는 leaq 한 번 — 메모리 읽기 없이 &amp;p-&gt;arr[i] 주소만 계산</li></ol>
+<li>h는 leaq 한 번: 메모리 읽기 없이 &amp;p-&gt;arr[i] 주소만 계산</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">int g(struct node *p, long i){ return p-&gt;next-&gt;arr[i]; } · int *h(struct node *p, long i){ return &amp;p-&gt;arr[i]; }</span></div>
 </div></details>
 </section>

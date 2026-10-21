@@ -35,19 +35,19 @@
 <h2><span class="h2no">S</span>가장 먼저: 핵심 18개</h2>
 <p>다른 것보다 우선. 01~06은 Data Lab의 핵심 비트/float 구현, 07~13은 GDB·Bomb, 14~18은 시험형 어셈블리·스택·실수·구조체 기출. 진도순이 아니라 시험·실습 연결성에 가중치를 준 순서.</p>
 <ul>
-<li><span class="k-blue">01</span> <b>addOK(x,y)</b>: Lec2 · 직접 일치 · 부호비트/XOR로 signed overflow 판정. 동일 부호 + 결과 부호 역전 설명하기</li>
-<li><span class="k-blue">02</span> <b>logicalShift(x,n)</b>: Lec2 · 직접 일치 · 산술/논리 시프트, n = 0·31 경계 처리. 허용 연산자 지키기</li>
+<li><a class="tap" href="problems/datalab-05.html"><span class="k-blue">01</span> <b>addOK(x,y)</b>: Lec2 · 직접 일치 · 부호비트/XOR로 signed overflow 판정. 동일 부호 + 결과 부호 역전 설명하기</a></li>
+<li><a class="tap" href="problems/datalab-06.html"><span class="k-blue">02</span> <b>logicalShift(x,n)</b>: Lec2 · 직접 일치 · 산술/논리 시프트, n = 0·31 경계 처리. 허용 연산자 지키기</a></li>
 <li><span class="k-blue">03</span> <b>isLess(x,y)</b>: Lec2 · 직접 일치 · x−y를 무작정 쓰지 않고 overflow를 피해 비교하기</li>
-<li><span class="k-blue">04</span> <b>float_twice(uf)</b>: Lec3 · 직접 일치 · S/E/F 분리, 0·denorm·normal·∞·NaN 구분</li>
+<li><a class="tap" href="problems/pset-05.html"><span class="k-blue">04</span> <b>float_twice(uf)</b>: Lec3 · 직접 일치 · S/E/F 분리, 0·denorm·normal·∞·NaN 구분</a></li>
 <li><span class="k-blue">05</span> <b>float_f2i(uf)</b>: Lec3 · 직접 일치 · 지수에 따른 shift와 음수/범위 초과/NaN 처리</li>
 <li><span class="k-blue">06</span> <b>float_i2f(x)</b>: Lec3 · 직접 일치 · leading 1 탐색과 round-to-even. 어려워서 04~05 이후 추천</li>
 <li><span class="k-blue">07</span> <b>pwn.college Debugging Refresher</b>: Lec4~6 · 실전 자동 채점 · Inspecting Registers → Examining Memory → Setting Breakpoints 3개부터. Bomb Lab 전에 권장</li>
 <li><span class="k-blue">08</span> <b>pwn.college Control Flow</b>: Lec4~5 · 실전 자동 채점 · Comparing Values, Recognizing/Writing Loops 중심으로 cmp/test/jcc 익히기</li>
-<li><span class="k-blue">09</span> <b>bomb 랩 phase 1·2</b>: Lec5 · 실습 원본 · loop, cmp, 주소 증가 규칙을 disassembly로 복원</li>
-<li><span class="k-blue">10</span> <b>bomb 랩 phase 3</b>: Lec5 · 실습 원본 · 간접 점프와 case 매핑. LeetCode로는 직접 대체 불가</li>
-<li><span class="k-blue">11</span> <b>bomb 랩 phase 4</b>: Lec6 · 실습 원본 · call·ret·인자 전달·재귀 함수 동작 복원</li>
-<li><span class="k-blue">12</span> <b>bomb 랩 phase 5</b>: Lec5~7 · 실습 원본 · 배열을 따라가는 루프와 포인터 해석</li>
-<li><span class="k-blue">13</span> <b>bomb 랩 phase 6</b>: Lec6~7 · 실습 원본 · 구조체 포인터, 노드 재연결, 순서 조건 복원</li>
+<li><span class="k-blue">09</span> <b>bomb 랩 phase 1·2</b>: Lec5 · 실습 원본 · loop, cmp, 주소 증가 규칙을 disassembly로 복원 <a class="tapc" href="problems/bomb-1.html">phase 1</a> <a class="tapc" href="problems/bomb-2.html">phase 2</a></li>
+<li><a class="tap" href="problems/bomb-3.html"><span class="k-blue">10</span> <b>bomb 랩 phase 3</b>: Lec5 · 실습 원본 · 간접 점프와 case 매핑. LeetCode로는 직접 대체 불가</a></li>
+<li><a class="tap" href="problems/bomb-4.html"><span class="k-blue">11</span> <b>bomb 랩 phase 4</b>: Lec6 · 실습 원본 · call·ret·인자 전달·재귀 함수 동작 복원</a></li>
+<li><a class="tap" href="problems/bomb-5.html"><span class="k-blue">12</span> <b>bomb 랩 phase 5</b>: Lec5~7 · 실습 원본 · 배열을 따라가는 루프와 포인터 해석</a></li>
+<li><a class="tap" href="problems/bomb-6.html"><span class="k-blue">13</span> <b>bomb 랩 phase 6</b>: Lec6~7 · 실습 원본 · 구조체 포인터, 노드 재연결, 순서 조건 복원</a></li>
 <li><span class="k-blue">14</span> <b>CMU Fall 2012 P7 · Switch</b>: Lec5 · 기출 동일 개념 · jump table → C switch 복원</li>
 <li><span class="k-blue">15</span> <b>CMU Fall 2012 P8 · Stack discipline</b>: Lec6 · 기출 동일 개념 · call 반환 주소, saved registers, stack frame 계산</li>
 <li><span class="k-blue">16</span> <b>CMU Fall 2012 P5·P6 · Struct</b>: Lec7 · 기출 동일 개념 · alignment/padding/필드 offset/lea 주소 계산</li>
@@ -58,8 +58,8 @@
 <h2><span class="h2no">A</span>중요 보강: 19~33</h2>
 <p>S를 대부분 끝냈다면 진행. LeetCode가 Data Lab 연산자 제한을 검사해 주지는 않음.</p>
 <ul>
-<li><span class="k-blue">19</span> <b>bitNor · absVal</b>: Lec2 · 직접 일치 · De Morgan 및 sign mask. 01~03 막힐 때 앞서 해도 좋음</li>
-<li><span class="k-blue">20</span> <b>negate · float_abs</b>: Lec2~3 · 직접 일치 · two's complement와 float sign bit/NaN</li>
+<li><span class="k-blue">19</span> <b>bitNor · absVal</b>: Lec2 · 직접 일치 · De Morgan 및 sign mask. 01~03 막힐 때 앞서 해도 좋음 <a class="tapc" href="problems/datalab-01.html">bitNor 풀이</a></li>
+<li><span class="k-blue">20</span> <b>negate · float_abs</b>: Lec2~3 · 직접 일치 · two's complement와 float sign bit/NaN <a class="tapc" href="problems/datalab-04.html">negate 풀이</a></li>
 <li><span class="k-blue">21</span> <b>LeetCode 405 · Convert a Number to Hexadecimal</b>: Lec2 · 개념 매우 유사 · 32비트 2의 보수로 음수의 16진수 표현</li>
 <li><span class="k-blue">22</span> <b>LeetCode 371 · Sum of Two Integers</b>: Lec2 · 기술 유사 · XOR와 carry로 덧셈. Data Lab의 연산자 제약과는 다름</li>
 <li><span class="k-blue">23</span> <b>LeetCode 190 · Reverse Bits</b>: Lec2 · 기술 유사 · mask/shift. 라이브러리 없이 32비트 직접 구현</li>

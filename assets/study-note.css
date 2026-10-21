@@ -338,7 +338,8 @@ html[data-theme="dark"] svg [fill="#f2f2f2"]{fill:#e0e0e0}
 .notes dl.def>div>dt:empty{display:none}
 .notes p.lead{font-weight:700;font-size:16.5px;line-height:1.7;margin:.5em 0 .9em;padding-left:12px;border-left:3px solid var(--ink)}
 .notes dl.def>div.exrow>dd{border-left:2px solid #d9d9d9;padding-left:10px;color:#444}
-.notes ul li.exrow{list-style:none;margin-left:-1.4em;padding-left:10px;border-left:2px solid #d9d9d9;color:#444}
+.notes ul li.exrow{list-style:none;padding-left:10px;border-left:2px solid #d9d9d9;color:#444}
+.notes ul ul li.exrow{margin-left:-1.4em}
 a.tap{display:block;position:relative;border:1px solid #d9d9d9;border-radius:6px;padding:10px 44px 10px 16px;margin:8px 0;color:inherit;text-decoration:none;cursor:pointer;background:#fff;transition:background .12s,border-color .12s,transform .12s}
 a.tap::after{content:"\2192";position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gray)}
 a.tap.na::after{display:none}
@@ -358,3 +359,4 @@ a.card:active{transform:translateY(1px)}
 a.card:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 a.card .c-t{font-weight:700;font-size:16px}
 a.card .c-d{font-size:14.5px;color:#444;margin-top:4px;line-height:1.55}
+
