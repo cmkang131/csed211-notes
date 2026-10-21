@@ -30,7 +30,7 @@
 <span class="prob-no">문제 1</span>
 <p>다음 명령들을 순서대로 실행했다. movl $0x2A, %eax → movl $0x1F, %ecx → cmpl %ecx, %eax <br>(a) 이 시점의 ZF, SF, OF, CF 값을 각각 쓰시오. <span class="k-red">[4점]</span></p>
 <ul>
-<li>(b) 이 상태에서 ja, jg, je, jl 중 분기가 일어나는(taken) 것을 모두 고르시오.</li>
+<li>(b) 이 상태에서 ja, jg, je, jl 중 분기가 일어나는 것을 모두 고르시오.</li>
 </ul>
 <p><span class="k-red">[2점]</span></p>
 <p>이어서 movl $0x7FFFFFFF, %eax → addl $1, %eax 를 실행했다. <br>(c) 결과 값(16진수), OF, SF를 쓰고, OF가 그 값이 되는 이유를 한 줄로 설명하시오. <span class="k-red">[2점]</span></p>
@@ -51,7 +51,7 @@
 </div>
 <div class="subpart">
 <span class="part">(c)</span>
-<ol class="steps"><li>0x7FFFFFFF + 1 = 0x80000000. 최대 양수(TMax)에 1을 더해 음수(TMin)가 되는 signed overflow → OF = 1. 결과 최상위 비트가 1 → SF = 1. (unsigned 덧셈으로는 범위 내라 CF = 0.)<br></li></ol>
+<ol class="steps"><li>0x7FFFFFFF + 1 = 0x80000000. TMax에 1을 더해 TMin이 되는 signed overflow → OF = 1. 결과 최상위 비트가 1 → SF = 1. (unsigned 덧셈으로는 범위 내라 CF = 0.)<br></li></ol>
 </div>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">ZF=0, SF=0, OF=0, CF=0 · ja, jg · 0x80000000, OF=1, SF=1</span></div>
 </div></details>
