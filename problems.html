@@ -33,11 +33,11 @@
 </ul>
 <div class="nb">
 <ul>
-<li>CMU 옛 기출 일부는 32-bit(IA32) 코드 — 이 과목은 x86-64 기준. 레지스터 이름뿐 아니라 인자 전달·포인터 크기·스택 규약이 다를 수 있으니 해당 문제의 가정을 따를 것</li>
-<li>정수 자작 문제는 32-bit 비트벡터(Data Lab) 모델로 볼 것 — 표준 C에서 signed overflow는 undefined이므로 14·11번의 코드를 일반 C 규칙과 혼동하지 말 것</li>
-<li>LeetCode에는 Data Lab의 허용 연산자 제한이 자동 적용되지 않음 — 같은 문제를 "허용 연산자만 써서" 다시 풀면 랩 연습이 됨</li>
+<li>CMU 옛 기출 일부는 32-bit(IA32) 코드. 이 과목은 x86-64 기준. 레지스터 이름뿐 아니라 인자 전달·포인터 크기·스택 규약이 다를 수 있으니 해당 문제의 가정을 따를 것</li>
+<li>정수 자작 문제는 32-bit 비트벡터(Data Lab) 모델로 볼 것. 표준 C에서 signed overflow는 undefined이므로 14·11번의 코드를 일반 C 규칙과 혼동하지 말 것</li>
+<li>LeetCode에는 Data Lab의 허용 연산자 제한이 자동 적용되지 않음. 같은 문제를 "허용 연산자만 써서" 다시 풀면 랩 연습이 됨</li>
 <li>정답은 원본 노트를 옮겨 재정리한 것 (전면 재검산 판은 아님)</li>
-<li>LAB 표시는 개념상 연계 — Bomb Lab 실제 phase 코드와 같다는 뜻이 아님</li>
+<li>LAB 표시는 개념상 연계. Bomb Lab 실제 phase 코드와 같다는 뜻이 아님</li>
 </ul>
 </div>
 
@@ -92,7 +92,7 @@
 <a class="card" href="problems/pset-10.html">
 <span class="go">→</span>
 <div class="card-t"><span class="no">10</span>Stack(스택) Pointer(포인터) 추적 (x86-64)</div>
-<div class="card-m">Lec6 · 프로시저 · ★</div>
+<div class="card-m">Lec6 · 프로시저 · 스택 추적 · ★</div>
 </a>
 <a class="card" href="problems/pset-11.html">
 <span class="go">→</span>
@@ -111,13 +111,13 @@
 </a>
 <a class="card" href="problems/pset-14.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">14</span>C 비교 (int 32-bit, 2의 보수) — true/false?</div>
+<div class="card-t"><span class="no">14</span>C 비교 (int 32-bit, 2의 보수): true/false?</div>
 <div class="card-m">Lec2 · 비트·정수 | Data Lab 연계 · ★★</div>
 </a>
 <a class="card" href="problems/pset-15.html">
 <span class="go">→</span>
 <div class="card-t"><span class="no">15</span>인자 전달</div>
-<div class="card-m">Lec6 · 프로시저 · ★</div>
+<div class="card-m">Lec6 · 프로시저 · 인자 전달 · ★</div>
 </a>
 <a class="card" href="problems/pset-16.html">
 <span class="go">→</span>
@@ -131,12 +131,12 @@
 </a>
 <a class="card" href="problems/pset-18.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">18</span>C의 float / double 성질 — true/false?</div>
+<div class="card-t"><span class="no">18</span>C의 float / double 성질: true/false?</div>
 <div class="card-m">Lec3 · 부동소수점 · ★★</div>
 </a>
 <a class="card" href="problems/pset-19.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">19</span>Pointer(포인터) 연산</div>
+<div class="card-t"><span class="no">19</span>Pointer 연산</div>
 <div class="card-m">Lec7 · 데이터 · ★</div>
 </a>
 <a class="card" href="problems/pset-20.html">
@@ -147,7 +147,7 @@
 <a class="card" href="problems/pset-21.html">
 <span class="go">→</span>
 <div class="card-t"><span class="no">21</span>Register(레지스터) 분류</div>
-<div class="card-m">Lec6 · 프로시저 · ★</div>
+<div class="card-m">Lec6 · 프로시저 · 레지스터 · ★</div>
 </a>
 </section>
 <section>
@@ -197,32 +197,32 @@
 <h2>Bomb Lab phases</h2>
 <a class="card" href="problems/bomb-1.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">P1</span>Phase 1 — 문자열 비교</div>
+<div class="card-t"><span class="no">P1</span>Phase 1: 문자열 비교</div>
 <div class="card-m">Bomb Lab</div>
 </a>
 <a class="card" href="problems/bomb-2.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">P2</span>Phase 2 — 2배씩 커지는 수열</div>
+<div class="card-t"><span class="no">P2</span>Phase 2: 2배씩 커지는 수열</div>
 <div class="card-m">Bomb Lab</div>
 </a>
 <a class="card" href="problems/bomb-3.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">P3</span>Phase 3 — jump table (switch)</div>
+<div class="card-t"><span class="no">P3</span>Phase 3: jump table (switch)</div>
 <div class="card-m">Bomb Lab</div>
 </a>
 <a class="card" href="problems/bomb-4.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">P4</span>Phase 4 — 재귀 함수 func4</div>
+<div class="card-t"><span class="no">P4</span>Phase 4: 재귀 함수 func4</div>
 <div class="card-m">Bomb Lab</div>
 </a>
 <a class="card" href="problems/bomb-5.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">P5</span>Phase 5 — 배열을 따라가는 루프</div>
+<div class="card-t"><span class="no">P5</span>Phase 5: 배열을 따라가는 루프</div>
 <div class="card-m">Bomb Lab</div>
 </a>
 <a class="card" href="problems/bomb-6.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">P6</span>Phase 6 — 링크드 리스트 재배열</div>
+<div class="card-t"><span class="no">P6</span>Phase 6: 링크드 리스트 재배열</div>
 <div class="card-m">Bomb Lab</div>
 </a>
 </section>
@@ -280,12 +280,12 @@
 </a>
 <a class="card" href="problems/mock2-11.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">Q11</span>Data Lab 스타일 — 연산자 제한 구현</div>
+<div class="card-t"><span class="no">Q11</span>Data Lab 스타일: 연산자 제한 구현</div>
 <div class="card-m">모의고사 2탄</div>
 </a>
 <a class="card" href="problems/mock2-12.html">
 <span class="go">→</span>
-<div class="card-t"><span class="no">Q12</span>Bomb Lab 스타일 — 수열 phase 해독</div>
+<div class="card-t"><span class="no">Q12</span>Bomb Lab 스타일: 수열 phase 해독</div>
 <div class="card-m">모의고사 2탄</div>
 </a>
 </section>
@@ -299,7 +299,7 @@
 <div class="notice"><b>F10</b><br>P2 FP · P3 배열 접근 · P4 struct 정렬 · P5 struct 접근 · P6 switch 인코딩 · P7 스택 규약.</div>
 <div class="notice"><b>S10</b><br>P4 struct · P7 x86-64 asm → C. P6 (버퍼 오버플로 공격)는 Lec8에서 다뤘으니 풀어 볼 것.</div>
 <div class="notice"><b>F09</b><br>P3 FP 인코딩 · P8 배열 (H와 J 상수).</div>
-<div class="notice"><b>Practice exam</b><br>기말용이라 캐시·메모리·네트워크 등 범위 밖 문제가 많음 — 해당 부분만 풀기.</div>
+<div class="notice"><b>Practice exam</b><br>기말용이라 캐시·메모리·네트워크 등 범위 밖 문제가 많음. 해당 부분만 풀기.</div>
 <div class="notice"><b>CS:APP 학생 사이트</b><br>코드 예제와 웹 부록.</div>
 </div>
 
@@ -313,9 +313,7 @@
 <div class="notice"><a href="https://leetcode.com/problems/counting-bits/">Counting Bits</a></div>
 <div class="notice"><a href="https://leetcode.com/problems/bitwise-and-of-numbers-range/">Bitwise AND of Numbers Range</a></div>
 <div class="notice"><a href="https://leetcode.com/problems/reverse-bits/">Reverse Bits</a></div>
-<div class="notice"><a href="https://leetcode.com/problems/sum-of-two-integers/">Sum of Two Integers</a><div class="c-d">+ 없이 덧셈 — Data Lab 연습으로 제일 좋은 문제</div></div>
-</div>
-
+<div class="notice"><a href="https://leetcode.com/problems/sum-of-two-integers/">Sum of Two Integers</a><div class="c-d">+ 없이 덧셈: Data Lab 연습으로 제일 좋은 문제</div></div>
 <h2><span class="h2no">C</span>LAB 복습 메모 (시험에 나올 수 있다고 한 부분)</h2>
 <div class="bx"><p class="bx-h"><b>Data Lab (= Lec2, Lec3)</b></p>
 <ul>
@@ -330,9 +328,8 @@
 <li>gdb 명령 암기: <code>break explode_bomb</code>, <code>disas</code>, <code>x/s ADDR</code>, <code>x/8gx $rsp</code>, <code>info registers</code>, <code>stepi</code> / <code>nexti</code></li>
 </ul>
 </div>
-
-</div>
-<div class="foot">문제 풀이의 자작 문제는 강의 노트와 CS:APP/15-213 유형을 바탕으로 직접 만든 것(기출 아님). 외부 링크의 해설은 각 사이트 소유.</div>
+</section>
+<div class="foot">문제 풀이의 자작 문제는 강의 노트와 CS:APP/15-213 유형에서 직접 만든 것(기출 아님). 외부 링크의 해설은 각 사이트 소유.</div>
 
 </div>
 <script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>

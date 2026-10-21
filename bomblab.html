@@ -18,7 +18,7 @@
   <span class="phead-c">CSED211 컴퓨터 시스템</span>
   <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Bomb Lab(봄 랩) — gdb disassembly 분석</h1>
+<h1 class="pagetitle">Bomb Lab(봄 랩): gdb disassembly 분석</h1>
 <p class="psub">풀이 도구와 접근 순서 · phase별 분석은 문제 풀이 페이지에</p>
 <div class="body notes">
 
@@ -26,21 +26,21 @@
 <h2><span class="h2no">1</span>풀이 도구와 순서</h2>
 <div class="nb"><p class="bx-h"><b>gdb 명령</b></p>
 <ul>
-<li><code>break explode_bomb</code> — 폭발 직전에 멈춤 (안전장치) · <code>disas</code> (함수 disassemble) · <code>stepi</code> / <code>nexti</code> (한 명령씩)</li>
-<li><code>x/s ADDR</code> — 주소의 문자열 읽기 (phase 1) · <code>x/8gx ADDR</code> — 8바이트씩 8개 (jump table) · <code>x/16dw ADDR</code> — 4바이트 10진수 16개 (배열) · <code>info registers</code></li>
+<li><code>break explode_bomb</code>: 폭발 직전에 멈춤 (안전장치) · <code>disas</code> (함수 disassemble) · <code>stepi</code> / <code>nexti</code> (한 명령씩)</li>
+<li><code>x/s ADDR</code>: 주소의 문자열 읽기 (phase 1) · <code>x/8gx ADDR</code>: 8바이트씩 8개 (jump table) · <code>x/16dw ADDR</code>: 4바이트 10진수 16개 (배열) · <code>info registers</code></li>
 </ul>
 </div>
 <ul>
-<li>asm을 볼 때 순서: (1) 인자가 어떤 register인지 (2) 비교·점프로 만들어지는 구조 (3) 메모리 접근의 offset과 scale — 순서대로 적고 C로 복원</li>
+<li>asm을 볼 때 순서: (1) 인자가 어떤 register인지 (2) 비교·점프로 만들어지는 구조 (3) 메모리 접근의 offset과 scale. 순서대로 적고 C로 복원</li>
 </ul>
 
 <h2><span class="h2no">2</span>Phase 분석은 문제 풀이 페이지로 옮김</h2>
 <div class="nb"><ul><li>phase 1~6 각각 문제 페이지 (disassembly → ▸힌트 → ▸정답) → <a href="problems.html">문제 풀이</a>의 Bomb Lab 섹션</li></ul></div>
 <h2><span class="h2no">3</span>분석 중 헷갈렸던 포인트 (수정 메모)</h2>
-<div class="nb"><p class="bx-h"><b>처음에 잘못 읽었다가 고친 것 — 시험에서도 같은 실수 조심</b></p>
+<div class="nb"><p class="bx-h"><b>처음에 잘못 읽었다가 고친 것: 시험에서도 같은 실수 조심</b></p>
 <ul>
 <li><code>mov 0x30(%rsp,%rax,4), %eax</code> → 주소 자체가 아니라 Memory[%rsp + 48 + 4×%rax]의 값을 읽음</li>
-<li><code>cmp %eax, 0x0(%rbp)</code> → %rbp는 입력값이 아니라 입력값의 주소 — 입력값끼리 비교하는 것</li>
+<li><code>cmp %eax, 0x0(%rbp)</code> → %rbp는 입력값이 아니라 입력값의 주소. 입력값끼리 비교하는 것</li>
 <li><code>cmp $0x5, %ebx; jle</code> → %ebx ≤ 5이면 점프. 점프 주소(0x401145)와 값을 비교하는 게 아님</li>
 <li><code>mov 0x8(%rdx), %rdx</code> → node.next (포인터). %rdx에 8을 더하는 게 아님</li>
 <li><code>cmp %eax, (%rbx); jle</code> → 현재 노드 value ≤ 다음 노드 value</li>
@@ -48,12 +48,14 @@
 </div>
 
 <h2><span class="h2no">4</span>정답 모음</h2>
+<details class="tg"><summary>정답 보기</summary>
 <pre class="c">Phase 1: Current frameworks are mainly designed for a solo training case.
 Phase 2: 1 2 4 8 16 32
 Phase 3: 4 0
 Phase 4: 24 2
 Phase 5: 5 115
 Phase 6: 4 2 3 6 1 5</pre>
+</details>
 
 </div>
 <div class="pnav"><a href="datalab.html">← Data Lab</a><a href="roadmap.html">로드맵 →</a>
