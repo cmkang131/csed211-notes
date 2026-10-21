@@ -3,132 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CSED211 컴퓨터시스템 노트</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<title>컴퓨터 시스템 — 중간고사 스터디 노트</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="paper">
-  <div class="course">컴퓨터시스템 · CSED211 · POSTECH</div>
-  <h1>컴퓨터시스템 노트</h1>
-  <div class="sub">CS:APP 3판 기반 강의 노트, Data Lab(데이터 랩) · Bomb Lab(봄 랩) 실습, Day별 정리와 시험 대비 자료.</div>
-  <section>
-    <h2>강의 노트</h2>
-    <a class="card" href="lec1.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 1 · Course Introduction</div>
-          <div class="card-d">추상화 수준 · 과목 목표 · Xeon Phi 사양 읽기 · Learning Pyramid · 연습문제 5개</div>
-          <div class="card-m">슬라이드 + 수업 녹취 정리 · 9/8</div>
-        </a>
-    <a class="card" href="lec2.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 2 · Bits, Bytes, Integers</div>
-          <div class="card-d">비트 연산 · two's complement · 캐스팅과 확장 · shift · endian · 연습문제 7개</div>
-          <div class="card-m">슬라이드 + 수업 녹취 정리 · 9/10</div>
-        </a>
-    <a class="card" href="lec3.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 3 · Floating Point</div>
-          <div class="card-d">IEEE 754 · normalized/denormal · rounding · FP 연산의 성질 · 연습문제 7개</div>
-          <div class="card-m">슬라이드 + 수업 녹취 정리 · 9/22</div>
-        </a>
-    <a class="card" href="lec4.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 4 · Machine-Level Basics</div>
-          <div class="card-d">x86-64 register · mov와 operand · addressing mode · lea와 산술 연산 · 연습문제 6개</div>
-          <div class="card-m">슬라이드 + 수업 녹취 정리 · 10/1</div>
-        </a>
-    <a class="card" href="lec5.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 5 · Control(제어)</div>
-          <div class="card-d">조건 코드(Condition Codes) · cmp/test · setX · 점프(Jump) · 조건 분기(Conditional Branch) · cmov · 반복문(Loop) · switch</div>
-          <div class="card-m">10/8 · 10/13 녹화 · 슬라이드 전체 + 수업 녹취</div>
-        </a>
-    <a class="card" href="lec6.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 6 · Procedures(프로시저)</div>
-          <div class="card-d">스택(Stack) · call/ret · 인자 전달(Argument Passing) · 스택 프레임(Stack Frame) · 재귀(Recursion)</div>
-          <div class="card-m">10/15 · 녹화 약 30분 + 슬라이드 정리</div>
-        </a>
-    <a class="card" href="lec7.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 7 · Data(데이터)</div>
-          <div class="card-d">배열(Array) · 다차원 배열 · 구조체(Struct) · 정렬(Alignment)과 패딩(Padding)</div>
-          <div class="card-m">10/15 · 슬라이드 14~35는 슬라이드 기반 정리</div>
-        </a>
-    <a class="card" href="lec8.html">
-          <span class="go">→</span>
-          <div class="card-t">Lecture 8 · Advanced Topics(심화 주제)</div>
-          <div class="card-d">메모리 레이아웃(Memory Layout) · 버퍼 오버플로(Buffer Overflow) · 유니언(Union)</div>
-          <div class="card-m">10/20 · 수업 녹취 포함</div>
-        </a>
-  </section>
-  <section>
-    <h2>실습</h2>
-    <a class="card" href="datalab.html">
-          <span class="go">→</span>
-          <div class="card-t">Data Lab(데이터 랩) 모음</div>
-          <div class="card-d">Data Lab 1 — Bitwise 연산(비트 연산) · Shift(시프트) · 비트 퍼즐 / Data Lab 2 — 정수(Integer)와 부동소수점(Floating Point) bit 조작</div>
-          <div class="card-m">9/17 · 10/1 · 허용 연산자 제한 연습</div>
-        </a>
-    <a class="card" href="bomblab.html">
-          <span class="go">→</span>
-          <div class="card-t">Bomb Lab(봄 랩)</div>
-          <div class="card-d">GDB 디스어셈블리(Disassembly) 읽기 · phase별 분석 · jump table · 스택 추적</div>
-          <div class="card-m">실습 원본 정리</div>
-        </a>
-  </section>
-  <section>
-    <h2>Day별</h2>
-    <a class="card" href="days.html">
-          <span class="go">→</span>
-          <div class="card-t">이전 Day별 정리(Day-by-Day Notes)</div>
-          <div class="card-d">Day 5 (10/8) 조건 코드 · Day 6 (10/13) 조건 분기 — 슬라이드별로 합치기 전의 Day 페이지 보관</div>
-          <div class="card-m">Lec5와 내용 겹침 · 원본 보존용</div>
-        </a>
-  </section>
-  <section>
-    <h2>시험 대비</h2>
-    <a class="card" href="exam-info.html">
-          <span class="go">→</span>
-          <div class="card-t">시험 정보</div>
-          <div class="card-d">중간 10/29 · 기말 12/24, 18:00–21:00 · 실습 관련 문제와 부호 반전 감점 · 결시 시 낙제 · 성적 비율</div>
-          <div class="card-m">교수님이 수업에서 시험에 대해 한 말 모음 · 2026.10.15 기준</div>
-        </a>
-    <a class="card" href="summary.html">
-          <span class="go">→</span>
-          <div class="card-t">총정리 (압축본)</div>
-          <div class="card-d">Lec 1–7 · Data Lab — Lecture 1 · Course Introduction (9/8) · Lecture 2 · Bits, Bytes, Integers (9/10) · Lecture 3 · Floating Point (9/22) · Data Lab에서 쓰는 개념 등</div>
-          <div class="card-m">문제풀이용 개념과 대표 예시만 압축 · 2026.10.16 기준</div>
-        </a>
-    <a class="card" href="problems.html">
-          <span class="go">→</span>
-          <div class="card-t">중간고사 대비 문제 세트(Problem Set)</div>
-          <div class="card-d">Lec2~7 + LAB · CMU 15-213 기출 + 자작 문제 · 정답/해설 토글 포함</div>
-          <div class="card-m">난이도 ★~★★★ 표시</div>
-        </a>
-    <a class="card" href="problems-mixed.html">
-          <span class="go">→</span>
-          <div class="card-t">중요도순 혼합 문제 세트(Mixed Problem Set)</div>
-          <div class="card-d">유형을 번갈아 배치한 풀이 순서판 · 어셈블리→C 복원, 제어 흐름, 재귀·스택, 배열·struct, 비트 구현 우선</div>
-          <div class="card-m">번호대로 풀면 됨</div>
-        </a>
-    <a class="card" href="roadmap.html">
-          <span class="go">→</span>
-          <div class="card-t">코딩 문제 로드맵(Problem Roadmap)</div>
-          <div class="card-d">중요도순 38문제 체크리스트 · Lec2~8 + LAB · 원본 링크 · 유사도 표시</div>
-          <div class="card-m">10/21 정리</div>
-        </a>
-    <a class="card" href="plan.html">
-          <span class="go">→</span>
-          <div class="card-t">중간고사 플랜(Midterm Plan) v2</div>
-          <div class="card-d">10/20~10/30 일별 계획 · NLP 드롭 반영 · 알고리즘+컴시스 집중</div>
-          <div class="card-m">10/20 작성</div>
-        </a>
-  </section>
-  <div class="foot">원본: Notion 아카이브 · 강의: CSED211 컴퓨터시스템 (POSTECH).</div>
+<header class="topbar"><div class="topbar-in">
+<div class="brand"><a href="index.html">컴퓨터 시스템<span class="sub">CSED211 · POSTECH</span></a></div>
+<nav>
+<a href="index.html" class="on">홈</a>
+<a href="exam-info.html">시험 정보</a>
+<a href="summary.html">총정리</a>
+<a href="problems.html">문제 풀이</a>
+<a href="roadmap.html">로드맵</a>
+<a href="plan.html">플랜</a>
+</nav>
+</div></header>
+<main class="paper">
+<div class="phead">컴퓨터 시스템 · CSED211 · POSTECH · 2026 가을</div>
+<h1 class="title">중간고사 스터디 노트</h1>
+<p class="title-sub">중간고사 <b>10월 29일 (목) 18:00–21:00</b> · 정리 범위 Lec2–7 + Data Lab + Bomb Lab (공식 범위 공지 없음 — <a href="exam-info.html">시험 정보</a> 참고)</p>
+<div class="body notes">
+
+<h2><span class="n">A</span>시험 준비 흐름</h2>
+<div class="grid">
+<a class="card blue" href="exam-info.html"><div class="c-k">필수 확인</div><div class="c-t">시험 정보</div><div class="c-d">일정 · 범위 · 부호 반전 감점 규칙 · 교수님이 강조한 것. 수업 녹취와 슬라이드에서 모은 원문 기준.</div><div class="c-m">10/29 18:00–21:00 · 결시 시 낙제</div></a>
+<a class="card" href="summary.html"><div class="c-k">시험 직전</div><div class="c-t">총정리 한 장</div><div class="c-d">Lec1–7 + Data Lab 1을 한 페이지로 압축. 강의별 핵심 공식과 "자주 틀리는 것"만 모은 복기용.</div><div class="c-m">시험 당일 오전에 읽는 용도</div></a>
+<a class="card" href="problems.html"><div class="c-k">실전 연습</div><div class="c-t">문제 풀이 (중요도순)</div><div class="c-d">자작 문제 22개 + CMU 기출 + LeetCode 보조를 중요도순으로 배치. 힌트와 정답은 접혀 있음.</div><div class="c-m">번호대로 풀면 됨</div></a>
+<a class="card" href="roadmap.html"><div class="c-k">계획</div><div class="c-t">코딩 문제 로드맵</div><div class="c-d">핵심 18개(S) → 보강(A) → 확장(B). 어떤 문제를 어떤 순서로 풀지, 각 문제가 어느 강의와 연결되는지.</div><div class="c-m">10/21 정리</div></a>
+<a class="card" href="plan.html"><div class="c-k">계획</div><div class="c-t">중간고사 플랜 v2</div><div class="c-d">10/20–10/30 일별 계획. 알고리즘(10/26)·수데사(10/28) 시험과 함께 짠 전체 시간표.</div><div class="c-m">10/20 작성</div></a>
 </div>
+
+<h2><span class="n">B</span>강의 노트</h2>
+<div class="grid">
+<a class="card" href="lec1.html"><div class="c-k">Lecture 1 · 9/8</div><div class="c-t">Course Overview</div><div class="c-d">컴퓨터 시스템의 큰 그림: 하드웨어/소프트웨어 스택, 메모리 계층, 이 과목에서 배우는 것.</div></a>
+<a class="card" href="lec2.html"><div class="c-k">Lecture 2 · 9/10</div><div class="c-t">Bits and Integers</div><div class="c-d">비트 연산, 2의 보수, 부호 확장·절단, endian, 시프트, 덧셈 overflow. Data Lab 1의 직접 기반.</div></a>
+<a class="card" href="lec3.html"><div class="c-k">Lecture 3 · 9/17</div><div class="c-t">Floating Point</div><div class="c-d">IEEE 754 (S/E/F), normalized·denormalized·∞·NaN, round-to-even. Data Lab 2의 직접 기반.</div></a>
+<a class="card" href="lec4.html"><div class="c-k">Lecture 4 · 9/22</div><div class="c-t">Machine-Level Programming I — Basics</div><div class="c-d">x86-64 레지스터, mov와 주소 지정 방식, 산술 명령, lea, AT&T 문법 읽는 법.</div></a>
+<a class="card" href="lec5.html"><div class="c-k">Lecture 5 · 10/8, 10/13</div><div class="c-t">Machine-Level Programming II — Control</div><div class="c-d">조건 코드, cmp/test, setX, 점프, 조건부 이동, 반복문 변환, switch와 jump table. 10/8 + 10/13 통합본.</div></a>
+<a class="card" href="lec6.html"><div class="c-k">Lecture 6 · 10/13</div><div class="c-t">Machine-Level Programming III — Procedures</div><div class="c-d">call/ret, 스택 프레임, 인자 전달, caller/callee-saved 레지스터, 재귀. Bomb Lab 재귀 phase 연계.</div></a>
+<a class="card" href="lec7.html"><div class="c-k">Lecture 7 · 10/15</div><div class="c-t">Machine-Level Programming IV — Data</div><div class="c-d">1차원·중첩 배열의 주소 계산, 구조체 정렬과 패딩, 포인터 산술. Bomb Lab phase 5·6 연계.</div></a>
+<a class="card" href="lec8.html"><div class="c-k">Lecture 8 · 10/20</div><div class="c-t">Machine-Level Programming V — Memory Layout &amp; Buffer Overflow</div><div class="c-d">메모리 배치, 버퍼 오버플로, 카나리, ROP. <b>중간고사 범위 밖일 가능성 높음</b> (플랜 기준) — 미리 읽어두는 용도.</div></a>
+</div>
+
+<h2><span class="n">C</span>실습 (LAB)</h2>
+<div class="grid">
+<a class="card" href="datalab.html"><div class="c-k">Data Lab 1 + 2</div><div class="c-t">Data Lab 정리</div><div class="c-d">규칙과 제약, 자주 쓰는 비트 트릭, IEEE 비트 조작 패턴, 풀었던 함수들 복기. 시험의 실습 문제와 직결.</div></a>
+<a class="card" href="bomblab.html"><div class="c-k">Bomb Lab</div><div class="c-t">Bomb Lab 정리</div><div class="c-d">phase별 어셈블리 읽기 전략, gdb 명령, 각 phase가 Lec4–7의 무엇을 묻는지.</div></a>
+</div>
+
+</div>
+<nav class="pnav"><span></span><span></span><a href="exam-info.html">시험 정보 →</a></nav>
+</main>
+<footer class="footer">CSED211 컴퓨터 시스템 · 중간고사 스터디 노트 · 2026-10-21 정리 · 내용 출처: 강의 녹취·슬라이드 정리본. 불확실한 내용은 각 페이지에 표시.</footer>
 </body>
 </html>

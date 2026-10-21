@@ -3,579 +3,197 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bomb Lab(봄 랩) — 컴퓨터 시스템</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<title>Bomb Lab — 컴퓨터 시스템</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="paper">
-  <div class="phead"><a class="to-home" href="index.html">&larr; 홈</a><span class="phead-c">컴퓨터 시스템 · CSED211 · POSTECH</span><span class="phead-r">실습</span></div>
-  <h1 class="pg-title">Bomb Lab(봄 랩)</h1>
-  
-  <div class="body notes">
-<div class="asm">phase_1:<br>sub    $0x8, %rsp<br>mov    $0x4024c0, %esi  → %esi = 0x4024c0 → %rsi에 저장<br>callq  strings_not_equal   → 이 함수의 반환값이 %eax에 저장. (%eax = 같으면 0, 다르면 1)<br>test   %eax, %eax       → %eax에 저장된 값이 0이면 → ZF=1<br>je     0x400f07            → ZF=1 이면 점프 <br>callq  explode_bomb   <br>add    $0x8, %rsp<br>retq</div>
-<p class="hl">⇒ %rsi에 저장된 값을 찾으면 됨.</p>
-<p>(gdb) x/s 0x4024c0<br>0x4024c0:	&quot;Current frameworks are mainly designed for a solo training case.&quot;</p>
-<hr>
-<p>phase_2:</p>
-<p>x1 x2 x3 x4 x5 x6 → 6개의 정수를 입력</p>
-<div class="asm">Dump of assembler code for function phase_2:<br>0x0000000000400f0c &lt;+0&gt;:	push   %rbp<br>0x0000000000400f0d &lt;+1&gt;:	push   %rbx<br>0x0000000000400f0e &lt;+2&gt;:	sub    $0x28,%rsp<br><br>0x0000000000400f12 &lt;+6&gt;:	mov    %rsp,%rsi                           <span class="k-blue">아래 함수에 %rsp(스택 위치)전달</span><br>0x0000000000400f15 &lt;+9&gt;:	callq  0x4015aa &lt;read_six_numbers&gt;<br>                                                                             → <span class="k-blue">문자열에서 정수 6개를 읽어 스택에 저장</span><br>0x0000000000400f1a &lt;+14&gt;:	cmpl   $0x1,(%rsp)<br>                                                                              →<span class="k-blue">(%rsp) : 위 문자열 중 첫번째를 읽음 → (%rsp) - 1 &gt; 0<br></span>                                                                               ⇒ 그니까 x1 = <b>1</b>이어야 함<br>0x0000000000400f1e &lt;+18&gt;:	je     0x400f40 &lt;phase_2+52&gt;<br><b>0x0000000000400f20 &lt;+20&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br></b>0x0000000000400f25 &lt;+25&gt;:	jmp    0x400f40 &lt;phase_2+52&gt;<br><span class="c-red">0x0000000000400f27 &lt;+27&gt;:	mov    -0x4(%rbx),%eax    → %eax = (%rbx) = x1<br></span>0x0000000000400f2a &lt;+30&gt;:	add    %eax,%eax             → %eax = 2*%eax   =  2*x1<br>0x0000000000400f2c &lt;+32&gt;:	cmp    %eax,(%rbx)          <br><span class="k-blue">0x0000000000400f2e &lt;+34&gt;:	je     0x400f35 &lt;phase_2+41&gt; → (%rbx) = %eax 여야 함.<br></span>                                                                                → <span class="c-red">x2 = 2*x1</span><br><b>0x0000000000400f30 &lt;+36&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br></b><span class="k-blue">0x0000000000400f35 &lt;+41&gt;:	add    $0x4,%rbx</span>                   → %rbx += 4 (3번째 정수로 이동)<span class="k-blue"><br></span>0x0000000000400f39 &lt;+45&gt;:	cmp    %rbp,%rbx                  → %rbx - %rbp <br>0x0000000000400f3c &lt;+48&gt;:	jne    0x400f27 &lt;phase_2+27&gt; → 반복문 역할⇒ 2배씩 됨. <span class="c-green">0x0000000000400f3e &lt;+50&gt;:	jmp    0x400f4c &lt;phase_2+64&gt; ⇒ 반복문이 끝나는 조건.</span><br><span class="k-blue">0x0000000000400f40 &lt;+</span><span class="k-blue"><b>52</b></span><span class="k-blue">&gt;:	lea    0x4(%rsp),%rbx  </span>        → %rbx = rsp + 4 = 2번째 정수 <span class="k-blue"><br></span>0x0000000000400f45 &lt;+57&gt;:	lea    0x18(%rsp),%rbp     → %rbp = rsp + 18 = 마지막 다음 정수<br><span class="c-red">0x0000000000400f4a &lt;+62&gt;:	jmp    0x400f27 &lt;phase_2+27&gt;</span><span class="c-blue"><br></span><span class="c-green">0x0000000000400f4c &lt;+64&gt;:	add    $0x28,%rsp<br><br></span>0x0000000000400f50 &lt;+68&gt;:	pop    %rbx <br>0x0000000000400f51 &lt;+69&gt;:	pop    %rbp<br>0x0000000000400f52 &lt;+70&gt;:	retq</div>
-<p class="hl">⇒ 답은 1 2 4 8 16 32</p>
-<div class="figwrap"><img src="img/스크린샷_2026-10-17_오후_9.24.34.webp" loading="lazy" alt=""></div>
-<hr>
-<p>phase_3:</p>
-<p>x1 x2 를 입력</p>
-<ul class="lv1">
-<li>0x0000000000400f53 &lt;+0&gt;:	sub    $0x18,%rsp<br>0x0000000000400f57 &lt;+4&gt;:	lea    0x8(%rsp),%rcx → <code>%rcx</code> → 두 번째 정수를 저장할 주소<br>0x0000000000400f5c &lt;+9&gt;:	lea    0xc(%rsp),%rdx →<code>%rdx</code> → 첫 번째 정수를 저장할 주소<br><br>0x0000000000400f61 &lt;+14&gt;:	mov    $0x40280d,%esi        %rsi = 0x40280d(입력 값의 주소)<br>0x0000000000400f66 &lt;+19&gt;:	mov    $0x0,%eax                   %rax = 0x0<br>0x0000000000400f6b &lt;+24&gt;:	callq  0x400c30 &lt;__isoc99_sscanf@plt&gt;<br>                                                             → 입력값 2개의 주소를 %rcx / %rdx에 저장<br>                                                             → 이때 정수의 개수를 %rax에 반환<br>0x0000000000400f70 &lt;+29&gt;:	cmp    $0x1,%eax       %rax -1 <br>0x0000000000400f73 &lt;+32&gt;:	jg     0x400f7a &lt;phase_3+39&gt;  → 정수의 개수가 2개 이상<br><b>0x0000000000400f75 &lt;+34&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br><br></b>0x0000000000400f7a &lt;+39&gt;:	cmpl   $0x7,0xc(%rsp)→ (%rsp+c) - 0x7 → x1는 7이하<br><b>0x0000000000400f7f &lt;+44&gt;:	ja     0x400fe7 &lt;phase_3+148&gt;  <br><br></b>0x0000000000400f81 &lt;+46&gt;:	mov    0xc(%rsp),%eax      %eax = x1<br>0x0000000000400f85 &lt;+50&gt;:	jmpq   *0x402540(,%rax,8)    → x1 값에 따라서 jump <br><br>0x0000000000400<span class="k-blue">f8c</span> &lt;+57&gt;:	mov    $0x0,%eax<br>0x0000000000400f91 &lt;+62&gt;:	jmp    0x400f98 &lt;phase_3+69&gt;<br>0x0000000000400<span class="k-blue">f93</span> &lt;+64&gt;:	mov    $0x16d,%eax<br><br>0x0000000000400f98 &lt;+69&gt;:	sub    $0x1e3,%eax     <br>0x0000000000400f9d &lt;+74&gt;:	jmp    0x400fa4 &lt;phase_3+81&gt;<br>0x0000000000400<span class="k-blue">f9f </span>&lt;+76&gt;:	mov    $0x0,%eax<br><br>0x0000000000400fa4 &lt;+81&gt;:	add    $0x253,%eax    <br>0x0000000000400fa9 &lt;+86&gt;:	jmp    0x400fb0 &lt;phase_3+93&gt;<br>0x0000000000400<span class="k-blue">fab</span> &lt;+88&gt;:	mov    $0x0,%eax<br><br>0x0000000000400fb0 &lt;+93&gt;:	sub    $0x3ac,%eax<br>0x0000000000400fb5 &lt;+98&gt;:	jmp    0x400fbc &lt;phase_3+105&gt;<br>0x0000000000400<span class="k-blue">fb7</span> &lt;+100&gt;:	mov    $0x0,%eax       → %eax = 0<br><br>0x0000000000400fbc &lt;+105&gt;:	add    $0x3ac,%eax    → %eax = 0x3ac<br>0x0000000000400fc1 &lt;+110&gt;:	jmp    0x400fc8 &lt;phase_3+117&gt;<br>0x0000000000400<span class="k-blue">fc3</span> &lt;+112&gt;:	mov    $0x0,%eax    <br><br>0x0000000000400fc8 &lt;+117&gt;:	sub    $0x3ac,%eax<br>0x0000000000400fcd &lt;+122&gt;:	jmp    0x400fd4 &lt;phase_3+129&gt;<br>0x0000000000400<span class="k-blue">fcf</span> &lt;+124&gt;:	mov    $0x0,%eax<br><br>0x0000000000400fd4 &lt;+129&gt;:	add    $0x3ac,%eax<br><span class="c-red">0x0000000000400fd9 &lt;+134&gt;:	jmp    0x400fe0 &lt;phase_3+141&gt; → 이때, %eax 값이 중요.<br>                                                                                                                        %eax = 3ac 이어야 함?</span><br><br>0x0000000000400<span class="k-blue">fdb</span> &lt;+136&gt;:	mov    $0x0,%eax           <br><span class="c-red">0x0000000000400fe0 &lt;+141&gt;:	sub    $0x3ac,%eax             %eax - 3ac</span><br><span class="k-blue">0x0000000000400fe5 &lt;+146&gt;:	jmp    0x400ff1 &lt;phase_3+158&gt;</span><br><b>0x0000000000400fe7 &lt;+148&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br></b>0x0000000000400fec &lt;+153&gt;:	mov    $0x0,%eax               <br> <br>0x0000000000400ff1 &lt;+158&gt;:	cmpl   $0x5,0xc(%rsp)         →            <span class="k-blue">x1 - 5 ≤ 0</span> 이어야 함.<br><b>0x0000000000400ff6 &lt;+163&gt;:	jg     0x400ffe &lt;phase_3+171&gt;<br></b><span class="k-blue"><br></span>0x0000000000400ff8 &lt;+165&gt;:	cmp    0x8(%rsp),%eax               → x2 = %eax여야 함.<br><span class="k-blue">0x0000000000400ffc &lt;+169&gt;:	je     0x401003 &lt;phase_3+176&gt;</span><br><b>0x0000000000400ffe &lt;+171&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br><br></b>0x0000000000401003 &lt;+176&gt;:	add    $0x18,%rsp<br>0x0000000000401007 &lt;+180&gt;:	retq</li>
+<header class="topbar"><div class="topbar-in">
+<div class="brand"><a href="index.html">컴퓨터 시스템<span class="sub">CSED211 · POSTECH</span></a></div>
+<nav><a href="index.html">홈</a><a href="exam-info.html">시험 정보</a><a href="summary.html">총정리</a><a href="problems.html">문제 풀이</a><a href="roadmap.html">로드맵</a><a href="plan.html">플랜</a></nav>
+</div></header>
+<main class="paper">
+<div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>Bomb Lab</div>
+<h1 class="title">Bomb Lab(봄 랩) — phase별 disassembly 분석</h1>
+<p class="title-sub"><span class="chip blue">실습</span>gdb로 disassembly를 읽고 각 phase의 입력 조건을 찾아 폭탄을 해제하는 lab — 시험의 asm → C 복원 문제와 풀이 순서가 같음</p>
+<div class="body notes">
+
+<h2><span class="n">1</span>풀이 도구와 순서</h2>
+<div class="bx"><span class="bx-tag">gdb 명령</span>
+<ul>
+<li><code>break explode_bomb</code> — 폭발 직전에 멈춤 (안전장치) · <code>disas</code> (함수 disassemble) · <code>stepi</code> / <code>nexti</code> (한 명령씩)</li>
+<li><code>x/s ADDR</code> — 주소의 문자열 읽기 (phase 1) · <code>x/8gx ADDR</code> — 8바이트씩 8개 (jump table) · <code>x/16dw ADDR</code> — 4바이트 10진수 16개 (배열) · <code>info registers</code></li>
 </ul>
-<p>x1 = 4라면, → x2 = 0</p>
-<p class="def"><span class="k-blue">답 </span> : 4 0</p>
-<div class="asm">(gdb) x/8gx 0x402540<br>0x402540:	0x0000000000400f93	0x0000000000400f8c<br>0x402550:	0x0000000000400f9f	0x0000000000400fab<br>0x402560:	<span class="k-blue">0x0000000000400fb7</span>	0x0000000000400fc3<br>0x402570:	0x0000000000400fcf	0x0000000000400fdb</div>
-<hr>
-<p>phase_4:</p>
-<p>x1 x2</p>
-<div class="asm">Dump of assembler code for function phase_4:<br>0x0000000000401040 &lt;+0&gt;:	sub    $0x18,%rsp<br><br>0x0000000000401044 &lt;+4&gt;:	lea    0xc(%rsp),%rcx            → %rcx = (%rsp + c) x2<br>0x0000000000401049 &lt;+9&gt;:	lea    0x8(%rsp),%rdx           → %rdx = (%rsp + 8) x1<br>0x000000000040104e &lt;+14&gt;:	mov    $0x40280d,%esi        → %rsi = 0x40280d<br>0x0000000000401053 &lt;+19&gt;:	mov    $0x0,%eax                   → %eax = 0x0<br>0x0000000000401058 &lt;+24&gt;:	callq  0x400c30 &lt;__isoc99_sscanf@plt&gt;<br>                                                             → 입력값 2개의 주소를 %rcx / %rdx에 저장<br>                                                             → 이때 정수의 개수를 %rax에 반환<br><br>0x000000000040105d &lt;+29&gt;:	cmp    $0x2,%eax           → 정수 2개를 입력해야함.<br><b>0x0000000000401060 &lt;+32&gt;:	jne    0x40106e &lt;phase_4+46&gt;  → 2개가 아니면 jmp<br></b><br>0x0000000000401062 &lt;+34&gt;:	mov    0xc(%rsp),%eax           → %eax = x2<br>0x0000000000401066 &lt;+38&gt;:	sub    $0x2,%eax                     → %eax = x2 - 2 <br>0x0000000000401069 &lt;+41&gt;:	cmp    $0x2,%eax                   0 ≤ %eax ≤ 2. → 2≤ x2 ≤ 4<br><span class="k-blue">0x000000000040106c &lt;+44&gt;:	jbe    0x401073 &lt;phase_4+51&gt; </span>        <br><b>0x000000000040106e &lt;+46&gt;:	callq  0x401574 &lt;explode_bomb&gt;     <br><br></b>0x0000000000401073 &lt;+51&gt;:	mov    0xc(%rsp),%esi              %esi = x2<br>0x0000000000401077 &lt;+55&gt;:	mov    $0x5,%edi                       %edi = 5<br><span class="c-red">0x000000000040107c &lt;+60&gt;:	callq  0x401008 &lt;func4&gt;        ⇒ %eax = 12*x2 (x2가 func4의 두 번째 인자)<br></span>0x0000000000401081 &lt;+65&gt;:	cmp    0x8(%rsp),%eax         → %eax = (r%sp + 8) = x1<br>                                                                                                               →  x1 = 12*x2.<br><span class="k-blue">0x0000000000401085 &lt;+69&gt;:	je     0x40108c &lt;phase_4+76&gt;<br></span><br><b>0x0000000000401087 &lt;+71&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br></b>0x000000000040108c &lt;+76&gt;:	add    $0x18,%rsp<br>0x0000000000401090 &lt;+80&gt;:	retq</div>
-<pre class="code"><code>(gdb) disas func4
-Dump of assembler code for function func4:
-   0x0000000000401008 &lt;+0&gt;:	push   %r12
-   0x000000000040100a &lt;+2&gt;:	push   %rbp
-   0x000000000040100b &lt;+3&gt;:	push   %rbx
-   
-   0x000000000040100c &lt;+4&gt;:	mov    %edi,%ebx        %ebx = %edi = 1:5 2:4.. 5:0
-   0x000000000040100e &lt;+6&gt;:	test   %edi,%edi         -&gt; %edi끼리 &amp;
-   0x0000000000401010 &lt;+8&gt;:	jle    0x401036 &lt;func4+46&gt;   -&gt; %edi &lt;= 0 1:X 2:X... O
-   
-   0x0000000000401012 &lt;+10&gt;:	mov    %esi,%ebp         -&gt; %ebp = %esi 5
-   0x0000000000401014 &lt;+12&gt;:	mov    %esi,%eax         -&gt; %eax = %esi 5
-   0x0000000000401016 &lt;+14&gt;:	cmp    $0x1,%edi            -&gt; %edi-1 1:4 2:3...5:0
-   0x0000000000401019 &lt;+17&gt;:	je     0x40103b &lt;func4+51&gt;   -&gt; 1:X. 2:X... 5:O
-   
-   0x000000000040101b &lt;+19&gt;:	lea    -0x1(%rdi),%edi    -&gt; %edi = (%rdi -1) 
-   0x000000000040101e &lt;+22&gt;:	callq  0x401008 &lt;func4&gt;
-   
-   0x0000000000401023 &lt;+27&gt;:	lea    (%rax,%rbp,1),%r12d   -&gt; %r12d = %rax + %rbp
-   0x0000000000401027 &lt;+31&gt;:	lea    -0x2(%rbx),%edi       -&gt; 
-   0x000000000040102a &lt;+34&gt;:	mov    %ebp,%esi
-   0x000000000040102c &lt;+36&gt;:	callq  0x401008 &lt;func4&gt;
-   0x0000000000401031 &lt;+41&gt;:	add    %r12d,%eax
-   0x0000000000401034 &lt;+44&gt;:	jmp    0x40103b &lt;func4+51&gt;
-   
-   0x0000000000401036 &lt;+46&gt;:	mov    $0x0,%eax     -&gt; %eax = 0
-   
-   0x000000000040103b &lt;+51&gt;:	pop    %rbx
-   0x000000000040103c &lt;+52&gt;:	pop    %rbp
-   0x000000000040103d &lt;+53&gt;:	pop    %r12
-   0x000000000040103f &lt;+55&gt;:	retq   
-End of assembler dump.</code></pre>
-<pre class="code"><code>def func4():
-%ebx = %edi
-if %edi&lt;= 0:return
-
-%ebp = %esi
-%eax = %esi
-
-if %edi = x: return
-  
-%edi = %rdi -1
-
-func4()
-
-%r12d = %rax + %rbp
-
-%edi = %rbx - 2
-%esi = %ebp
-
-func4()
-
-%eax += %r12d
-
--&gt; &lt;+51&gt;
-
-&lt;+46&gt; : %eax = 0
-return </code></pre>
-<pre class="code"><code>Let %edi = n / %esi = x
-
-def func4(n,x):
-	%ebx = n
-	if n &lt;= 0: return 0
-	%ebp = x
-	if n == 1: return x
-	
-	a = func4(n-1,x)
-	%r12d = a + x
-	b = func4(n-2,x)
-	
-	return r12d + b</code></pre>
-<p>f(0,x) = 0<br>f(1,x) = x<br>f(2,x) = 2x<br>f(3,x) = 4x<br>f(4,x) = 7x<br>f(5,x) = 12x</p>
-<hr>
-<p>phase_5</p>
-<div class="asm">0x0000000000401091 &lt;+0&gt;:	sub    $0x18,%rsp<br>0x0000000000401095 &lt;+4&gt;:	lea    0x8(%rsp),%rcx          → %rcx = (%rsp + 8) → x2<br>0x000000000040109a &lt;+9&gt;:	lea    0xc(%rsp),%rdx          → %rdx = (%rsp + 12) → x1<br>0x000000000040109f &lt;+14&gt;:	mov    $0x40280d,%esi      → %esi = 0x40280d<br>0x00000000004010a4 &lt;+19&gt;:	mov    $0x0,%eax                 → %eax = 0<br>0x00000000004010a9 &lt;+24&gt;:	callq  0x400c30 [__isoc99_sscanf@plt](mailto:__isoc99_sscanf@plt)<br>0x00000000004010ae &lt;+29&gt;:	cmp    $0x1,%eax<br>0x00000000004010b1 &lt;+32&gt;:	jg     0x4010b8 &lt;phase_5+39&gt;<br>0x00000000004010b3 &lt;+34&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br>0x00000000004010b8 &lt;+39&gt;:	mov    0xc(%rsp),%eax<br>0x00000000004010bc &lt;+43&gt;:	and    $0xf,%eax<br>0x00000000004010bf &lt;+46&gt;:	mov    %eax,0xc(%rsp)<br>0x00000000004010c3 &lt;+50&gt;:	cmp    $0xf,%eax<br>0x00000000004010c6 &lt;+53&gt;:	je     0x4010f4 &lt;phase_5+99&gt;<br>0x00000000004010c8 &lt;+55&gt;:	mov    $0x0,%ecx<br>0x00000000004010cd &lt;+60&gt;:	mov    $0x0,%edx<br>0x00000000004010d2 &lt;+65&gt;:	add    $0x1,%edx<br>0x00000000004010d5 &lt;+68&gt;:	cltq<br>0x00000000004010d7 &lt;+70&gt;:	mov    0x402580(,%rax,4),%eax<br>0x00000000004010de &lt;+77&gt;:	add    %eax,%ecx<br>0x00000000004010e0 &lt;+79&gt;:	cmp    $0xf,%eax<br>0x00000000004010e3 &lt;+82&gt;:	jne    0x4010d2 &lt;phase_5+65&gt;<br>0x00000000004010e5 &lt;+84&gt;:	mov    %eax,0xc(%rsp)<br>0x00000000004010e9 &lt;+88&gt;:	cmp    $0xf,%edx<br>0x00000000004010ec &lt;+91&gt;:	jne    0x4010f4 &lt;phase_5+99&gt;<br>0x00000000004010ee &lt;+93&gt;:	cmp    0x8(%rsp),%ecx<br>0x00000000004010f2 &lt;+97&gt;:	je     0x4010f9 &lt;phase_5+104&gt;<br>0x00000000004010f4 &lt;+99&gt;:	callq  0x401574 &lt;explode_bomb&gt;<br>0x00000000004010f9 &lt;+104&gt;:	add    $0x18,%rsp<br>0x00000000004010fd &lt;+108&gt;:	retq</div>
-<pre class="code"><code>%rcx = (%rsp + 8) → x2
-%rdx = (%rsp + 0xc) → x1
-%esi = 0x40280d
-%eax = 0
-
-__isoc99_sscanf@plt : (x1, x2)를 받음. -&gt; %eax = 인자의 개수
-
-if %eax &gt; 1: jump&lt;+39&gt;        인자 수 : 2이상.
-explode_bomb
-&lt;+39&gt;
-
-%eax = x1
-%eax &amp;= 0xf      -&gt; %eax에서 마지막 4 비트만 남김.
-x1 = %eax
-
-if %eax = 0xf: explode_bomb     =&gt; x1은 마지막 4개 비트가 1111이면 안됨.
-
-%ecx = 0
-%edx = 0
-loop:
-%edx += 1
-
-cltq : %eax를 %rax로 확장
-
-%eax = (0x402580 + 4 * %rax)       -&gt; arr
-%ecx += %eax
-
-if %eax != 0xf: loop              -&gt; 그니까 %eax는 0xf 이어야 함.
-%eax = 15                   -&gt; 배열을 따라가다 15에 도달하면 종료. 입력 x1 = 15라는 뜻 아님.
-
-if %edx != 0xf: explode_bomb       loop 반복 횟수 != 15
-if %ecx == x2 : RETURN            sum(%eax in loop) == x2
-explode_bomb        </code></pre>
-<div class="asm">(gdb) x/16dw 0x402580<br>0x402580 &lt;array.3159&gt;:	<span class="k-blue">10</span>	2	<span class="k-blue">14</span>	<span class="k-blue">7</span><br>0x402590 &lt;array.3159+16&gt;:	<span class="k-blue">8</span>	<span class="k-blue">12</span>	<span class="k-blue">15</span>	<span class="k-blue">11</span><br>0x4025a0 &lt;array.3159+32&gt;:	<span class="k-blue">0</span>	<span class="k-blue">4</span>	<span class="k-blue">1</span>	<span class="k-blue">13</span><br>0x4025b0 &lt;array.3159+48&gt;:	<span class="k-blue">3</span>	<span class="k-blue">9</span>	<span class="k-blue">6</span>	<span class="k-blue">5</span></div>
-<p>0x402580 → arr = [<span class="k-blue">10</span>, 2, <span class="k-blue">14</span>, <span class="k-blue">7</span>, <span class="k-blue">8</span>, <span class="k-blue">12</span>, <span class="k-blue">15</span>, <span class="k-blue">11</span>, <span class="k-blue">0</span>, <span class="k-blue">4</span>,  <span class="k-blue">1</span>, <span class="k-blue">13</span>, <span class="k-blue">3</span>, <span class="k-blue">9</span>, <span class="k-blue">6</span>, <span class="k-blue">5</span>]</p>
-<p>5 → 12 → 3 → 7 → 11 → 13 → 9 → 4 → 8 → 0 → 10 → 1 → 2 → 14 → 6 → 15</p>
-<p>5, <code>115</code></p>
-<hr>
-<p>phase_6</p>
-<pre class="code"><code>0x00000000004010fe &lt;+0&gt;:	push   %r13
-0x0000000000401100 &lt;+2&gt;:	push   %r12
-0x0000000000401102 &lt;+4&gt;:	push   %rbp
-0x0000000000401103 &lt;+5&gt;:	push   %rbx
-0x0000000000401104 &lt;+6&gt;:	sub    $0x58,%rsp
-0x0000000000401108 &lt;+10&gt;:	lea    0x30(%rsp),%rsi
-0x000000000040110d &lt;+15&gt;:	callq  0x4015aa &lt;read_six_numbers&gt;
-0x0000000000401112 &lt;+20&gt;:	lea    0x30(%rsp),%r13
-0x0000000000401117 &lt;+25&gt;:	mov    $0x0,%r12d
-0x000000000040111d &lt;+31&gt;:	mov    %r13,%rbp
-0x0000000000401120 &lt;+34&gt;:	mov    0x0(%r13),%eax
-0x0000000000401124 &lt;+38&gt;:	sub    $0x1,%eax
-0x0000000000401127 &lt;+41&gt;:	cmp    $0x5,%eax
-0x000000000040112a &lt;+44&gt;:	jbe    0x401131 &lt;phase_6+51&gt;
-0x000000000040112c &lt;+46&gt;:	callq  0x401574 &lt;explode_bomb&gt;
-0x0000000000401131 &lt;+51&gt;:	add    $0x1,%r12d
-0x0000000000401135 &lt;+55&gt;:	cmp    $0x6,%r12d
-0x0000000000401139 &lt;+59&gt;:	jne    0x401142 &lt;phase_6+68&gt;
-0x000000000040113b &lt;+61&gt;:	mov    $0x0,%esi
-0x0000000000401140 &lt;+66&gt;:	jmp    0x401184 &lt;phase_6+134&gt;
-0x0000000000401142 &lt;+68&gt;:	mov    %r12d,%ebx
-0x0000000000401145 &lt;+71&gt;:	movslq %ebx,%rax
-0x0000000000401148 &lt;+74&gt;:	mov    0x30(%rsp,%rax,4),%eax
-0x000000000040114c &lt;+78&gt;:	cmp    %eax,0x0(%rbp)
-0x000000000040114f &lt;+81&gt;:	jne    0x401156 &lt;phase_6+88&gt;
-0x0000000000401151 &lt;+83&gt;:	callq  0x401574 &lt;explode_bomb&gt;
-0x0000000000401156 &lt;+88&gt;:	add    $0x1,%ebx
-0x0000000000401159 &lt;+91&gt;:	cmp    $0x5,%ebx
-0x000000000040115c &lt;+94&gt;:	jle    0x401145 &lt;phase_6+71&gt;
-0x000000000040115e &lt;+96&gt;:	add    $0x4,%r13
-0x0000000000401162 &lt;+100&gt;:	jmp    0x40111d &lt;phase_6+31&gt;
-0x0000000000401164 &lt;+102&gt;:	mov    0x8(%rdx),%rdx
-0x0000000000401168 &lt;+106&gt;:	add    $0x1,%eax
-0x000000000040116b &lt;+109&gt;:	cmp    %ecx,%eax
-0x000000000040116d &lt;+111&gt;:	jne    0x401164 &lt;phase_6+102&gt;
-0x000000000040116f &lt;+113&gt;:	jmp    0x401176 &lt;phase_6+120&gt;
-0x0000000000401171 &lt;+115&gt;:	mov    $0x6042f0,%edx
-0x0000000000401176 &lt;+120&gt;:	mov    %rdx,(%rsp,%rsi,2)
-0x000000000040117a &lt;+124&gt;:	add    $0x4,%rsi
-0x000000000040117e &lt;+128&gt;:	cmp    $0x18,%rsi
-0x0000000000401182 &lt;+132&gt;:	je     0x401199 &lt;phase_6+155&gt;
-0x0000000000401184 &lt;+134&gt;:	mov    0x30(%rsp,%rsi,1),%ecx
-0x0000000000401188 &lt;+138&gt;:	cmp    $0x1,%ecx
-0x000000000040118b &lt;+141&gt;:	jle    0x401171 &lt;phase_6+115&gt;
-0x000000000040118d &lt;+143&gt;:	mov    $0x1,%eax
-0x0000000000401192 &lt;+148&gt;:	mov    $0x6042f0,%edx
-0x0000000000401197 &lt;+153&gt;:	jmp    0x401164 &lt;phase_6+102&gt;
-0x0000000000401199 &lt;+155&gt;:	mov    (%rsp),%rbx
-0x000000000040119d &lt;+159&gt;:	lea    0x8(%rsp),%rax
-0x00000000004011a2 &lt;+164&gt;:	lea    0x30(%rsp),%rsi
-0x00000000004011a7 &lt;+169&gt;:	mov    %rbx,%rcx
-0x00000000004011aa &lt;+172&gt;:	mov    (%rax),%rdx
-0x00000000004011ad &lt;+175&gt;:	mov    %rdx,0x8(%rcx)
-0x00000000004011b1 &lt;+179&gt;:	add    $0x8,%rax
-0x00000000004011b5 &lt;+183&gt;:	cmp    %rsi,%rax
-0x00000000004011b8 &lt;+186&gt;:	je     0x4011bf &lt;phase_6+193&gt;
-0x00000000004011ba &lt;+188&gt;:	mov    %rdx,%rcx
-0x00000000004011bd &lt;+191&gt;:	jmp    0x4011aa &lt;phase_6+172&gt;
-0x00000000004011bf &lt;+193&gt;:	movq   $0x0,0x8(%rdx)
-0x00000000004011c7 &lt;+201&gt;:	mov    $0x5,%ebp
-0x00000000004011cc &lt;+206&gt;:	mov    0x8(%rbx),%rax
-0x00000000004011d0 &lt;+210&gt;:	mov    (%rax),%eax
-0x00000000004011d2 &lt;+212&gt;:	cmp    %eax,(%rbx)
-0x00000000004011d4 &lt;+214&gt;:	jle    0x4011db &lt;phase_6+221&gt;
-0x00000000004011d6 &lt;+216&gt;:	callq  0x401574 &lt;explode_bomb&gt;
-0x00000000004011db &lt;+221&gt;:	mov    0x8(%rbx),%rbx
-0x00000000004011df &lt;+225&gt;:	sub    $0x1,%ebp
-0x00000000004011e2 &lt;+228&gt;:	jne    0x4011cc &lt;phase_6+206&gt;
-0x00000000004011e4 &lt;+230&gt;:	add    $0x58,%rsp
-0x00000000004011e8 &lt;+234&gt;:	pop    %rbx
-0x00000000004011e9 &lt;+235&gt;:	pop    %rbp
-0x00000000004011ea &lt;+236&gt;:	pop    %r12
-0x00000000004011ec &lt;+238&gt;:	pop    %r13
-0x00000000004011ee &lt;+240&gt;:	retq   </code></pre>
-<pre class="code"><code>push   %r13
-push   %r12
-push   %rbp
-push   %rbx
-sub    $0x58,%rsp
-   
-%rsi = %rsp + 030
-read_six_numbers: 정수 6개를 스택에 저장 (반환값 %eax를 개수로 사용하지 않음)
-0x30(%rsp) = x1
-0x34(%rsp) = x2
-...
-0x44(%rsp) = x6
-
-%r13 = 0x30(%rsp) = %rsp + 030
-%r12d = 0x0
-
-----
-
-&lt;+31&gt;
-%rbp = %r13
-%eax = (%r13)
-%eax -= 1
-if %eax &lt;= 5 : jmp&lt;+51&gt;
-explode_bomb
-&lt;+51&gt;
-
-%r12d += 1
-if r12d != 0x6: jmp&lt;+68&gt;
-
-%esi = 0x0
-jmp&lt;+134&gt;
-
-&lt;+68&gt;
-%ebx = %r12d
--------
-
-&lt;+71&gt;
-%rax = 확장된 %ebx
-
-%eax = (0x30 + %rsp + 4*%rax)
-
-if %eax != Memory[%rbp]: jmp&lt;+88&gt;
-explode_bomb
-&lt;+88&gt;
-
-%ebx += 0x1
-if %ebx &lt;= 0x5: jmp &lt;+71&gt;
-
-%r13 += 0x4
-jmp&lt;+31&gt;
-
-=========
-
-&lt;+102&gt;
-%rdx = Memory[%rdx + 8]  (현재 노드의 next 포인터)
-%eax += 0x1
-%eax != %ecx: jmp&lt;+102&gt;
-%edx = 0x6042f0
-jmp&lt;+120&gt;
-
-&lt;+115&gt;
-%edx = 0x6042f0
-
-&lt;+120&gt;
-(%rsp+ 2*%rsi) = %rdx
-%rsi += 4
-if %rsi == 0x18 : jmp&lt;+155&gt;
-
---------
-
-&lt;+134&gt;
-%ecx = (0x30 + %rsp + rsi)
-if %ecx &lt;= 1 jmp&lt;+115&gt;
-%eax = 1
-%edx = 0x6042f0
-jmp&lt;+102&gt;
-
-=========
-
-&lt;+155&gt;
-%rbx = (%rsp)
-%rax = %rsp + 8
-%rsi = rsp + 48
-%rcx = %rbx
-
-&lt;+172&gt;
-%rdx = (%rax)
-(8 + %rcx) = %rdx
-%rax += 8
-if %rax == %rsi: jmp&lt;+193&gt;
-
-%rcx = %rdx
-jmp&lt;+172&gt;
-
-==========
-
-&lt;+193&gt;
-(%rdx+8) = 0
-%ebp = 5
-
-&lt;+206&gt;
-%rax = (rbx + 8)
-%eax = (%rax)
-if 현재 노드 value &lt;= 다음 노드 value: jmp &lt;+221&gt;
-explode_bomb
-&lt;+221&gt;
-
-%rbx = ($rbx + 8)
-%ebp -= 1
-if jne -&gt; &lt;+206&gt;
-%rsp += 0x58</code></pre>
-<pre class="code"><code>MEMORY
-
-0x30(%rsp) = x1
-0x34(%rsp) = x2
-...
-0x44(%rsp) = x6    -&gt; 초기값 저장</code></pre>
-<pre class="code"><code>%rsi
-1. %rsp + 0x30 : 
-2. 0x0 -&gt; 다음 단계
-
-4. 0x0
-
-%r13
-1. %rsp + 0x30
-2. %rsp + 0x34
-...
-
-
-%r12d
-1. 0x0
-2. 0x1
-3. 0x2
-.. -&gt; 6까지 반복.
-
-%rbp
-1. %r13 = %rsp + 0x30 =x1
-2. ~ = x2
-
-%eax
-1. (%r13) = %rsp+30 = x1
-2. x1 -1
-2. expended %ebx = 0x1
-3. (0x30 + %rsp + 4*%rax) = (3*16 + %rsp + 4) = (%rsp + 52
-= x2
-4. x2
-5. x2 -1
-
-%ebx
-1. %r12d = 0x1
-2. 0x2
-...
-4. ebx는 비교 대상 배열 인덱스 (0x401145는 명령어 주소)
-
-
-
-if 1 &lt;= x1 &lt;= 6 -&gt; jmp &lt;+51&gt; (unsigned jbe; x1 - 1 &lt;= 5)
-=&gt; bomb을 피하려면 항상. x1 -1 &lt;= 5
---
-if %r12d != 0x6 -&gt; jmp&lt;+68&gt;
-처음에는 0-&gt;1...이라서 아님.
---
-if %eax == Memory[%rbp]: bomb (두 입력값이 같으면 폭발)
-x2 != x1
---
-if ebx &lt;= 5 -&gt; jump &lt;+71&gt; (0x401145는 점프 주소)
--&gt; ebx = 6이 되면 내부 반복 종료</code></pre>
-<p>1 &lt;= x1, x2, x3, x4, x5, x6 &lt;= 6<br>x1, x2,x3,x4,x5,x6 모두 서로 달라야 함.<br></p>
-<pre class="code"><code>%rsi
-1. 0x0
-2. 0x4
-
-%ecx 
-1. (0x30 + %rsp + rsi) = (rsp+48) = x1
-
-%edx
-1. 0x6042f0
-
----
-if %ecx &lt;= 1 =&gt; jmp&lt;+115&gt;
-	-&gt; x1&lt;=1이면 -&gt; jmp to 115
-else
-	%eax = 1
-	%edx = 0x6042f0
-jmp to 102
----
-(%rsp+ 2*%rsi) = %rdx
--&gt; 첫번째 스택 = 0x6042f0
-if %rsi == 0x18 == 24 -&gt; jmp&lt;+155&gt;
--&gt; 24가 될 때까지 반복.
----
-&lt;102&gt;</code></pre>
-<hr>
-<p>phase_6 이어서 분석 (기존 &lt;+102&gt;부터)</p>
-<pre class="code"><code># 앞에서 알아낸 조건
-x1, x2, x3, x4, x5, x6는 모두 1~6 범위
-x1~x6 사이에 같은 값이 있으면 explode_bomb
-
-MEMORY
-0x30(%rsp) = x1
-0x34(%rsp) = x2
-0x38(%rsp) = x3
-0x3c(%rsp) = x4
-0x40(%rsp) = x5
-0x44(%rsp) = x6
-
-(%rsp)      = 선택한 node1 주소
-0x8(%rsp)   = 선택한 node2 주소
-0x10(%rsp)  = 선택한 node3 주소
-...
-0x28(%rsp)  = 선택한 node6 주소</code></pre>
-<pre class="code"><code># &lt;+134&gt; : 입력 x_i로 몇 번째 노드를 선택할지 결정
-mov 0x30(%rsp,%rsi,1), %ecx
-    -&gt; %ecx = Memory[%rsp + 0x30 + %rsi] = 현재 입력 x_i
-cmp $0x1, %ecx
-jle &lt;+115&gt;
-    -&gt; x_i &lt;= 1이면 첫 번째 노드 사용
-
-mov $0x1, %eax
-mov $0x6042f0, %edx
-jmp &lt;+102&gt;
-    -&gt; x_i &gt; 1이면 첫 번째 노드에서 시작해서 next로 이동
-
-# &lt;+102&gt; : 노드 연결 따라가기
-mov 0x8(%rdx), %rdx
-    -&gt; %rdx = Memory[%rdx + 8] = 현재 노드의 next 포인터
-    -&gt; %rdx += 8 이 아님!! 8바이트 뒤에 저장된 &#x27;주소&#x27;를 읽음
-add $0x1, %eax
-cmp %ecx, %eax
-jne &lt;+102&gt;
-    -&gt; %eax가 입력값 x_i와 같아질 때까지 next 이동
-    -&gt; 결국 %rdx = x_i번째 노드의 주소
-
-# &lt;+115&gt;
-mov $0x6042f0, %edx
-    -&gt; 첫 번째 노드의 주소
-
-# &lt;+120&gt;
-mov %rdx, (%rsp,%rsi,2)
-    -&gt; Memory[%rsp + 2*%rsi] = 선택한 노드 주소
-    -&gt; %rsi = 0,4,8,12,16,20
-    -&gt; 저장 주소 = rsp, rsp+8, rsp+16, ..., rsp+40
-add $0x4, %rsi
-cmp $0x18, %rsi
-je &lt;+155&gt;
-    -&gt; %rsi == 24가 되면 6개 선택 완료
-    -&gt; 아니면 &lt;+134&gt;로 돌아가 다음 입력 처리</code></pre>
-<pre class="code"><code># &lt;+155&gt; : 선택한 노드 6개를 입력 순서대로 다시 연결
-mov (%rsp), %rbx
-    -&gt; %rbx = 첫 번째로 선택한 노드 주소
-lea 0x8(%rsp), %rax
-    -&gt; %rax = 다음 노드 주소가 저장된 스택 위치
-lea 0x30(%rsp), %rsi
-    -&gt; %rsi = 노드 주소 배열의 끝 위치(rsp+48)
-mov %rbx, %rcx
-    -&gt; %rcx = 현재 노드 주소
-
-# &lt;+172&gt;
-mov (%rax), %rdx
-    -&gt; %rdx = 스택에 보관한 다음 노드 주소
-mov %rdx, 0x8(%rcx)
-    -&gt; Memory[%rcx + 8] = %rdx
-    -&gt; 현재 노드의 next를 다음 노드에 연결
-add $0x8, %rax
-cmp %rsi, %rax
-je &lt;+193&gt;
-mov %rdx, %rcx
-jmp &lt;+172&gt;
-    -&gt; 8바이트씩 이동하며 next 포인터 연결 반복</code></pre>
-<pre class="code"><code># &lt;+193&gt; : 마지막 노드의 next = NULL
-movq $0x0, 0x8(%rdx)
-
-mov $0x5, %ebp
-    -&gt; 6개의 노드를 비교하려면 인접 쌍 5개 검사
-
-# &lt;+206&gt;
-mov 0x8(%rbx), %rax
-    -&gt; %rax = 현재 노드의 next 포인터
-mov (%rax), %eax
-    -&gt; %eax = 다음 노드의 value (32비트)
-cmp %eax, (%rbx)
-    -&gt; 현재 노드 value - 다음 노드 value
-jle &lt;+221&gt;
-    -&gt; 현재 노드 value &lt;= 다음 노드 value이면 통과
-    -&gt; 아니면 explode_bomb
-
-# &lt;+221&gt;
-mov 0x8(%rbx), %rbx
-    -&gt; %rbx = 다음 노드 주소
-sub $0x1, %ebp
-jne &lt;+206&gt;
-    -&gt; 총 5번 비교</code></pre>
-<p><b>정리</b></p>
-<pre class="code"><code>numbers = [x1, x2, x3, x4, x5, x6]
-
-# 1. 1~6이 각각 정확히 한 번씩 들어와야 함
-assert sorted(numbers) == [1, 2, 3, 4, 5, 6]
-
-# 2. 입력 숫자 i = 연결 리스트의 i번째 노드를 선택
-chosen = [node_at_position(i) for i in numbers]
-
-# 3. 선택한 순서대로 노드를 다시 연결
-for i in range(5):
-    chosen[i].next = chosen[i+1]
-chosen[5].next = None
-
-# 4. 노드의 value는 오름차순(같아도 됨)
-for i in range(5):
-    assert chosen[i].value &lt;= chosen[i+1].value</code></pre>
-<p><b>따라서:</b> 입력 정수 자체를 정렬하는 게 아니라, 각 숫자가 선택하는 <b>노드의 value 순서</b>를 오름차순으로 만드는 문제. 노드 6개의 실제 값과 최종 정답은 페이지 맨 아래에 확인하여 추가함.</p>
-<pre class="code"><code># 메모리 확인만 수행. bomb 실행하지 않음.
-x/4wx 0x6042f0
-x/gx 0x6042f8
-# 두 번째 명령어로 얻은 next 주소에서도 value와 next 확인</code></pre>
-<p><b>앞에서 잘못 적은 부분 수정 메모</b></p>
-<pre class="code"><code>mov 0x30(%rsp,%rax,4), %eax
-    -&gt; %eax = Memory[%rsp + 48 + 4*%rax] (주소 자체 아님)
-cmp %eax, 0x0(%rbp)
-    -&gt; 입력값끼리 비교함. %rbp는 입력값이 아닌 &#x27;입력값 주소&#x27;
-cmp $0x5, %ebx ; jle &lt;+71&gt;
-    -&gt; %ebx &lt;= 5이면 점프. 점프 주소 0x401145와 비교하는 게 아님
-mov 0x8(%rdx), %rdx
-    -&gt; %rdx = node.next (노드의 다음 포인터)
-cmp %eax, (%rbx) ; jle &lt;+221&gt;
-    -&gt; 현재 노드 value &lt;= 다음 노드 value</code></pre>
-<hr>
-<p><b>phase_6 정답 (실행 파일 데이터 확인)</b></p>
-<p>Mac <code>~/Downloads/bomb13.tar</code>의 <code>bomb13/bomb</code>에서 <code>0x6042f0</code> 연결 리스트 노드를 직접 읽어서 확인.</p>
-<pre class="code"><code>Node 1 : value = 651, address = 0x6042f0, next = 0x604300
-Node 2 : value = 232, address = 0x604300, next = 0x604310
-Node 3 : value = 299, address = 0x604310, next = 0x604320
-Node 4 : value = 216, address = 0x604320, next = 0x604330
-Node 5 : value = 751, address = 0x604330, next = 0x604340
-Node 6 : value = 336, address = 0x604340, next = 0x0</code></pre>
-<pre class="code"><code>value 오름차순:
-216 &lt; 232 &lt; 299 &lt; 336 &lt; 651 &lt; 751
-Node 번호:
-4 → 2 → 3 → 6 → 1 → 5
-
-Phase 6 입력: 4 2 3 6 1 5</code></pre>
-<p class="def"><b class="k-blue">확인 근거</b> : Phase 6의 <code>cmp %eax,(%rbx); jle</code>는 현재 노드 value ≤ 다음 노드 value 조건이다. 그래서 실제 <code>value</code>가 오름차순이 되도록 노드 번호를 입력해야 한다. 노드 번호 자체를 오름차순으로 쓰는 문제가 아님.</p>
-<p><b>Phase 1~6 정답 모음</b></p>
-<pre class="code"><code>Current frameworks are mainly designed for a solo training case.
-1 2 4 8 16 32
-4 0
-24 2
-5 115
-4 2 3 6 1 5</code></pre>
-<p>※ 위 Phase 6 노드 값은 Mac에 내려받은 <code>bomb13.tar</code> 실행 파일의 정적 데이터를 기준으로 계산했으며, 서버의 <code>~/bomb13/bomb</code> 파일과 별도 해시 대조는 하지 않음. 노드 시작 주소와 Phase 1 문자열은 기존 분석과 일치함.</p>
-  </div>
-  <div class="pnav"><a href="datalab2.html">&larr; 이전</a><a href="index.html">목록</a><a href="days.html">다음 &rarr;</a></div>
 </div>
+<ul>
+<li>asm을 볼 때 순서: (1) 인자가 어떤 register인지 (2) 비교·점프로 만들어지는 구조 (3) 메모리 접근의 offset과 scale — 순서대로 적고 C로 복원</li>
+</ul>
+
+<h2><span class="n">2</span>Phase 1 — 문자열 비교</h2>
+<pre class="c">phase_1:
+  sub  $0x8, %rsp
+  mov  $0x4024c0, %esi      # 비교할 문자열 주소를 %rsi에
+  callq strings_not_equal   # %eax = 같으면 0, 다르면 1
+  test %eax, %eax           # %eax = 0이면 ZF=1
+  je   0x400f07             # ZF=1이면 폭발 건너뜀
+  callq explode_bomb</pre>
+<ul>
+<li>입력 문자열이 0x4024c0의 문자열과 같아야 함 → <code>x/s 0x4024c0</code>로 읽으면 끝</li>
+</ul>
+<div class="final-answer">"Current frameworks are mainly designed for a solo training case."</div>
+
+<h2><span class="n">3</span>Phase 2 — 2배씩 커지는 수열</h2>
+<pre class="c">  callq read_six_numbers        # 정수 6개를 스택에 저장
+  cmpl $0x1, (%rsp)             # x1 = 1이어야 함
+  je   &lt;phase_2+52&gt;
+  ...
+  mov  -0x4(%rbx), %eax         # %eax = 이전 원소
+  add  %eax, %eax               # %eax = 2 × 이전 원소
+  cmp  %eax, (%rbx)             # 현재 원소와 비교
+  je   &lt;phase_2+41&gt;            # x_i = 2 × x_(i-1) 여야 함
+  add  $0x4, %rbx               # 다음 정수로
+  cmp  %rbp, %rbx
+  jne  &lt;phase_2+27&gt;            # 끝까지 반복</pre>
+<ul>
+<li>loop 구조: %rbx가 두 번째 정수부터 마지막까지 돌면서 "현재 = 2 × 이전"을 검사</li>
+<li>x1 = 1이고 2배씩 → 1, 2, 4, 8, 16, 32</li>
+</ul>
+<div class="final-answer">1 2 4 8 16 32</div>
+
+<h2><span class="n">4</span>Phase 3 — jump table (switch)</h2>
+<pre class="c">  callq __isoc99_sscanf         # 정수 2개 (개수 %eax로 반환)
+  cmp  $0x1, %eax
+  jg   &lt;phase_3+39&gt;            # 2개 이상 입력해야 함
+  cmpl $0x7, 0xc(%rsp)          # x1 ≤ 7 (unsigned)
+  ja   explode_bomb
+  mov  0xc(%rsp), %eax
+  jmpq *0x402540(,%rax,8)       # x1 값으로 jump table 분기</pre>
+<div class="tblwrap"><table class="tbl">
+<thead><tr><th>index (x1)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead>
+<tbody><tr><td>목적지</td><td>+64</td><td>+57</td><td>+76</td><td>+88</td><td>+100</td><td>+112</td><td>+124</td><td>+136</td></tr></tbody>
+</table></div>
+<ul>
+<li><code>x/8gx 0x402540</code>으로 테이블을 읽음 — 각 엔트리가 case 몸통의 주소</li>
+<li>각 case는 mov $0, %eax → add/sub 상수의 조합으로 %eax를 만듦. x1 = 4 (+100)면 <code>mov $0x0,%eax; add $0x3ac,%eax</code> → %eax = 0x3ac… 이어서 sub $0x3ac → %eax = 0</li>
+<li>마지막에 cmpl $0x5, 0xc(%rsp) (x1 ≤ 5)와 cmp 0x8(%rsp),%eax (x2 = %eax)를 통과해야 함 → x1 = 4, x2 = 0</li>
+</ul>
+<div class="final-answer">4 0</div>
+
+<h2><span class="n">5</span>Phase 4 — 재귀 함수 func4</h2>
+<pre class="c">  cmpl $0x2,%eax          # sscanf로 정확히 2개
+  mov 0xc(%rsp),%eax
+  sub $0x2,%eax
+  cmp $0x2,%eax           # 0 ≤ x2−2 ≤ 2 → 2 ≤ x2 ≤ 4 (unsigned jbe)
+  jbe &lt;phase_4+51&gt;
+  ...
+  mov 0xc(%rsp),%esi      # 두 번째 인자 = x2
+  mov $0x5,%edi           # 첫 번째 인자 = 5
+  callq func4
+  cmp 0x8(%rsp),%eax      # x1 = func4(5, x2) 여야 함</pre>
+<pre class="c">func4(n = %edi, x = %esi):
+  if (n &lt;= 0) return 0
+  if (n == 1) return x
+  a = func4(n-1, x)
+  b = func4(n-2, x)
+  return a + x + b</pre>
+<div class="tblwrap"><table class="tbl">
+<thead><tr><th>n</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+<tbody><tr><td>f(n, x)</td><td>0</td><td>x</td><td>2x</td><td>4x</td><td>7x</td><td>12x</td></tr></tbody>
+</table></div>
+<ul>
+<li>func4(5, x2) = 12·x2 이고 x1 = 12·x2 여야 함. 2 ≤ x2 ≤ 4 중 x2 = 2 → x1 = 24</li>
+</ul>
+<div class="final-answer">24 2</div>
+
+<h2><span class="n">6</span>Phase 5 — 배열을 따라가는 루프</h2>
+<pre class="c">  mov 0xc(%rsp),%eax
+  and $0xf,%eax           # x1의 마지막 4 bit만 남김
+  cmp $0xf,%eax
+  je  explode_bomb        # 1111이면 안 됨
+  mov $0x0,%ecx           # %ecx = 합계
+  mov $0x0,%edx           # %edx = 반복 횟수
+loop:
+  add $0x1,%edx
+  cltq
+  mov 0x402580(,%rax,4),%eax   # %eax = arr[%rax]
+  add %eax,%ecx                # 합계에 더함
+  cmp $0xf,%eax
+  jne loop                     # arr 값이 15가 되면 종료
+  cmp $0xf,%edx
+  jne explode_bomb             # 반복 횟수 = 15여야 함
+  cmp 0x8(%rsp),%ecx           # 합계 = x2 여야 함
+  je  &lt;phase_5+104&gt;</pre>
+<pre class="c">(gdb) x/16dw 0x402580
+arr = [10, 2, 14, 7, 8, 12, 15, 11, 0, 4, 1, 13, 3, 9, 6, 5]
+         0   1   2  3  4   5   6   7  8  9  10  11 12 13 14 15</pre>
+<ul>
+<li>arr[i]를 다음 index로 삼아 값이 15일 때까지 따라가는 포인터 체이스 — 입력 x1의 하위 4 bit가 시작 index</li>
+<li>시작 5라면: 5 → 12 → 3 → 7 → 11 → 13 → 9 → 4 → 8 → 0 → 10 → 1 → 2 → 14 → 6 → 15 (정확히 15번 반복)</li>
+<li>합계 = 12+3+7+11+13+9+4+8+0+10+1+2+14+6+15 = 115 → x1 = 5, x2 = 115</li>
+</ul>
+<div class="final-answer">5 115</div>
+
+<h2><span class="n">7</span>Phase 6 — 링크드 리스트 재배열</h2>
+<h3>조건 1: 입력은 1~6의 순열</h3>
+<ul>
+<li>각 x_i에 대해 x_i − 1 ≤ 5 (unsigned jbe) → 1 ≤ x_i ≤ 6</li>
+<li>이중 루프로 모든 쌍을 비교해 같은 값이 있으면 폭발 → 6개는 모두 다름 → <b>1~6이 정확히 한 번씩</b></li>
+</ul>
+<h3>조건 2: 입력이 고른 노드를 value 오름차순으로</h3>
+<ul>
+<li>입력 x_i는 0x6042f0에서 시작하는 연결 리스트의 i번째 노드를 선택 (&lt;+102&gt;: x_i가 될 때까지 next를 따라감 — <span class="kr">%rdx += 8이 아니라 8바이트 뒤에 저장된 주소를 읽는 것</span>)</li>
+<li>선택한 노드 6개를 입력 순서대로 다시 연결 (&lt;+155&gt;~&lt;+193&gt;)</li>
+<li>인접 쌍 5개를 검사: 현재 노드 value ≤ 다음 노드 value 여야 함 (jle)</li>
+<li>즉 입력 정수 자체를 정렬하는 게 아니라, <b>각 숫자가 선택하는 노드의 value가 오름차순</b>이 되는 순서를 찾는 문제</li>
+</ul>
+<figure class="fig" style="--figw:620px">
+<svg viewBox="0 0 620 190" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+<g font-size="12.5">
+<text x="8" y="20" font-weight="700" fill="#23252d">원래 리스트 (주소 순) — x/gx로 읽은 값</text>
+<g font-family="monospace">
+<rect x="8"   y="32" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="54" y="49" text-anchor="middle" fill="#23252d">node1</text><text x="54" y="64" text-anchor="middle" fill="#23252d">651</text>
+<rect x="108" y="32" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="154" y="49" text-anchor="middle" fill="#23252d">node2</text><text x="154" y="64" text-anchor="middle" fill="#23252d">232</text>
+<rect x="208" y="32" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="254" y="49" text-anchor="middle" fill="#23252d">node3</text><text x="254" y="64" text-anchor="middle" fill="#23252d">299</text>
+<rect x="308" y="32" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="354" y="49" text-anchor="middle" fill="#23252d">node4</text><text x="354" y="64" text-anchor="middle" fill="#23252d">216</text>
+<rect x="408" y="32" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="454" y="49" text-anchor="middle" fill="#23252d">node5</text><text x="454" y="64" text-anchor="middle" fill="#23252d">751</text>
+<rect x="508" y="32" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="554" y="49" text-anchor="middle" fill="#23252d">node6</text><text x="554" y="64" text-anchor="middle" fill="#23252d">336</text>
+</g>
+<text x="8" y="100" font-weight="700" fill="#23252d">value 오름차순으로 다시 연결해야 함</text>
+<g font-family="monospace">
+<rect x="8"   y="112" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="54" y="129" text-anchor="middle" fill="#23252d">node4</text><text x="54" y="144" text-anchor="middle" fill="#23252d">216</text>
+<rect x="108" y="112" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="154" y="129" text-anchor="middle" fill="#23252d">node2</text><text x="154" y="144" text-anchor="middle" fill="#23252d">232</text>
+<rect x="208" y="112" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="254" y="129" text-anchor="middle" fill="#23252d">node3</text><text x="254" y="144" text-anchor="middle" fill="#23252d">299</text>
+<rect x="308" y="112" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="354" y="129" text-anchor="middle" fill="#23252d">node6</text><text x="354" y="144" text-anchor="middle" fill="#23252d">336</text>
+<rect x="408" y="112" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="454" y="129" text-anchor="middle" fill="#23252d">node1</text><text x="454" y="144" text-anchor="middle" fill="#23252d">651</text>
+<rect x="508" y="112" width="92" height="40" fill="#fff" stroke="#22242a" stroke-width="1.5"/><text x="554" y="129" text-anchor="middle" fill="#23252d">node5</text><text x="554" y="144" text-anchor="middle" fill="#23252d">751</text>
+</g>
+<text x="8" y="178" fill="#23252d" font-weight="700">입력 = 노드 번호 순서: 4 2 3 6 1 5</text>
+</g>
+</svg>
+<figcaption>메모리 확인만 수행하고 bomb은 실행하지 않음 — 노드 값은 Mac의 bomb13.tar 정적 데이터 기준 (서버 ~/bomb13/bomb과 해시 대조는 안 함 — 노드 시작 주소와 phase 1 문자열은 기존 분석과 일치)</figcaption>
+</figure>
+<div class="final-answer">4 2 3 6 1 5</div>
+
+<h2><span class="n">8</span>분석 중 헷갈렸던 포인트 (수정 메모)</h2>
+<div class="bx"><span class="bx-tag">처음에 잘못 읽었다가 고친 것 — 시험에서도 같은 실수 조심</span>
+<ul>
+<li><code>mov 0x30(%rsp,%rax,4), %eax</code> → 주소 자체가 아니라 Memory[%rsp + 48 + 4×%rax]의 값을 읽음</li>
+<li><code>cmp %eax, 0x0(%rbp)</code> → %rbp는 입력값이 아니라 입력값의 주소 — 입력값끼리 비교하는 것</li>
+<li><code>cmp $0x5, %ebx; jle</code> → %ebx ≤ 5이면 점프. 점프 주소(0x401145)와 값을 비교하는 게 아님</li>
+<li><code>mov 0x8(%rdx), %rdx</code> → node.next (포인터). %rdx에 8을 더하는 게 아님</li>
+<li><code>cmp %eax, (%rbx); jle</code> → 현재 노드 value ≤ 다음 노드 value</li>
+</ul>
+</div>
+
+<h2><span class="n">9</span>정답 모음</h2>
+<pre class="c">Phase 1: Current frameworks are mainly designed for a solo training case.
+Phase 2: 1 2 4 8 16 32
+Phase 3: 4 0
+Phase 4: 24 2
+Phase 5: 5 115
+Phase 6: 4 2 3 6 1 5</pre>
+
+</div>
+<div class="pnav"><a href="datalab.html">← Data Lab</a><a href="roadmap.html">로드맵 →</a></div>
+</main>
 </body>
 </html>

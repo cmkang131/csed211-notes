@@ -1,0 +1,237 @@
+/* ============================================================
+   CSED211 컴퓨터 시스템 — 중간고사 스터디 노트
+   design: handwritten study-note kit v2 (white page, boxed cards)
+   ============================================================ */
+:root{
+  --ink:#22242a; --ink-soft:#4b4e57; --ink-faint:#8a8d98;
+  --paper:#ffffff; --pagebg:#f6f6f4;
+  --line:#e5e3de;
+  --blue:#2563eb; --blue-ink:#1e40af; --blue-bg:#eef4ff; --blue-line:#c3d7fb;
+  --red:#dc2626;  --red-ink:#b91c1c;  --red-bg:#fff1f0;  --red-line:#f6c8c4;
+  --green:#16a34a;--green-ink:#15803d;--green-bg:#f0faf2;--green-line:#c2e8cd;
+  --amber-ink:#92600a; --amber-bg:#fffae8; --amber-line:#ecd9a0;
+  --violet-ink:#6d28d9; --violet-bg:#f4f1fe; --violet-line:#d8cdf7;
+  --teal-ink:#0f766e; --teal-bg:#effaf8; --teal-line:#bfe7e0;
+  --hl:#fff0a6;
+  --code-bg:#f4f4f2;
+  --mono:"JetBrains Mono","SF Mono",Consolas,"D2Coding",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--pagebg); color:var(--ink);
+  font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:16px; line-height:1.75; font-weight:400;
+}
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50; background:rgba(255,255,255,.92);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+}
+.topbar-in{max-width:1020px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar .brand{font-weight:700;font-size:14.5px;letter-spacing:-.01em}
+.topbar .brand a{color:var(--ink);text-decoration:none}
+.topbar .brand .sub{color:var(--ink-faint);font-weight:500;font-size:12.5px;margin-left:6px}
+.topbar nav{margin-left:auto;display:flex;gap:2px;flex-wrap:wrap}
+.topbar nav a{
+  color:var(--ink-soft);text-decoration:none;font-size:13px;font-weight:500;
+  padding:5px 9px;border-radius:7px;
+}
+.topbar nav a:hover{background:#f0efec;color:var(--ink)}
+.topbar nav a.on{color:var(--ink);background:#eceae6;font-weight:700}
+/* ---------- page shell ---------- */
+.paper{max-width:1020px;margin:28px auto 80px;padding:0 24px}
+.phead{margin-bottom:6px;font-size:13px;color:var(--ink-faint)}
+.phead a{color:var(--ink-faint);text-decoration:none}
+.phead a:hover{color:var(--blue)}
+.phead .sep{margin:0 6px;color:#cfccc5}
+h1.title{
+  font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.35;margin:2px 0 4px;
+}
+.title-sub{color:var(--ink-soft);font-size:14.5px;margin:0 0 18px}
+.title-sub .chip{margin-right:6px}
+.chip{
+  display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;
+  background:#f0efec;color:var(--ink-soft);vertical-align:2px;
+}
+.chip.blue,.chip.red,.chip.green,.chip.amber{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+/* ---------- headings (no bare <hr> section breaks) ---------- */
+.body h2{
+  font-size:20px;font-weight:800;letter-spacing:-.015em;margin:44px 0 14px;
+  padding:9px 14px 9px 15px;border-left:5px solid var(--blue);
+  background:linear-gradient(90deg,#f2f6ff,rgba(242,246,255,0));border-radius:0 10px 10px 0;
+}
+.body h2 .n{color:var(--blue);margin-right:8px;font-variant-numeric:tabular-nums}
+.body h3{
+  font-size:16.5px;font-weight:700;margin:26px 0 10px;color:var(--ink);
+  display:flex;align-items:center;gap:8px;
+}
+.body h3::before{content:"";width:8px;height:8px;border-radius:2.5px;background:#c9cdd6;flex:none}
+.body h4{font-size:15px;font-weight:700;margin:18px 0 8px;color:var(--ink-soft)}
+/* ---------- inline marks ---------- */
+.kb{color:var(--blue-ink);font-weight:700}
+.kr{color:var(--red-ink);font-weight:700}
+.kg{color:var(--green-ink);font-weight:700}
+.hl{background:var(--hl);padding:0 3px;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+code, .ic{
+  font-family:var(--mono);font-size:.875em;background:var(--code-bg);
+  border:1px solid #e8e6e1;border-radius:5px;padding:1px 5px;color:#33363d;
+}
+/* ---------- lists ---------- */
+.body ul,.body ol{margin:8px 0 12px;padding-left:24px}
+.body li{margin:4px 0}
+.body li::marker{color:#a9adb8}
+.body ul ul,.body ul ol,.body ol ul{margin:3px 0 5px}
+.body ul ul li::marker{color:#c4c8d2}
+/* ---------- boxes ---------- */
+.bx{
+  border-radius:12px;padding:13px 16px 13px 15px;margin:14px 0;
+  border:1px solid var(--line);background:#fff;font-size:15px;
+}
+.bx .bx-tag{
+  display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;
+  letter-spacing:.02em;margin-bottom:6px;
+}
+.bx .bx-tag .ico{font-size:13px}
+.bx > :first-child{margin-top:0}
+.bx > :last-child{margin-bottom:0}
+/* 6:52 rule: black boxes only — no colored boxes */
+.bx{border:1.5px solid var(--ink);background:#fff}
+.bx .bx-tag{color:var(--ink)}
+.bx.concept,.bx.def,.bx.ex,.bx.warn,.bx.formula,.bx.tip,.bx.gray{background:#fff;border-color:var(--ink)}
+.bx.concept .bx-tag,.bx.def .bx-tag,.bx.ex .bx-tag,.bx.warn .bx-tag,.bx.formula .bx-tag,.bx.tip .bx-tag,.bx.gray .bx-tag{color:var(--ink)}
+/* formula box = centered display math */
+.fbox{
+  border:1.5px solid var(--ink);border-radius:10px;background:#fff;
+  padding:10px 18px;margin:12px 0;text-align:center;overflow-x:auto;
+}
+.fbox mjx-container{display:inline-block;margin:0!important}
+.fbox .fx-cap{display:block;text-align:left;font-size:12.5px;color:var(--ink-faint);margin-bottom:2px}
+/* ---------- figures ---------- */
+figure.fig{margin:18px 0;text-align:center}
+figure.fig svg{max-width:100%;height:auto}
+figure.fig figcaption{font-size:13px;color:var(--ink-faint);margin-top:6px}
+/* ---------- tables ---------- */
+.tblwrap{overflow-x:auto;margin:12px 0}
+table.tbl{border-collapse:collapse;font-size:14px;min-width:60%}
+table.tbl th,table.tbl td{border:1px solid #ddd9d2;padding:6px 11px;text-align:left;vertical-align:top}
+table.tbl thead th{background:#f4f3f0;font-weight:700}
+table.tbl tbody tr:nth-child(even){background:#faf9f7}
+table.tbl td.c,table.tbl th.c{text-align:center}
+table.tbl code{background:#f0efec}
+table.tbl.small{font-size:13px}
+/* ---------- code / asm ---------- */
+pre{
+  font-family:var(--mono);font-size:13px;line-height:1.6;background:#fbfaf8;
+  border:1px solid #e6e4de;border-radius:10px;padding:12px 16px;overflow-x:auto;margin:12px 0;
+}
+pre.asm{border-left:4px solid #94b8f5}
+pre.c{border-left:4px solid #9fd3ab}
+pre .cm{color:#8a8d98}
+pre .kw{color:#7c3aed}
+/* ---------- math ---------- */
+mjx-container{font-size:1.02em}
+mjx-container[display="true"]{margin:10px 0!important}
+/* ---------- problem cards ---------- */
+.prob{
+  border:1.5px solid var(--ink);border-radius:10px;background:#fff;
+  margin:20px 0;padding:0;overflow:hidden;
+}
+.prob-head{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding:12px 18px 10px;border-bottom:1px solid #edebe6;
+}
+.prob-head .pid{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink-soft)}
+.prob-head .ptitle{font-weight:800;font-size:15.5px;letter-spacing:-.01em}
+.prob-head .ptag{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.prob-head .ptag.exam{background:#fff;color:var(--ink)}
+.prob-head .ptag.aux{background:#fff;color:var(--ink)}
+.prob-head .stars{color:#e8a33d;font-size:13px;letter-spacing:1px}
+.prob-head .plab{font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.prob-body{padding:14px 18px 16px}
+.prob-body > :first-child{margin-top:0}
+.prob-body > :last-child{margin-bottom:0}
+/* hint & answer toggles — plain text toggles, page ink */
+details.tgl{margin:6px 0 0;border:none;background:none}
+details.tgl summary{
+  list-style:none;cursor:pointer;display:inline;
+  font-size:13.5px;font-weight:600;color:var(--ink);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-color:#c4c1b9;
+  padding:0;user-select:none;
+}
+details.tgl summary:hover{text-decoration-color:var(--ink)}
+details.tgl summary::-webkit-details-marker{display:none}
+details.tgl .tgl-body{margin-top:8px;padding:10px 0 2px;border-top:1px solid #e6e4de;font-size:14.5px}
+details.tgl .tgl-body > :first-child{margin-top:0}
+details.tgl .tgl-body > :last-child{margin-bottom:0}
+.ans-ptr{font-size:13px;color:var(--ink-faint);margin:0 0 8px}
+/* numbered solution steps — plain numbers, no badges */
+.steps{counter-reset:stp;margin:10px 0;padding:0;list-style:none}
+.steps li{counter-increment:stp;position:relative;padding:2px 0 8px 26px;margin:0}
+.steps li::before{
+  content:counter(stp) ".";position:absolute;left:0;top:2px;
+  font-weight:700;font-size:14px;color:var(--ink);font-family:var(--mono);
+}
+.steps li .why{color:var(--ink-faint);font-size:13px}
+/* final answer — simple yellow highlighter line */
+.final-answer{
+  margin:12px 0 2px;padding:1px 6px;font-size:14.5px;display:inline-block;
+  background:var(--hl);
+}
+/* ---------- exam info banner ---------- */
+.exam-banner{
+  display:flex;gap:16px;flex-wrap:wrap;margin:18px 0;
+}
+.exam-card{
+  flex:1 1 200px;border-radius:14px;padding:14px 18px;border:1.5px solid var(--ink);
+  background:#fff;
+}
+.exam-card .k{font-size:12px;font-weight:800;color:var(--ink);letter-spacing:.03em}
+.exam-card .v{font-size:19px;font-weight:800;margin-top:2px;letter-spacing:-.01em}
+.exam-card .s{font-size:13px;color:var(--ink-soft)}
+/* ---------- index cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:14px;margin:16px 0}
+.card{
+  display:block;border:1.5px solid var(--ink);border-radius:14px;background:#fff;padding:15px 18px 13px;
+  text-decoration:none;color:inherit;transition:box-shadow .15s ease,transform .15s ease;
+  box-shadow:0 1px 2px rgba(30,30,40,.03);
+}
+.card:hover{box-shadow:0 4px 14px rgba(30,30,40,.09);transform:translateY(-1px)}
+.card .c-k{font-size:11.5px;font-weight:800;letter-spacing:.04em;color:var(--ink-faint)}
+.card .c-t{font-size:16.5px;font-weight:800;margin:3px 0 3px;letter-spacing:-.01em}
+.card .c-d{font-size:13px;color:var(--ink-soft);line-height:1.55}
+.card .c-m{margin-top:8px;font-size:12px;color:var(--ink-faint)}
+.card.blue{border-color:var(--ink);background:#fff}
+.card.blue .c-k{color:var(--ink-faint)}
+/* ---------- prev/next nav ---------- */
+.pnav{
+  display:flex;justify-content:space-between;gap:12px;margin:48px 0 0;
+  border-top:1px solid var(--line);padding-top:16px;font-size:13.5px;
+}
+.pnav a{color:var(--ink-soft);text-decoration:none;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.pnav a:hover{color:var(--blue-ink);border-color:var(--blue-line)}
+/* ---------- misc ---------- */
+.note-small{font-size:13px;color:var(--ink-faint)}
+.toc-sec{margin:26px 0}
+kbd{font-family:var(--mono);font-size:.85em;background:#f0efec;border:1px solid #d8d5cf;border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+a{color:var(--blue)}
+.body a{color:var(--blue-ink)}
+hr.soft{border:0;border-top:1px dashed #dfddd7;margin:26px 0}
+.footer{max-width:1020px;margin:0 auto 60px;padding:0 24px;font-size:12.5px;color:var(--ink-faint)}
+/* checkbox list for roadmap */
+.ckl{list-style:none;padding-left:2px;margin:8px 0}
+.ckl li{padding-left:28px;position:relative;margin:7px 0}
+.ckl li::before{
+  content:"";position:absolute;left:2px;top:5px;width:15px;height:15px;
+  border:2px solid #b9bcc6;border-radius:4.5px;background:#fff;
+}
+.ckl li b{font-weight:700}
+.ckl .ck-no{font-family:var(--mono);font-weight:700;color:var(--blue-ink);font-size:12.5px;margin-right:6px}
+@media (max-width:720px){
+  .paper{padding:0 16px;margin-top:18px}
+  h1.title{font-size:23px}
+  .topbar-in{padding:8px 14px}
+}
+/* QA: reserve figure layout space — explicit aspect ratio, no pop-in */
+figure.fig svg{width:100%;max-width:var(--figw,720px);height:auto;display:block;margin:0 auto}
+pre.wrap{white-space:pre-wrap;word-break:break-word;overflow-x:visible}

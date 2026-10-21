@@ -3,399 +3,347 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lecture 8 · Advanced Topics(심화 주제) — 컴퓨터 시스템</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<title>Lec8 · Advanced Topics — 컴퓨터 시스템</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="paper">
-  <div class="phead"><a class="to-home" href="index.html">&larr; 홈</a><span class="phead-c">컴퓨터 시스템 · CSED211 · POSTECH</span><span class="phead-r">10/20</span></div>
-  <h1 class="pg-title">Lecture 8 · Advanced Topics(심화 주제)</h1>
-  <div class="pg-meta">2026-10-20 (화) · 슬라이드 Lecture 8 Advanced Topics + 수업 녹취 (14:04–14:53, ASR 누락 다수)</div>
-  <div class="body notes">
-<h3>Memory Layout(메모리 레이아웃)</h3>
-<h4>x86-64 address space의 다섯 영역</h4>
-<div class="figwrap"><img src="img/d20261020_01_memory_layout.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">Text </span> : 0x400000 근처, machine code, read-only</p>
-<ul class="lv1">
-<li>Data : global variable·static variable·string constant</li>
-</ul>
-<ul class="lv1">
-<li>Heap : malloc·calloc·new, 실행 중 dynamic allocation</li>
-</ul>
-<ul class="lv1">
-<li>Shared Libraries : shared library code</li>
-</ul>
-<ul class="lv1">
-<li>Stack : 0x7FFFFFFFFFFF 근처, 기본 8 MiB, local variable·function frame</li>
-</ul>
-<p>Stack은 아래로, heap은 위로 자람</p>
-<ul class="lv1">
-<li>stack overflow와 heap overflow가 서로 반대 방향인 이유</li>
-</ul>
-<h4>array·heap·stack의 실제 주소</h4>
-<div class="figwrap"><img src="img/d20261020_02_memory_addresses.webp" loading="lazy" alt=""></div>
-<p><code>char big_array[1L&lt;&lt;24]</code> : 16 MB global array</p>
-<p><code>char huge_array[1L&lt;&lt;31]</code> : 2 GB global array</p>
-<p><code>p1 = malloc(1L&lt;&lt;28)</code> : 256 MB</p>
-<p><code>p2 = malloc(1L&lt;&lt;8)</code> : 256 B</p>
-<p><code>p3 = malloc(1L&lt;&lt;32)</code> : 4 GB</p>
-<p><code>p4 = malloc(1L&lt;&lt;8)</code> : 256 B</p>
-<p class="def"><span class="k-blue">실행 예 </span> : local 0x7ffffffbe87c, p1 0x7f7262a1e010, p2 0x8359d010</p>
-<ul class="lv1">
-<li>p3 0x7f7162a1d010, p4 0x8359d120</li>
-</ul>
-<ul class="lv1">
-<li>big_array 0x80601060, huge_array 0x601060</li>
-</ul>
-<ul class="lv1">
-<li>main 0x40060c, useless 0x400590</li>
-</ul>
-<p class="def"><span class="k-blue">주소가 흩어지는 이유 </span> : heap·stack·shared library가 각각 다른 방향으로 자람</p>
-<ul class="lv1">
-<li>(보충) ASLR이 켜져 있으면 실행마다 stack 주소가 달라짐</li>
-</ul>
-<hr>
-<h3>Buffer Overflow(버퍼 오버플로)</h3>
-<h4>struct_t 예제 : array 범위를 넘으면</h4>
-<div class="figwrap"><img src="img/d20261020_03_struct_bug.webp" loading="lazy" alt=""></div>
-<p><code>struct_t { int a[2]; double d; }</code></p>
-<p><code>fun(i)</code> : <code>s.d = 3.14</code>, <code>s.a[i] = 1073741824</code>, return <code>s.d</code></p>
-<p class="def"><span class="k-blue">결과 </span> : fun(0)=3.14, fun(1)=3.14</p>
-<ul class="lv1">
-<li>fun(2)=3.1399998664856, fun(3)=2.00000061035156</li>
-</ul>
-<ul class="lv1">
-<li>fun(4)=3.14, fun(6)=Segmentation fault</li>
-</ul>
-<p class="def"><span class="k-blue">결과가 시스템마다 다른 이유 </span> : struct padding과 stack 배치가 compiler·OS마다 다름</p>
-<p class="def"><span class="k-blue">메모리 배치 </span> : a[0] offset 0, a[1] offset 4, d offset 8</p>
-<ul class="lv1">
-<li>a[2] : d의 낮은 byte를 덮음</li>
-</ul>
-<ul class="lv1">
-<li>a[3] : d 전체를 덮음</li>
-</ul>
-<ul class="lv1">
-<li>a[6] : critical state / return address까지 침범</li>
-</ul>
-<h4>왜 큰 문제인가</h4>
-<div class="figwrap"><img src="img/d20261020_04_buffer_overflow.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">buffer overflow </span> : array에 할당된 크기를 넘겨 쓰는 것</p>
-<p class="warn">기술적 원인 기준 보안 취약점 1위</p>
-<ul class="lv1">
-<li>전체 원인 1위는 social engineering</li>
-</ul>
-<p class="def"><span class="k-blue">가장 흔한 형태 </span> : unchecked string length</p>
-<ul class="lv1">
-<li>특히 stack의 bounded character array → stack smashing</li>
-</ul>
-<ul class="lv1">
-<li class="warn">programmers가 같은 실수를 반복, 최근 countermeasure로 공격이 어려워짐</li>
-</ul>
-<h4>취약한 gets()와 echo</h4>
-<div class="figwrap"><img src="img/d20261020_05_gets_echo.webp" loading="lazy" alt=""></div>
-<p><code>gets(char *dest)</code> : EOF나 개행까지 읽고 <code>*p++ = c</code>, 마지막에 <code>*p = &#x27;\0&#x27;</code>, return <code>dest</code></p>
-<ul class="lv1">
-<li>길이를 지정하는 인자가 없음</li>
-</ul>
-<p class="def"><span class="k-blue">비슷한 함수 </span> : <code>strcpy</code>, <code>strcat</code> (임의 길이 복사)</p>
-<ul class="lv1">
-<li><code>scanf</code>·<code>fscanf</code>·<code>sscanf</code>의 <code>%s</code> (길이 제한 없음)</li>
-</ul>
-<p><code>echo()</code> : <code>char buf[4]; gets(buf); puts(buf);</code></p>
-<ul class="lv1">
-<li>23바이트 <code>01234567890123456789012</code> : 그대로 출력되지만 stack 일부를 이미 덮음</li>
-</ul>
-<ul class="lv1">
-<li>24바이트 <code>012345678901234567890123</code> : 출력이 <code>01234568901234567890123</code>처럼 깨짐</li>
-</ul>
-<ul class="lv1">
-<li>25바이트 <code>0123456789012345678901234</code> : Segmentation fault</li>
-</ul>
-<h4>stack frame과 return address</h4>
-<div class="figwrap"><img src="img/d20261020_06_echo_frame.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">echo disassembly </span> : <code>sub $24,%rsp</code>, <code>%rsp</code>를 <code>gets</code> 인자로 전달</p>
-<ul class="lv1">
-<li><code>%rsp</code> = buf 시작</li>
-</ul>
-<ul class="lv1">
-<li>return address = <code>%rsp+24</code></li>
-</ul>
-<p class="def"><span class="k-blue">23바이트 + null = 24바이트 </span> : buf와 padding을 꽉 채움</p>
-<p class="def"><span class="k-blue">24바이트 + null = 25바이트 </span> : return address 첫 byte를 0x00으로 덮음</p>
-<p class="def"><span class="k-blue">25바이트 이상 </span> : return address 여러 byte가 바뀌어 <code>retq</code>가 엉뚱한 주소로 점프</p>
-<ul class="lv1">
-<li>(슬라이드만) 23/24/25바이트별 stack 그림</li>
-</ul>
-<hr>
-<h3>Stack(스택) Smashing과 Code Injection</h3>
-<h4>return address 덮어쓰기</h4>
-<div class="figwrap"><img src="img/d20261020_07_stack_smash.webp" loading="lazy" alt=""></div>
-<p><code>Q()</code> : <code>char buf[64]; gets(buf);</code></p>
-<ul class="lv1">
-<li>return address A를 다른 code S의 주소로 덮음</li>
-</ul>
-<p>Q가 <code>ret</code> : A 대신 S로 점프</p>
-<p class="def"><span class="k-blue">attack string </span> : 24바이트 filler + 8바이트 주소 <code>0x4006fb</code>(smash)</p>
-<ul class="lv1">
-<li><code>smash()</code> : <code>printf(&quot;I&#x27;ve been smashed!\n&quot;)</code>, <code>exit(0)</code></li>
-</ul>
-<h4>attack string 제작</h4>
-<div class="figwrap"><img src="img/d20261020_08_attack_string.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">filler </span> : <code>ff ff ff ff</code> × 6 = 24바이트</p>
-<ul class="lv1">
-<li>return address 자리 : <code>fb 06 40 00 00 00 00 00</code> = 0x4006fb</li>
-</ul>
-<ul class="lv1">
-<li>(보충) 64bit little endian이라 낮은 byte부터 씀</li>
-</ul>
-<h4>Code Injection</h4>
-<div class="figwrap"><img src="img/d20261020_09_code_injection.webp" loading="lazy" alt=""></div>
-<p>return address A를 buf의 주소 B로 덮음</p>
-<ul class="lv1">
-<li>buf 안에 실행할 machine code를 채움</li>
-</ul>
-<p>Q가 <code>ret</code> : <code>%rip</code>가 B로 이동해 stack 위 exploit code를 실행</p>
-<p class="warn"><span class="k-blue">성립 조건 </span> : stack이 executable, B 주소를 예측 가능</p>
-<ul class="lv1">
-<li>이후 non-executable stack과 ASLR로 어려워짐</li>
-</ul>
-<h4>실제 사례</h4>
-<div class="figwrap"><img src="img/d20261020_10_exploits.webp" loading="lazy" alt=""></div>
-<p>원격 machine에서 arbitrary code 실행 가능</p>
-<ul class="lv1">
-<li>programmers keep making the same mistakes; recent countermeasures make attacks much harder</li>
-</ul>
-<ul class="lv1">
-<li>Internet Worm (1988), IM Wars (1999), Twilight hack on Wii</li>
-</ul>
-<p>Lab 4 Attack Lab에서 직접 실습</p>
-<hr>
-<h3>Defenses</h3>
-<h4>code 수준 : fgets·strncpy·%ns</h4>
-<div class="figwrap"><img src="img/d20261020_11_code_defense.webp" loading="lazy" alt=""></div>
-<p><code>gets(buf)</code> → <code>fgets(buf, 4, stdin)</code> : 최대 3문자 + null</p>
-<p><code>strcpy</code> → <code>strncpy</code></p>
-<p><code>scanf %s</code> → <code>fgets</code> 또는 <code>%ns</code> (n은 buffer 크기)</p>
-<p>code 수준 수정은 기본이지만 legacy code를 모두 고칠 수 없음</p>
-<ul class="lv1">
-<li>system·compiler 수준 방어가 함께 필요</li>
-</ul>
-<h4>system 수준 1 : ASLR</h4>
-<div class="figwrap"><img src="img/d20261020_12_aslr.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">ASLR </span> : 프로그램 시작 시 stack에 임의 크기의 공간을 할당</p>
-<ul class="lv1">
-<li>stack 주소를 통째로 이동</li>
-</ul>
-<ul class="lv1">
-<li>buffer나 삽입 code의 시작 주소를 예측하기 어렵게 만듦</li>
-</ul>
-<p class="def"><span class="k-blue">실행 예 </span> : local 주소가 0x7ffe4d3be87c, 0x7fff75a4f9fc</p>
-<ul class="lv1">
-<li>0x7ffeadb7c80c, 0x7ffeaea2fdac, 0x7ffcd452017c로 매번 다름</li>
-</ul>
-<h4>system 수준 2 : non-executable stack</h4>
-<div class="figwrap"><img src="img/d20261020_13_nx.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">전통 x86 </span> : read-only 또는 writable만 표시, 읽을 수 있으면 실행 가능</p>
-<p class="def"><span class="k-blue">x86-64 </span> : executable permission을 명시적으로 추가</p>
-<ul class="lv1">
-<li>OS가 stack을 non-executable로 표시</li>
-</ul>
-<ul class="lv1">
-<li>non-executable 영역 실행 시 CPU/OS가 fault</li>
-</ul>
-<p>고전 code injection은 막지만 ROP는 막지 못함</p>
-<h4>compiler : stack canary</h4>
-<div class="figwrap"><img src="img/d20261020_14_canary.webp" loading="lazy" alt=""></div>
-<p>buffer 바로 뒤에 special value(canary)를 놓음</p>
-<ul class="lv1">
-<li>function exit 전에 check; 값이 바뀌면 something wrong</li>
-</ul>
-<ul class="lv1">
-<li>바뀌었으면 <code>__stack_chk_fail</code></li>
-</ul>
-<p>GCC <code>-fstack-protector</code> : 현재 기본값</p>
-<p>보호된 프로그램에 9바이트 입력 → <code>*** stack smashing detected ***</code></p>
-<h4>보호된 echo disassembly</h4>
-<div class="figwrap"><img src="img/d20261020_15_canary_asm.webp" loading="lazy" alt=""></div>
-<p><code>mov %fs:0x28,%rax</code> : canary 읽기</p>
-<p><code>mov %rax,0x8(%rsp)</code> : stack에 저장</p>
-<p><code>xor %eax,%eax</code> : register의 canary 복사본 지우기</p>
-<p><code>gets</code> 후 : <code>mov 0x8(%rsp),%rax</code>, <code>xor %fs:0x28,%rax</code></p>
-<ul class="lv1">
-<li>같으면 <code>je</code>로 정상 return</li>
-</ul>
-<ul class="lv1">
-<li>다르면 <code>call __stack_chk_fail</code></li>
-</ul>
-<p class="def"><span class="k-blue">frame </span> : buf <code>%rsp</code>, canary <code>%rsp+8</code>, return address <code>%rsp+24</code></p>
-<h4>off-by-one과 canary</h4>
-<div class="figwrap"><img src="img/d20261020_16_canary_check.webp" loading="lazy" alt=""></div>
-<p>canary 최하위 byte는 0x00인 경우가 많음</p>
-<ul class="lv1">
-<li>1바이트 null로 그 byte를 다시 0x00으로 덮으면 검사 통과 가능</li>
-</ul>
-<p class="def"><span class="k-blue">슬라이드 표현 </span> : benign corruption (무해한 손상)</p>
-<ul class="lv1">
-<li>프로그래머가 silent off-by-one 오류를 남길 수 있음</li>
-</ul>
-<p>canary는 return address를 덮는 공격을 막는 데 초점</p>
-<ul class="lv1">
-<li>buffer 앞쪽 local variable 손상까지 막지는 않음</li>
-</ul>
-<hr>
-<h3>Return-Oriented Programming</h3>
-<h4>gadget</h4>
-<div class="figwrap"><img src="img/d20261020_17_gadget_ab.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">배경 </span> : stack randomization + non-executable stack → code injection 어려움</p>
-<p class="def"><span class="k-blue">대안 </span> : 이미 존재하는 code/library code를 재사용, fragment(gadget)를 이어 붙임</p>
-<ul class="lv1">
-<li>gadget : <code>ret</code>(0xc3)로 끝나는 instruction sequence</li>
-</ul>
-<ul class="lv1">
-<li>code 위치는 fixed, executable; stack canary는 우회 못 함</li>
-</ul>
-<p><code>ab_plus_c</code> gadget : 0x4004d4</p>
-<ul class="lv1">
-<li><code>imul %rsi,%rdi</code>, <code>lea (%rdi,%rdx,1),%rax</code>, <code>ret</code></li>
-</ul>
-<div class="figwrap"><img src="img/d20261020_18_gadget_setval.webp" loading="lazy" alt=""></div>
-<p><code>setval</code> gadget : 0x4004dc</p>
-<ul class="lv1">
-<li>immediate bytes <code>c7 07 d4 48 89 c7</code>가 <code>movq %rax,%rdi</code>를 encode</li>
-</ul>
-<h4>ROP chain</h4>
-<div class="figwrap"><img src="img/d20261020_19_rop_chain.webp" loading="lazy" alt=""></div>
-<p><code>ret</code> : stack에서 다음 gadget 주소를 pop</p>
-<ul class="lv1">
-<li>각 gadget의 마지막 <code>ret</code>이 다음 gadget을 시작</li>
-</ul>
-<p class="def"><span class="k-blue">attack string </span> : filler + gadget 주소 연속</p>
-<ul class="lv1">
-<li>여러 gadget이 stack을 아래로 침범</li>
-</ul>
-<p>예제 : echo가 <code>%rdi+%rdx</code>를 계산하는 gadget으로 return</p>
-<p>ROP는 non-executable stack과 ASLR을 우회</p>
-<ul class="lv1">
-<li>stack canary는 우회하지 못함</li>
-</ul>
-<hr>
-<h3>Union(유니언)</h3>
-<h4>struct와 union의 배치</h4>
-<div class="figwrap"><img src="img/d20261020_20_union.webp" loading="lazy" alt=""></div>
-<p><code>struct S1 { char c; int i[2]; double v; }</code></p>
-<ul class="lv1">
-<li>c offset 0, i[0] 8, i[1] 12, v 16, size 24</li>
-</ul>
-<ul class="lv1">
-<li>모든 member가 동시에 존재</li>
-</ul>
-<p><code>union U1 { char c; int i[2]; double v; }</code></p>
-<ul class="lv1">
-<li>모든 member가 offset 0</li>
-</ul>
-<ul class="lv1">
-<li>size = 가장 큰 member = 8</li>
-</ul>
-<ul class="lv1">
-<li>한 번에 한 field만 사용</li>
-</ul>
-<h4>bit pattern 재해석</h4>
-<div class="figwrap"><img src="img/d20261020_21_union_bits.webp" loading="lazy" alt=""></div>
-<p><code>union { float f; unsigned u; }</code></p>
-<ul class="lv1">
-<li><code>bit2float(u)</code> : u에 bit pattern을 쓰고 f로 읽음</li>
-</ul>
-<ul class="lv1">
-<li><code>float2bit(f)</code> : f에 값을 쓰고 u로 읽음</li>
-</ul>
-<p><code>(float) u</code> / <code>(unsigned) f</code> : 값 변환</p>
-<ul class="lv1">
-<li>union : 같은 bit를 재해석</li>
-</ul>
-<p>IEEE 754 float의 sign·exponent·fraction 확인에 사용</p>
-<hr>
-<h3>Byte Ordering</h3>
-<h4>little endian과 big endian</h4>
-<div class="figwrap"><img src="img/d20261020_22_endian.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">short/int/long </span> : memory에 2/4/8개의 연속 byte</p>
-<ul class="lv1">
-<li>어느 byte가 가장 낮은 주소에 오는가가 endian</li>
-</ul>
-<p class="def"><span class="k-blue">Big endian </span> : most significant byte가 가장 낮은 주소 (SPARC)</p>
-<p class="def"><span class="k-blue">Little endian </span> : least significant byte가 가장 낮은 주소 (Intel x86)</p>
-<p class="def"><span class="k-blue">Bi-endian </span> : 설정에 따라 둘 다 (ARM)</p>
-<p>machine 사이 binary data 교환 시 문제</p>
-<h4>64-bit union 예제</h4>
-<div class="figwrap"><img src="img/d20261020_23_endian_little.webp" loading="lazy" alt=""></div>
-<p><code>union { unsigned char c[8]; unsigned short s[4]; unsigned int i[2]; unsigned long l[1]; } dw;</code></p>
-<p><code>dw.c[0..7] = 0xf0..0xf7</code></p>
-<p class="def"><span class="k-blue">Little endian </span> : s[0..3] = 0xf1f0, 0xf3f2, 0xf5f4, 0xf7f6</p>
-<ul class="lv1">
-<li>i[0..1] = 0xf3f2f1f0, 0xf7f6f5f4</li>
-</ul>
-<ul class="lv1">
-<li>l[0] = 0xf7f6f5f4f3f2f1f0</li>
-</ul>
-<div class="figwrap"><img src="img/d20261020_24_endian_big.webp" loading="lazy" alt=""></div>
-<p class="def"><span class="k-blue">Big endian </span> : s[0..3] = 0xf0f1, 0xf2f3, 0xf4f5, 0xf6f7</p>
-<ul class="lv1">
-<li>i[0..1] = 0xf0f1f2f3, 0xf4f5f6f7</li>
-</ul>
-<ul class="lv1">
-<li>l[0] = 0xf0f1f2f3f4f5f6f7</li>
-</ul>
-<ul class="lv1">
-<li>(보충) 32-bit machine은 long이 4byte라 l[0] 값이 64-bit와 다름</li>
-</ul>
-<hr>
-<h3>시험 포인트</h3>
-<p><code>struct_t</code> : a[0] 0, a[1] 4, d 8 → a[2]부터 d를 덮음</p>
-<p class="def"><span class="k-blue">echo frame </span> : buf <code>%rsp</code>, return address <code>%rsp+24</code></p>
-<ul class="lv1">
-<li>24바이트 attack string이 return address를 덮음</li>
-</ul>
-<p><code>struct S1</code> : offset 0/8/16, size 24</p>
-<p><code>union U1</code> : 모두 offset 0, size 8</p>
-<p class="def"><span class="k-blue">보안 </span> : <code>fgets</code>·<code>strncpy</code>·<code>%ns</code> / ASLR / non-executable stack</p>
-<ul class="lv1">
-<li>canary <code>%fs:0x28</code>, <code>__stack_chk_fail</code></li>
-</ul>
-<ul class="lv1">
-<li>ROP : <code>ret</code>으로 끝나는 gadget, canary는 우회 못 함</li>
-</ul>
-<p class="def"><span class="k-blue">endian </span> : little/big endian의 s/i/l 값 구분</p>
-<hr>
-<h3>연습문제</h3>
-<h4>문제 1</h4>
-<p><code>struct_t</code>에서 <code>fun(2)</code>와 <code>fun(3)</code>이 3.14가 아닌 값이 나오는 이유를 offset으로 설명하라.</p>
-<details><summary>답</summary><div class="det-body"><p><code>a[2]</code>는 d의 offset 8에 놓이는 첫 4byte를 덮음</p>
-<p>d의 낮은 byte가 바뀌어 3.14가 3.1399998664856이 됨</p>
-<p><code>a[3]</code>은 d의 나머지 4byte까지 덮음</p>
-<p>d 전체가 2.00000061035156으로 바뀜</p></div></details>
-<h4>문제 2</h4>
-<p><code>echo()</code>의 <code>buf[4]</code>에 24바이트를 넣으면 return address가 어떻게 바뀌는가?</p>
-<details><summary>답</summary><div class="det-body"><p>buf 4byte + padding 20byte = 24byte</p>
-<p>24번째 byte까지 채우고 <code>gets</code>가 붙이는 null이 return address의 첫 byte를 0x00으로 덮음</p>
-<p>원래 return address <code>0x4006f6</code> → <code>0x400600</code></p>
-<p><code>retq</code>가 <code>0x400600</code>으로 점프해 출력이 깨지거나 비정상 동작</p></div></details>
-<h4>문제 3</h4>
-<p><code>dw.c[0..7] = 0xf0..0xf7</code>일 때 little endian과 big endian의 <code>s[0]</code>, <code>i[0]</code>, <code>l[0]</code>을 구하라.</p>
-<details><summary>답</summary><div class="det-body"><p class="def"><span class="k-blue">Little endian </span> : s[0] = 0xf1f0, i[0] = 0xf3f2f1f0</p>
-<p>l[0] = 0xf7f6f5f4f3f2f1f0</p>
-<p class="def"><span class="k-blue">Big endian </span> : s[0] = 0xf0f1, i[0] = 0xf0f1f2f3</p>
-<p>l[0] = 0xf0f1f2f3f4f5f6f7</p></div></details>
-<hr>
-<h3>남은 질문</h3>
-<p>슬라이드 11–16의 disassembly walkthrough는 녹취가 거의 없어 슬라이드만으로 정리</p>
-<ul class="lv1">
-<li>교수님이 강조한 debugging 포인트가 있으면 보강 필요</li>
-</ul>
-  </div>
-  <div class="pnav"><a href="lec7.html">&larr; 이전</a><a href="index.html">목록</a><a href="datalab.html">다음 &rarr;</a></div>
+<header class="topbar"><div class="topbar-in">
+<div class="brand"><a href="index.html">컴퓨터 시스템<span class="sub">CSED211 · POSTECH</span></a></div>
+<nav><a href="index.html">홈</a><a href="exam-info.html">시험 정보</a><a href="summary.html">총정리</a><a href="problems.html">문제 풀이</a><a href="roadmap.html">로드맵</a><a href="plan.html">플랜</a></nav>
+</div></header>
+<main class="paper">
+<div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>Lecture 8</div>
+<h1 class="title">Lecture 8 · Advanced Topics(심화 주제)</h1>
+<p class="title-sub"><span class="chip blue">10/20 (화)</span>슬라이드 "Lecture 8 Advanced Topics" + 수업 녹취 (14:04–14:53, ASR 누락 다수 — 슬라이드 11–16의 disassembly walkthrough는 녹취가 거의 없어 슬라이드만으로 정리)</p>
+<div class="body notes">
+
+<h2><span class="n">1</span>Memory layout(메모리 레이아웃)</h2>
+<h3>x86-64 address space의 다섯 영역</h3>
+<figure class="fig" style="--figw:560px">
+<svg viewBox="0 0 560 300" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <g font-size="12">
+    <text x="24" y="24" font-size="12.5" font-weight="800" fill="#23252d">높은 주소 ↑</text>
+    <rect x="24" y="34" width="240" height="44" fill="#eef4ff" stroke="#7fa8e0"/><text x="38" y="52" fill="#23252d" font-weight="700">Stack</text><text x="38" y="68" fill="#6b7280" font-size="11">local variable, function frame · 기본 8 MiB</text>
+    <text x="280" y="60" fill="#6b7280" font-size="11">0x7FFFFFFFFFFF 근처 · 아래로 자람 ↓</text>
+    <rect x="24" y="90" width="240" height="36" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="113" fill="#23252d">Shared Libraries</text>
+    <rect x="24" y="138" width="240" height="44" fill="#eef4ff" stroke="#7fa8e0"/><text x="38" y="156" fill="#23252d" font-weight="700">Heap</text><text x="38" y="172" fill="#6b7280" font-size="11">malloc · calloc · new (실행 중 dynamic allocation)</text>
+    <text x="280" y="164" fill="#6b7280" font-size="11">위로 자람 ↑</text>
+    <rect x="24" y="194" width="240" height="36" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="217" fill="#23252d">Data — global · static · string constant</text>
+    <rect x="24" y="242" width="240" height="36" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="265" fill="#23252d">Text — machine code, read-only</text>
+    <text x="280" y="265" fill="#6b7280" font-size="11">0x400000 근처</text>
+  </g>
+</svg>
+<figcaption>stack은 아래로, heap은 위로 자람 — stack overflow와 heap overflow가 서로 반대 방향인 이유</figcaption>
+</figure>
+<h3>array·heap·stack의 실제 주소</h3>
+<pre class="c">char big_array[1L&lt;&lt;24];   /* 16 MB global array */
+char huge_array[1L&lt;&lt;31];  /* 2 GB global array */
+p1 = malloc(1L&lt;&lt;28);      /* 256 MB */    p3 = malloc(1L&lt;&lt;32);  /* 4 GB */
+p2 = malloc(1L&lt;&lt;8);       /* 256 B */     p4 = malloc(1L&lt;&lt;8);   /* 256 B */</pre>
+<div class="tblwrap"><table>
+<thead><tr><th>영역</th><th>실행 예 주소</th></tr></thead>
+<tbody>
+<tr><td>local variable (stack)</td><td><code>0x7ffffffbe87c</code></td></tr>
+<tr><td>p1, p3 (heap, 큰 할당)</td><td><code>0x7f7262a1e010</code>, <code>0x7f7162a1d010</code></td></tr>
+<tr><td>p2, p4 (heap, 작은 할당)</td><td><code>0x8359d010</code>, <code>0x8359d120</code></td></tr>
+<tr><td>big_array, huge_array (data)</td><td><code>0x80601060</code>, <code>0x601060</code></td></tr>
+<tr><td>main, useless (text)</td><td><code>0x40060c</code>, <code>0x400590</code></td></tr>
+</tbody></table></div>
+<ul>
+<li>주소가 흩어지는 이유: heap·stack·shared library가 각각 다른 방향으로 자람</li>
+<li>ASLR이 켜져 있으면 실행마다 stack 주소가 달라짐 (아래 Defenses)</li>
+</ul>
+
+<h2><span class="n">2</span>Buffer overflow(버퍼 오버플로)</h2>
+<h3>struct_t 예제 — array 범위를 넘으면</h3>
+<pre class="c">struct_t { int a[2]; double d; }      // a[0] offset 0, a[1] offset 4, d offset 8
+
+fun(i) { s.d = 3.14; s.a[i] = 1073741824; return s.d; }</pre>
+<div class="tblwrap"><table>
+<thead><tr><th>호출</th><th>결과</th><th>이유</th></tr></thead>
+<tbody>
+<tr><td>fun(0), fun(1)</td><td>3.14</td><td>정상 범위</td></tr>
+<tr><td>fun(2)</td><td>3.1399998664856</td><td>a[2]가 d의 낮은 4byte를 덮음</td></tr>
+<tr><td>fun(3)</td><td>2.00000061035156</td><td>a[3]이 d 전체를 덮음</td></tr>
+<tr><td>fun(4)</td><td>3.14</td><td>d를 지난 칸 (이 실행에서는 무해)</td></tr>
+<tr><td>fun(6)</td><td>Segmentation fault</td><td>critical state / return address까지 침범</td></tr>
+</tbody></table></div>
+<div class="bx warn">
+<span class="bx-tag">결과가 시스템마다 다르다</span>
+struct padding과 stack 배치가 compiler·OS마다 다르기 때문에 같은 코드도 다른 결과가 나올 수 있음.
 </div>
+<h3>왜 큰 문제인가</h3>
+<ul>
+<li>buffer overflow: array에 할당된 크기를 넘겨 쓰는 것 — <span class="kb">기술적 원인 기준 보안 취약점 1위</span> (전체 원인 1위는 social engineering)</li>
+<li>가장 흔한 형태: unchecked string length — 특히 stack의 bounded character array → <b>stack smashing</b></li>
+<li>programmers가 같은 실수를 반복해 왔고, 최근 countermeasure로 공격이 어려워짐</li>
+</ul>
+<h3>취약한 gets()와 echo</h3>
+<pre class="c">char *gets(char *dest) { ... }   // EOF나 개행까지 읽고 *p++ = c, 마지막에 *p = '\0'
+                                 // 길이를 지정하는 인자가 없음!
+// 비슷하게 위험: strcpy, strcat (임의 길이 복사), scanf·fscanf·sscanf의 %s (길이 제한 없음)
+
+void echo() {
+    char buf[4];
+    gets(buf);
+    puts(buf);
+}</pre>
+<figure class="fig" style="--figw:620px">
+<svg viewBox="0 0 620 250" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">echo의 stack frame — buf는 %rsp, return address는 %rsp+24</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="38" width="288" height="32" fill="#eef4ff" stroke="#7fa8e0"/><text x="38" y="59" fill="#23252d">buf + padding (24byte) — %rsp</text>
+    <rect x="24" y="70" width="288" height="32" fill="#fdf3d8" stroke="#e0c97f"/><text x="38" y="91" fill="#23252d">return address — %rsp+24</text>
+    <text x="330" y="60" fill="#6b7280" font-family="inherit" font-size="11.5">echo disassembly: sub $24,%rsp, %rsp를 gets 인자로 전달</text>
+  </g>
+  <g font-size="11.5">
+    <text x="24" y="134" font-size="12" font-weight="700" fill="#23252d">입력 길이별 결과</text>
+    <rect x="24" y="146" width="572" height="26" rx="6" fill="#f8f9fc" stroke="#e3e6ee"/><text x="38" y="164" fill="#23252d">23바이트 + null = 24 → buf와 padding을 꽉 채움 · 그대로 출력 (하지만 stack 일부를 이미 덮음)</text>
+    <rect x="24" y="178" width="572" height="26" rx="6" fill="#f8f9fc" stroke="#e3e6ee"/><text x="38" y="196" fill="#23252d">24바이트 + null = 25 → return address 첫 byte를 0x00으로 덮음 · 출력이 깨짐</text>
+    <rect x="24" y="210" width="572" height="26" rx="6" fill="#f8f9fc" stroke="#e3e6ee"/><text x="38" y="228" fill="#23252d">25바이트 이상 → return address 여러 byte가 바뀜 · retq가 엉뚱한 주소로 점프 → Segmentation fault</text>
+  </g>
+</svg>
+<figcaption>슬라이드의 23/24/25바이트 stack 그림을 하나로 정리</figcaption>
+</figure>
+
+<h2><span class="n">3</span>Stack smashing과 code injection</h2>
+<h3>return address 덮어쓰기</h3>
+<pre class="c">void Q() {
+    char buf[64];
+    gets(buf);              // return address A를 다른 code S의 주소로 덮으면
+}                           // Q가 ret할 때 A 대신 S로 점프
+
+void smash() { printf("I've been smashed!\n"); exit(0); }</pre>
+<figure class="fig" style="--figw:620px">
+<svg viewBox="0 0 620 180" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">attack string = 24바이트 filler + 8바이트 주소 (0x4006fb = smash)</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="40" width="288" height="34" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="61" fill="#23252d">ff ff ff ff × 6 (filler 24byte)</text>
+    <rect x="312" y="40" width="288" height="34" fill="#fbe9e7" stroke="#e0a49c"/><text x="326" y="61" fill="#23252d">fb 06 40 00 00 00 00 00</text>
+    <path d="M456 74 L456 96 L120 96 L120 118" stroke="#c0433a" stroke-width="1.6" fill="none" marker-end="url(#arr8)"/>
+    <rect x="24" y="118" width="192" height="34" fill="#fbe9e7" stroke="#e0a49c"/><text x="38" y="140" fill="#23252d">return address 자리</text>
+    <text x="232" y="140" fill="#6b7280" font-family="inherit" font-size="11.5">64bit little endian이라 낮은 byte(fb)부터 씀</text>
+    <defs><marker id="arr8" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#c0433a"/></marker></defs>
+  </g>
+</svg>
+<figcaption>gets가 입력을 buf부터 순서대로 쓰므로, 24바이트 뒤의 8바이트가 return address를 smash의 주소로 바꿈</figcaption>
+</figure>
+<h3>Code injection</h3>
+<ul>
+<li>return address A를 <b>buf의 주소 B</b>로 덮고, buf 안에 실행할 machine code를 채움 → Q가 ret하면 %rip가 B로 이동해 stack 위 exploit code를 실행</li>
+<li>성립 조건: stack이 executable할 것, B 주소를 예측 가능할 것 → 이후 non-executable stack과 ASLR로 어려워짐</li>
+<li>실제 사례: 원격 machine에서 arbitrary code 실행 가능 — Internet Worm (1988), IM Wars (1999), Twilight hack on Wii. Lab 4 Attack Lab에서 직접 실습</li>
+</ul>
+
+<h2><span class="n">4</span>Defenses(방어)</h2>
+<h3>code 수준 — 길이를 제한하는 함수로</h3>
+<ul>
+<li><code>gets(buf)</code> → <code>fgets(buf, 4, stdin)</code>: 최대 3문자 + null · <code>strcpy</code> → <code>strncpy</code> · <code>scanf %s</code> → fgets 또는 <code>%ns</code> (n은 buffer 크기)</li>
+<li>code 수준 수정은 기본이지만 legacy code를 모두 고칠 수 없음 → system·compiler 수준 방어가 함께 필요</li>
+</ul>
+<h3>system 수준 1 — ASLR</h3>
+<ul>
+<li>프로그램 시작 시 stack에 임의 크기의 공간을 할당 → stack 주소를 통째로 이동시켜 buffer나 삽입 code의 시작 주소를 예측하기 어렵게 만듦</li>
+<li>실행 예: local 주소가 0x7ffe4d3be87c, 0x7fff75a4f9fc, 0x7ffeadb7c80c, 0x7ffeaea2fdac, 0x7ffcd452017c로 매번 다름</li>
+</ul>
+<h3>system 수준 2 — non-executable stack</h3>
+<ul>
+<li>전통 x86: read-only 또는 writable만 표시 — 읽을 수 있으면 실행 가능. x86-64: executable permission을 명시적으로 추가</li>
+<li>OS가 stack을 non-executable로 표시 → non-executable 영역 실행 시 CPU/OS가 fault</li>
+<li><span class="kb">고전 code injection은 막지만 ROP는 막지 못함</span></li>
+</ul>
+<h3>compiler — stack canary</h3>
+<figure class="fig" style="--figw:560px">
+<svg viewBox="0 0 560 170" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">보호된 echo의 stack frame</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="38" width="200" height="32" fill="#eef4ff" stroke="#7fa8e0"/><text x="38" y="59" fill="#23252d">buf — %rsp</text>
+    <rect x="224" y="38" width="140" height="32" fill="#fdf3d8" stroke="#e0c97f"/><text x="238" y="59" fill="#23252d">canary — %rsp+8</text>
+    <rect x="364" y="38" width="172" height="32" fill="#fbe9e7" stroke="#e0a49c"/><text x="378" y="59" fill="#23252d">return addr — %rsp+24</text>
+    <text x="24" y="100" fill="#6b7280" font-family="inherit" font-size="11.5">buffer 바로 뒤에 special value(canary)를 놓고, function exit 전에 check → 값이 바뀌면 something wrong</text>
+    <text x="24" y="122" fill="#6b7280" font-family="inherit" font-size="11.5">보호된 프로그램에 9바이트 입력 → *** stack smashing detected ***</text>
+    <text x="24" y="144" fill="#6b7280" font-family="inherit" font-size="11.5">GCC -fstack-protector : 현재 기본값</text>
+  </g>
+</svg>
+<figcaption>canary가 buf와 return address 사이를 지킴 — overflow가 return address에 닿으려면 canary를 먼저 덮어야 함</figcaption>
+</figure>
+<pre class="asm">mov    %fs:0x28,%rax     <span class="cm"># canary 읽기</span>
+mov    %rax,0x8(%rsp)    <span class="cm"># stack에 저장</span>
+xor    %eax,%eax         <span class="cm"># register의 canary 복사본 지우기</span>
+...                      <span class="cm"># gets 호출</span>
+mov    0x8(%rsp),%rax    <span class="cm"># gets 후 canary 다시 읽기</span>
+xor    %fs:0x28,%rax     <span class="cm"># 원본과 비교</span>
+je     .L9               <span class="cm"># 같으면 정상 return</span>
+call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
+<h3>off-by-one과 canary의 한계</h3>
+<ul>
+<li>canary 최하위 byte는 0x00인 경우가 많음 → 1바이트 null로 그 byte를 다시 0x00으로 덮으면 검사 통과 가능. 슬라이드 표현: benign corruption (무해한 손상) — 프로그래머가 silent off-by-one 오류를 남길 수 있음</li>
+<li>canary는 return address를 덮는 공격을 막는 데 초점 — buffer 앞쪽 local variable 손상까지 막지는 않음</li>
+</ul>
+
+<h2><span class="n">5</span>Return-Oriented Programming (ROP)</h2>
+<ul>
+<li>배경: stack randomization + non-executable stack → code injection이 어려워짐. 대안: <b>이미 존재하는 code/library code를 재사용</b>해 fragment(gadget)를 이어 붙임</li>
+<li><b>gadget</b>: ret(0xc3)으로 끝나는 instruction sequence — code 위치는 fixed, executable</li>
+<li>예: ab_plus_c gadget (0x4004d4): <code>imul %rsi,%rdi; lea (%rdi,%rdx,1),%rax; ret</code> · setval gadget (0x4004dc): immediate bytes c7 07 d4 48 89 c7가 movq %rax,%rdi를 encode</li>
+</ul>
+<figure class="fig" style="--figw:560px">
+<svg viewBox="0 0 560 220" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">ROP chain — attack string = filler + gadget 주소의 연속</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="38" width="220" height="30" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="58" fill="#23252d">filler</text>
+    <rect x="24" y="68" width="220" height="30" fill="#fbe9e7" stroke="#e0a49c"/><text x="38" y="88" fill="#23252d">gadget 1 주소</text>
+    <rect x="24" y="98" width="220" height="30" fill="#fbe9e7" stroke="#e0a49c"/><text x="38" y="118" fill="#23252d">gadget 2 주소</text>
+    <rect x="24" y="128" width="220" height="30" fill="#fbe9e7" stroke="#e0a49c"/><text x="38" y="148" fill="#23252d">gadget 3 주소 …</text>
+    <path d="M260 83 L330 83 L330 60 L392 60" stroke="#c0433a" stroke-width="1.5" fill="none" marker-end="url(#arr8b)"/>
+    <path d="M260 113 L344 113 L344 86 L392 86" stroke="#c0433a" stroke-width="1.5" fill="none" marker-end="url(#arr8b)"/>
+    <path d="M260 143 L358 143 L358 112 L392 112" stroke="#c0433a" stroke-width="1.5" fill="none" marker-end="url(#arr8b)"/>
+    <rect x="396" y="44" width="140" height="86" fill="#f8f9fc" stroke="#e3e6ee"/>
+    <text x="408" y="66" fill="#23252d">gadget code</text>
+    <text x="408" y="86" fill="#23252d">…</text>
+    <text x="408" y="106" fill="#23252d">ret → 다음 gadget</text>
+    <text x="24" y="186" fill="#6b7280" font-family="inherit" font-size="11.5">ret이 stack에서 다음 gadget 주소를 pop — 각 gadget의 마지막 ret이 다음 gadget을 시작</text>
+    <text x="24" y="206" fill="#6b7280" font-family="inherit" font-size="11.5">예제: echo가 %rdi+%rdx를 계산하는 gadget으로 return</text>
+    <defs><marker id="arr8b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#c0433a"/></marker></defs>
+  </g>
+</svg>
+<figcaption>여러 gadget이 stack을 아래로 침범하며 이어짐</figcaption>
+</figure>
+<div class="bx warn">
+<span class="bx-tag">무엇을 우회하고 무엇을 못 우회하나</span>
+ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 우회하지 못함</b> — gadget의 code도 return address를 덮어야 도달할 수 있기 때문.
+</div>
+
+<h2><span class="n">6</span>Union(유니언)</h2>
+<h3>struct와 union의 배치</h3>
+<figure class="fig" style="--figw:620px">
+<svg viewBox="0 0 620 210" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">struct S1 { char c; int i[2]; double v; } — size 24, 모든 member가 동시에 존재</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="34" width="60" height="28" fill="#eef4ff" stroke="#7fa8e0"/><text x="42" y="52" fill="#23252d">c</text>
+    <rect x="84" y="34" width="60" height="28" fill="#f3f4f8" stroke="#dcdfe8" stroke-dasharray="4 3"/><text x="98" y="52" fill="#9aa0ab">pad</text>
+    <rect x="144" y="34" width="56" height="28" fill="#eef4ff" stroke="#7fa8e0"/><text x="156" y="52" fill="#23252d">i[0]</text>
+    <rect x="200" y="34" width="56" height="28" fill="#eef4ff" stroke="#7fa8e0"/><text x="212" y="52" fill="#23252d">i[1]</text>
+    <rect x="256" y="34" width="56" height="28" fill="#f3f4f8" stroke="#dcdfe8" stroke-dasharray="4 3"/><text x="270" y="52" fill="#9aa0ab">pad</text>
+    <rect x="312" y="34" width="112" height="28" fill="#eef4ff" stroke="#7fa8e0"/><text x="360" y="52" fill="#23252d">v</text>
+    <text x="26" y="80" fill="#6b7280">0</text><text x="146" y="80" fill="#6b7280">8</text><text x="202" y="80" fill="#6b7280">12</text><text x="314" y="80" fill="#6b7280">16</text><text x="414" y="80" fill="#6b7280">24</text>
+  </g>
+  <text x="24" y="116" font-size="12.5" font-weight="800" fill="#23252d">union U1 { char c; int i[2]; double v; } — 모든 member가 offset 0, size = 가장 큰 member = 8</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="128" width="112" height="28" fill="#eef4ff" stroke="#7fa8e0"/><text x="60" y="146" fill="#23252d">v (8B)</text>
+    <rect x="24" y="156" width="112" height="20" fill="#f3f4f8" stroke="#dcdfe8"/><text x="34" y="170" fill="#23252d">i[0..1] (8B)</text>
+    <rect x="24" y="176" width="14" height="20" fill="#fdf3d8" stroke="#e0c97f"/><text x="44" y="190" fill="#23252d">c (1B)</text>
+  </g>
+  <text x="160" y="160" fill="#6b7280" font-family="inherit" font-size="11.5">같은 8byte를 c, i, v 중 한 가지로만 읽음 — 한 번에 한 field만 사용</text>
+</svg>
+<figcaption>같은 member 목록인데 struct는 24byte, union은 8byte</figcaption>
+</figure>
+<h3>bit pattern 재해석</h3>
+<pre class="c">union { float f; unsigned u; };
+
+float bit2float(unsigned u0) { u = u0; return f; }  // u에 bit pattern을 쓰고 f로 읽음
+unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 읽음</pre>
+<ul>
+<li><code>(float) u</code> / <code>(unsigned) f</code>는 <b>값 변환</b> · union은 <b>같은 bit의 재해석</b> — 둘은 완전히 다름</li>
+<li>IEEE 754 float의 sign·exponent·fraction을 확인할 때 사용</li>
+</ul>
+
+<h2><span class="n">7</span>Byte ordering(바이트 순서)</h2>
+<ul>
+<li>short/int/long: memory에 2/4/8개의 연속 byte — 어느 byte가 가장 낮은 주소에 오는가가 endian</li>
+<li><b>Big endian</b>: most significant byte가 가장 낮은 주소 (SPARC) · <b>Little endian</b>: least significant byte가 가장 낮은 주소 (Intel x86) · <b>Bi-endian</b>: 설정에 따라 둘 다 (ARM)</li>
+<li>machine 사이에 binary data를 교환할 때 문제가 됨</li>
+</ul>
+<figure class="fig" style="--figw:640px">
+<svg viewBox="0 0 640 210" width="640" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">union { unsigned char c[8]; short s[4]; int i[2]; long l[1]; } dw — dw.c[0..7] = 0xf0..0xf7</text>
+  <g font-size="11" font-family="ui-monospace,monospace">
+    <rect x="24" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="34" y="51" fill="#23252d">f0</text>
+    <rect x="58" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="68" y="51" fill="#23252d">f1</text>
+    <rect x="92" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="102" y="51" fill="#23252d">f2</text>
+    <rect x="126" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="136" y="51" fill="#23252d">f3</text>
+    <rect x="160" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="170" y="51" fill="#23252d">f4</text>
+    <rect x="194" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="204" y="51" fill="#23252d">f5</text>
+    <rect x="228" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="238" y="51" fill="#23252d">f6</text>
+    <rect x="262" y="34" width="34" height="26" fill="#eef4ff" stroke="#7fa8e0"/><text x="272" y="51" fill="#23252d">f7</text>
+    <text x="24" y="76" fill="#6b7280">c[0] (낮은 주소) → c[7] (높은 주소)</text>
+  </g>
+  <g font-size="11.5" font-family="ui-monospace,monospace">
+    <text x="24" y="108" fill="#23252d" font-family="inherit" font-weight="700">Little endian (x86)</text>
+    <rect x="24" y="118" width="270" height="26" fill="#f8f9fc" stroke="#e3e6ee"/><text x="36" y="135" fill="#23252d">s[0]=0xf1f0 · i[0]=0xf3f2f1f0</text>
+    <rect x="24" y="148" width="270" height="26" fill="#f8f9fc" stroke="#e3e6ee"/><text x="36" y="165" fill="#23252d">l[0]=0xf7f6f5f4f3f2f1f0</text>
+    <text x="330" y="108" fill="#23252d" font-family="inherit" font-weight="700">Big endian (SPARC)</text>
+    <rect x="330" y="118" width="270" height="26" fill="#f8f9fc" stroke="#e3e6ee"/><text x="342" y="135" fill="#23252d">s[0]=0xf0f1 · i[0]=0xf0f1f2f3</text>
+    <rect x="330" y="148" width="270" height="26" fill="#f8f9fc" stroke="#e3e6ee"/><text x="342" y="165" fill="#23252d">l[0]=0xf0f1f2f3f4f5f6f7</text>
+  </g>
+  <text x="24" y="196" fill="#6b7280" font-size="11.5">32-bit machine은 long이 4byte라 l[0] 값이 64-bit와 다름</text>
+</svg>
+<figcaption>같은 byte열을 little endian은 뒤집어 읽고, big endian은 그대로 읽음</figcaption>
+</figure>
+
+<h2><span class="n">8</span>시험 포인트</h2>
+<div class="bx tip">
+<span class="bx-tag">시험 포인트</span>
+<ul>
+<li>memory layout: Text 0x400000 근처 · Data (global·static·string constant) · Heap (malloc, 위로 자람) · Shared Libraries · Stack 0x7FFFFFFFFFFF 근처 (기본 8 MiB, 아래로 자람)</li>
+<li>struct_t: a[0] offset 0, a[1] offset 4, d offset 8 → a[2]부터 d를 덮음 · 결과는 시스템마다 다를 수 있음 (padding·stack 배치가 compiler·OS에 따라 다름)</li>
+<li>echo frame: buf %rsp, return address %rsp+24 · 24바이트 입력 + null이 return address 첫 byte를 덮음 · gets/strcpy/strcat/%s는 길이 제한이 없어 위험</li>
+<li>방어: code 수준 fgets·strncpy·%ns · system 수준 ASLR (stack 주소를 매번 이동), non-executable stack (고전 injection은 막지만 ROP는 못 막음) · compiler 수준 stack canary (%fs:0x28, __stack_chk_fail, GCC -fstack-protector 기본값)</li>
+<li>canary 한계: 최하위 byte 0x00인 경우가 많아 off-by-one null 덮기는 통과 가능 · buffer 앞쪽 local variable 손상은 못 막음</li>
+<li>ROP: ret(0xc3)으로 끝나는 gadget을 이어 붙임 · non-executable stack과 ASLR 우회, canary는 우회 못 함</li>
+<li>struct S1: offset 0/8/16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만)</li>
+<li>union은 같은 bit의 재해석, cast는 값 변환 — bit2float/float2bit에 사용</li>
+<li>endian: dw.c = f0..f7일 때 little endian s[0]=0xf1f0, i[0]=0xf3f2f1f0, l[0]=0xf7f6f5f4f3f2f1f0 · big endian은 그대로 0xf0f1, 0xf0f1f2f3, 0xf0f1f2f3f4f5f6f7</li>
+</ul>
+</div>
+
+<h2><span class="n">9</span>연습문제</h2>
+
+<div class="prob"><div class="prob-body">
+<p><b>문제 1.</b> struct_t에서 fun(2)와 fun(3)이 3.14가 아닌 값이 나오는 이유를 offset으로 설명하라.</p>
+<details class="tgl ans"><summary>정답</summary>
+<div class="tgl-body">
+<ol class="steps">
+<li>배치는 a[0] offset 0, a[1] offset 4, d offset 8 → a[2]는 정확히 d가 시작하는 자리</li>
+<li>a[2] = 1073741824를 쓰면 d의 첫 4byte(낮은 byte)가 바뀜 → 3.14가 3.1399998664856이 됨</li>
+<li>a[3]은 d의 나머지 4byte까지 덮음 → d 전체가 2.00000061035156으로 바뀜</li>
+</ol>
+<div class="final-answer">a[2]는 d의 낮은 4byte, a[3]은 d 전체를 덮기 때문</div>
+</div></details>
+</div></div>
+
+<div class="prob"><div class="prob-body">
+<p><b>문제 2.</b> echo()의 buf[4]에 24바이트를 넣으면 return address가 어떻게 바뀌는가?</p>
+<details class="tgl ans"><summary>정답</summary>
+<div class="tgl-body">
+<ol class="steps">
+<li>frame: buf 4byte + padding 20byte = 24byte, return address는 %rsp+24</li>
+<li>24번째 byte까지 채우고 gets가 붙이는 null(25번째 byte)이 return address의 첫 byte를 0x00으로 덮음</li>
+<li>원래 return address 0x4006f6 → 0x400600</li>
+<li>retq가 0x400600으로 점프해 출력이 깨지거나 비정상 동작</li>
+</ol>
+<div class="final-answer">0x4006f6 → 0x400600 (첫 byte가 0x00으로 덮임)</div>
+</div></details>
+</div></div>
+
+<div class="prob"><div class="prob-body">
+<p><b>문제 3.</b> dw.c[0..7] = 0xf0..0xf7일 때 little endian과 big endian의 s[0], i[0], l[0]을 구하라.</p>
+<details class="tgl ans"><summary>정답</summary>
+<div class="tgl-body">
+<ol class="steps">
+<li>Little endian (낮은 자리 byte가 낮은 주소): s[0] = 0xf1f0, i[0] = 0xf3f2f1f0, l[0] = 0xf7f6f5f4f3f2f1f0</li>
+<li>Big endian (높은 자리 byte가 낮은 주소): s[0] = 0xf0f1, i[0] = 0xf0f1f2f3, l[0] = 0xf0f1f2f3f4f5f6f7</li>
+</ol>
+<div class="final-answer">little: 0xf1f0 / 0xf3f2f1f0 / 0xf7f6f5f4f3f2f1f0 · big: 0xf0f1 / 0xf0f1f2f3 / 0xf0f1f2f3f4f5f6f7</div>
+</div></details>
+</div></div>
+
+<div class="bx warn">
+<span class="bx-tag">남은 질문 (출처 불명확)</span>
+슬라이드 11–16의 disassembly walkthrough는 수업 녹취(ASR)가 거의 없어 슬라이드만으로 정리함 — 교수님이 강조한 debugging 포인트가 있었다면 이 노트에 없을 수 있음.
+</div>
+
+<nav class="pnav"><a class="prev" href="lec7.html">← Lecture 7 · 데이터</a><a class="next" href="summary.html">총정리 →</a></nav>
+</main>
 </body>
 </html>

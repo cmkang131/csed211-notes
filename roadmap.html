@@ -3,107 +3,124 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>코딩 문제 로드맵(Problem Roadmap) — 중요도순 · Lec2~8 + LAB — 컴퓨터 시스템</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<title>코딩 문제 로드맵 — 컴퓨터 시스템</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="paper">
-  <div class="phead"><a class="to-home" href="index.html">&larr; 홈</a><span class="phead-c">컴퓨터 시스템 · CSED211 · POSTECH</span><span class="phead-r">10/21 정리</span></div>
-  <h1 class="pg-title">코딩 문제 로드맵(Problem Roadmap) — 중요도순 · Lec2~8 + LAB</h1>
-  
-  <div class="body notes">
-<p><a href="index.html">CSED211-컴퓨터 시스템</a> · 2026-10-21 정리 · 알고리즘 과목 코딩 로드맵과 동일한 <b>중요도 번호·체크박스·원본 링크·유사도 표시</b> 구성</p>
-<div class="callout"><span class="ci">📌</span><div class="co-body"><p class="def"><b class="k-blue">사용법</b> : 위에서부터 체크하면서 풀기. 랩 문제는 허용 연산자/자료형/최대 연산 수를 지켜 직접 구현 → 테스트. 어셈블리 문제는 먼저 손으로 C 동작 복원 → GDB로 검증. 해설은 마지막에 확인.</p>
-<p class="def"><b class="k-blue">중요도 기준</b> : 현재 노션 강의(Lec2~8)와 직접 연결되는가 &gt; 실제 Data Lab/Bomb Lab 문제인가 &gt; 시험형 CMU 15-213 기출인가 &gt; 외부 자동채점으로 반복 연습 가능한가. <b>출제 확률을 뜻하지 않음.</b></p>
-<p class="def"><b class="k-blue">플랫폼/일치도</b> : 실습 원본=같은 수업 문제(수업 배포 파일로 실행), CMU 기출=같은 개념을 묻는 다른 문제, <a href="http://pwn.college" target="_blank" rel="noopener">pwn.college</a>=유사 실습 자동 채점, LeetCode=비트 연산 보조 자동 채점. *시험·실습의 1:1 대체라고 가정하지 않기.*</p>
-<p>0</p></div></div>
-<h3>0. 가장 먼저 풀 순서 — 핵심 18개 (S)</h3>
-<p class="warn"><b>다른 것보다 우선.</b> 01~06은 Data Lab의 핵심 비트/float 구현, 07~13은 GDB·Bomb, 14~18은 시험형 어셈블리·스택·실수/구조체 기출. 이 순서는 진도순이 아니라 시험·실습 연결성에 가중치를 준 순서.</p>
-<ul class="todo">
-<li><span class="cb"></span><div><b>01 · </b><a href="datalab1.html" target="_blank" rel="noopener"><b><code>addOK(x,y)</code></b></a> — Lec2 · 직접 일치 · 부호비트/XOR로 signed overflow 판정. 동일 부호+결과 부호 역전 설명하기.</div></li>
-<li><span class="cb"></span><div><b>02 · </b><a href="datalab1.html" target="_blank" rel="noopener"><b><code>logicalShift(x,n)</code></b></a> — Lec2 · 직접 일치 · 산술/논리 시프트, n=0·31 경계 처리. 허용 연산자 지키기.</div></li>
-<li><span class="cb"></span><div><b>03 · </b><a href="datalab2.html" target="_blank" rel="noopener"><b><code>isLess(x,y)</code></b></a> — Lec2 · 직접 일치 · <code>x-y</code>를 무작정 쓰지 않고 overflow를 피해 비교하기.</div></li>
-<li><span class="cb"></span><div><b>04 · </b><a href="datalab2.html" target="_blank" rel="noopener"><b><code>float_twice(uf)</code></b></a> — Lec3 · 직접 일치 · S/E/F 분리, 0·denorm·normal·Infinity·NaN 구분.</div></li>
-<li><span class="cb"></span><div><b>05 · </b><a href="datalab2.html" target="_blank" rel="noopener"><b><code>float_f2i(uf)</code></b></a> — Lec3 · 직접 일치 · 지수에 따른 shift와 음수/범위 초과/NaN 처리.</div></li>
-<li><span class="cb"></span><div><b>06 · </b><a href="datalab2.html" target="_blank" rel="noopener"><b><code>float_i2f(x)</code></b></a> — Lec3 · 직접 일치 · leading 1 탐색과 round-to-even. 어려워서 04~05 이후 추천.</div></li>
-<li><span class="cb"></span><div><b>07 · </b><a href="https://pwn.college/computing-101/debugging-refresher/" target="_blank" rel="noopener"><b>pwn.college Debugging Refresher</b></a> — Lec4~6 · 실전 자동 채점 · Inspecting Registers → Examining Memory → Setting Breakpoints 3개부터. Bomb Lab 전에 권장.</div></li>
-<li><span class="cb"></span><div><b>08 · </b><a href="https://pwn.college/computing-101/control-flow/" target="_blank" rel="noopener"><b>pwn.college Control Flow</b></a> — Lec4~5 · 실전 자동 채점 · Comparing Values, Recognizing/ Writing Loops 중심으로 cmp/test/jcc 익히기.</div></li>
-<li><span class="cb"></span><div><b>09 · <a href="bomblab.html">bomb 랩</a></b> — Lec5 · 실습 원본 · loop, <code>cmp</code>, 주소 증가 규칙을 disassembly로 복원.</div></li>
-<li><span class="cb"></span><div><b>10 · <a href="bomblab.html">bomb 랩</a></b> — Lec5 · 실습 원본 · 간접 점프와 case 매핑. LeetCode로는 직접 대체 불가.</div></li>
-<li><span class="cb"></span><div><b>11 · <a href="bomblab.html">bomb 랩</a></b> — Lec6 · 실습 원본 · <code>call</code>·<code>ret</code>·인자 전달·재귀 함수 동작 복원.</div></li>
-<li><span class="cb"></span><div><b>12 · <a href="bomblab.html">bomb 랩</a></b> — Lec5~7 · 실습 원본 · 배열을 따라가는 루프와 포인터 해석.</div></li>
-<li><span class="cb"></span><div><b>13 · <a href="bomblab.html">bomb 랩</a></b> — Lec6~7 · 실습 원본 · 구조체 포인터, 노드 재연결, 순서 조건 복원.</div></li>
-<li><span class="cb"></span><div><b>14 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P7 · Switch</b></a> — Lec5 · 기출 동일 개념 · jump table → C switch 복원. LeetCode보다 시험형 문제에 가까움.</div></li>
-<li><span class="cb"></span><div><b>15 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P8 · Stack discipline</b></a> — Lec6 · 기출 동일 개념 · call 반환 주소, saved registers, stack frame 계산.</div></li>
-<li><span class="cb"></span><div><b>16 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P5·P6 · Struct</b></a> — Lec7 · 기출 동일 개념 · alignment/padding/필드 offset/<code>lea</code> 주소 계산.</div></li>
-<li><span class="cb"></span><div><b>17 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P3 · Floating point</b></a> — Lec3 · 기출 동일 개념 · IEEE 754 인코딩/예외값/반올림을 손계산.</div></li>
-<li><span class="cb"></span><div><b>18 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P4 · Loops</b></a> — Lec5 · 기출 동일 개념 · 어셈블리 분기/반복문을 C로 복원.</div></li>
-</ul-todo>
-<hr>
-<h3>1. 중요 보강 — 19~33 (A)</h3>
-<p>S를 대부분 끝냈다면 진행. 외부 온라인 저지로 비트 감각을 반복하고 부족한 시스템 개념을 실습한다. <b>LeetCode가 Data Lab 연산자 제한을 검사해 주지는 않는다.</b></p>
-<ul class="todo">
-<li><span class="cb"></span><div><b>19 · </b><a href="datalab1.html" target="_blank" rel="noopener"><b><code>bitNor</code></b></a><b><a href="datalab1.html" target="_blank" rel="noopener"></b><code>absVal</code></a> — Lec2 · 직접 일치 · De Morgan 및 sign mask. 01~03 막힐 때 앞서 해도 좋음.</div></li>
-<li><span class="cb"></span><div><b>20 · </b><a href="datalab2.html" target="_blank" rel="noopener"><b><code>negate</code></b></a><b><a href="datalab2.html" target="_blank" rel="noopener"></b><code>float_abs</code></a> — Lec2~3 · 직접 일치 · two&#x27;s complement와 float sign bit/NaN.</div></li>
-<li><span class="cb"></span><div><b>21 · </b><a href="https://leetcode.com/problems/convert-a-number-to-hexadecimal/" target="_blank" rel="noopener"><b>LeetCode 405 · Convert a Number to Hexadecimal</b></a> — Lec2 · 개념 매우 유사 · 32비트 2의 보수로 음수의 16진수 표현. 자동 채점.</div></li>
-<li><span class="cb"></span><div><b>22 · </b><a href="https://leetcode.com/problems/sum-of-two-integers/" target="_blank" rel="noopener"><b>LeetCode 371 · Sum of Two Integers</b></a> — Lec2 · 기술 유사 · XOR와 carry로 덧셈. Data Lab의 연산자 제약과는 다름.</div></li>
-<li><span class="cb"></span><div><b>23 · </b><a href="https://leetcode.com/problems/reverse-bits/" target="_blank" rel="noopener"><b>LeetCode 190 · Reverse Bits</b></a> — Lec2 · 기술 유사 · mask/shift. 라이브러리 없이 32비트 직접 구현.</div></li>
-<li><span class="cb"></span><div><b>24 · </b><a href="https://leetcode.com/problems/bitwise-and-of-numbers-range/" target="_blank" rel="noopener"><b>LeetCode 201 · Bitwise AND of Numbers Range</b></a> — Lec2 · 기술 유사 · 상위 공통 prefix와 AND 의미를 설명.</div></li>
-<li><span class="cb"></span><div><b>25 · </b><a href="https://leetcode.com/problems/divide-two-integers/" target="_blank" rel="noopener"><b>LeetCode 29 · Divide Two Integers</b></a> — Lec2 · 관련 심화 · 시프트 기반 정수 나눗셈, TMin 및 0 방향 반올림.</div></li>
-<li><span class="cb"></span><div><b>26 · </b><a href="https://pwn.college/computing-101/endian-escapades/" target="_blank" rel="noopener"><b>pwn.college Endian Escapades</b></a> — Lec2·7 · 자동 채점 · Little-Endian Bytes, Cracking a Struct 중심.</div></li>
-<li><span class="cb"></span><div><b>27 · </b><a href="https://pwn.college/computing-101/the-stack-revisited/" target="_blank" rel="noopener"><b>pwn.college The Stack, Revisited</b></a> — Lec6·8 · 자동 채점 · caller frame, <code>rsp</code>, return address와 stack layout.</div></li>
-<li><span class="cb"></span><div><b>28 · </b><a href="https://pwn.college/computing-101/assembly-assortment/" target="_blank" rel="noopener"><b>pwn.college Assembly Assortment</b></a> — Lec4~5 · 자동 채점 · Reverse the Calculation, Masking Bits, Shifting Left/Right, Loops on Data.</div></li>
-<li><span class="cb"></span><div><b>29 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f11.pdf" target="_blank" rel="noopener"><b>CMU Fall 2011 P5 · Stack discipline</b></a> — Lec6 · 기출 추가 · 재귀 호출과 stack 추적 심화.</div></li>
-<li><span class="cb"></span><div><b>30 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f10-a.pdf" target="_blank" rel="noopener"><b>CMU Fall 2010 P3·P4·P5 · Arrays/Struct</b></a> — Lec7 · 기출 추가 · 배열 스케일링, 구조체 정렬, 필드 접근.</div></li>
-<li><span class="cb"></span><div><b>31 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P2 · Integer encoding</b></a> — Lec2 · 기출 추가 · signed/unsigned 변환, 2의 보수 및 확장.</div></li>
-<li><span class="cb"></span><div><b>32 · </b><a href="https://leetcode.com/problems/number-of-1-bits/" target="_blank" rel="noopener"><b>LeetCode 191 · Number of 1 Bits</b></a> — Lec2 · 보조 기초 · bit counting, mask/shift. 위 문제들이 어렵다면 첫 문제로 이동 가능.</div></li>
-<li><span class="cb"></span><div><b>33 · </b><a href="https://leetcode.com/problems/power-of-two/" target="_blank" rel="noopener"><b>LeetCode 231 · Power of Two</b></a> — Lec2 · 보조 기초 · <code>x &amp; (x-1)</code> 관찰. 범위가 좁아 우선도 낮음.</div></li>
-</ul-todo>
-<hr>
-<h3>2. 확장/이후 진도 — 34~38 (B)</h3>
-<p>Lecture 8의 버퍼 오버플로는 10/20 강의에 포함되지만, Attack Lab과 Cache Lab은 별도 실습이므로 <b>해당 실습이 실제로 주어지면 우선순위를 다시 조정</b>한다.</p>
-<ul class="todo">
-<li><span class="cb"></span><div><b>34 · </b><a href="https://csapp.cs.cmu.edu/3e/labs.html" target="_blank" rel="noopener"><b>CS:APP Attack Lab (자가학습)</b></a> — Lec8 확장 · buffer overflow, return address, code injection/ROP. 강의에서 Attack Lab 실습 시작할 때 순위를 올리기.</div></li>
-<li><span class="cb"></span><div><b>35 · </b><a href="https://pwn.college/computing-101/" target="_blank" rel="noopener"><b>pwn.college Computer Memory</b></a> — Lec7~8 · 메모리 접근 챌린지. 특정 모듈이 사이트에서 바뀌면 Computing 101 목차에서 선택.</div></li>
-<li><span class="cb"></span><div><b>36 · </b><a href="https://csapp.cs.cmu.edu/3e/labs.html" target="_blank" rel="noopener"><b>CS:APP Cache Lab (자가학습)</b></a> — 향후 memory hierarchy/cache 진도 이후. 현재 중간고사 최우선 문제와 혼합하지 않기.</div></li>
-<li><span class="cb"></span><div><b>37 · </b><a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener"><b>CMU Fall 2012 P1 · Mixed warm-up</b></a> — 기출 종합 점검 · 정수·어셈블리·스택·데이터 분야의 빈 개념 찾기.</div></li>
-<li><span class="cb"></span><div><b>38 · </b><a href="https://godbolt.org/" target="_blank" rel="noopener"><b>C → x86-64 역컴파일 미니 실습</b></a> — 직접 실험/자동 채점 아님 · 짧은 C 함수 <code>if</code>, <code>for</code>, <code>switch</code>, 재귀, struct를 <code>-O0</code>과 <code>-O2</code>에서 비교.</div></li>
-</ul-todo>
-<hr>
-<h3>3. 오늘 바로 시작할 6문제</h3>
-<ol>
-<li><b>01</b> Data Lab <code>addOK</code> → signed overflow 설명하기</li>
-<li><b>02</b> Data Lab <code>logicalShift</code> → n=0, n=31 경계 테스트</li>
-<li><b>04</b> <code>float_twice</code> → NaN/Infinity/denorm/normal 나누기</li>
-<li><b>07</b> GDB: Inspecting Registers, Examining Memory, Setting Breakpoints</li>
-<li><b>10</b> Bomb Lab Phase 3 → switch/jump table 분석</li>
-<li><b>15</b> CMU F12 P8 → 호출 깊이·stack 크기 직접 계산</li>
-</ol>
-<p>막히면 19/20/32/33으로 돌아가 기초를 보충. 이미 Lab을 제출했더라도 해설을 보지 않고 20분 안에 재작성/설명할 수 있으면 체크.</p>
-<h3>4. 강의 ↔ 문제 연결 빠른 지도</h3>
-<table class="tbl"><tr><th>강의/실습</th><th>관련 번호</th><th>핵심 실력</th></tr><tr><td>Lec2 Bits·Integers / Data Lab 1</td><td>01~03, 19, 21~25, 31~33</td><td>2의 보수, mask, shift, overflow</td></tr><tr><td>Lec3 Floating Point / Data Lab 2</td><td>04~06, 17, 20</td><td>IEEE 754, S/E/F, rounding</td></tr><tr><td>Lec4~5 Machine Level·Control</td><td>07~10, 14, 18, 28</td><td>register, jump, loop, switch</td></tr><tr><td>Lec6 Procedures</td><td>07, 11, 15, 27, 29</td><td>call/ret, saved register, stack</td></tr><tr><td>Lec7 Data</td><td>12~13, 16, 26, 30</td><td>array, struct, padding, pointer</td></tr><tr><td>Lec8 Memory·Overflow</td><td>27, 34~35</td><td>stack layout, overflow, 방어</td></tr></table>
-<h3>5. 채점/운영 방식</h3>
+<header class="topbar"><div class="topbar-in">
+<div class="brand"><a href="index.html">컴퓨터 시스템<span class="sub">CSED211 · POSTECH</span></a></div>
+<nav><a href="index.html">홈</a><a href="exam-info.html">시험 정보</a><a href="summary.html">총정리</a><a href="problems.html">문제 풀이</a><a href="roadmap.html">로드맵</a><a href="plan.html">플랜</a></nav>
+</div></header>
+<main class="paper">
+<div class="phead"><a href="index.html">← 홈</a><span class="sep">·</span>로드맵</div>
+<h1 class="title">코딩 문제 로드맵 (중요도순 · Lec2~8 + LAB)</h1>
+<p class="title-sub"><span class="chip blue">10/21 정리</span>위에서부터 체크하면서 풀면 됨 — 문제 자체는 <a href="problems.html">문제 풀이</a> 페이지에 정리돼 있음</p>
+<div class="body notes">
+
+<div class="bx"><span class="bx-tag">사용법과 기준</span>
 <ul>
-<li><b>Data Lab</b>: 과목에서 제공한 <code>btest</code>/<code>dlc</code>가 있으면 그것으로 검증. 기본 동작이 맞아도 연산 규칙을 어기면 완료 표시 X.</li>
-<li><b>Bomb Lab</b>: 과목 개인 바이너리와 GDB/objdump 사용. Phase별 해답을 기록하는 것보다, <code>cmp/test/jcc/call/ret/lea</code>의 역할을 설명할 수 있어야 완료.</li>
-<li><b>CMU 기출</b>: <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12.pdf" target="_blank" rel="noopener">F12 문제 PDF</a> · <a href="https://www.cs.cmu.edu/~213/oldexams/exam1-f12-sol.txt" target="_blank" rel="noopener">공식 해설</a>. 파일 전체를 풀지 말고 지정한 P 번호만 풀이. 일부 과거 문제는 IA32이므로 x86-64와 calling convention을 혼동하지 않기.</li>
-<li><a href="http://pwn.college" target="_blank" rel="noopener"><b>pwn.college</b></a>: <a href="https://pwn.college/computing-101/" target="_blank" rel="noopener">Computing 101 전체 목록</a>. 특정 challenge를 클릭한 뒤 풀이/flag로 완료 표시. 반대로 <code>Assembly Crash Course</code> 옛 과정은 아카이브라 새 Computing 101을 우선.</li>
-<li><b>LeetCode</b>: C로 풀이 권장. 부호/자료형/오버플로 규칙을 명시하고 Python의 무제한 정수와 C의 32-bit 정수를 구분.</li>
+<li>사용법: 위에서부터 체크하면서 풀기. 랩 문제는 허용 연산자·자료형·최대 연산 수를 지켜 직접 구현 → 테스트. 어셈블리 문제는 먼저 손으로 C 동작 복원 → GDB로 검증. 해설은 마지막에 확인</li>
+<li>중요도 기준: 현재 강의(Lec2~8)와 직접 연결되는가 &gt; 실제 Data Lab/Bomb Lab 문제인가 &gt; 시험형 CMU 15-213 기출인가 &gt; 외부 자동채점으로 반복 가능한가. <b>출제 확률을 뜻하지 않음</b></li>
+<li>일치도 표기: 실습 원본 = 같은 수업 문제 · 직접 일치 = lab 문제 그 자체 · 기출 동일 개념 = 같은 개념을 묻는 다른 문제 · 자동 채점 = pwn.college·LeetCode 유사 연습. <b>시험·실습의 1:1 대체라고 가정하지 않기</b></li>
 </ul>
-<h3>6. 노션 내부 참고</h3>
-<ul>
-<li><a href="datalab1.html">Data Lab 1</a></li>
-<li><a href="datalab2.html">Data Lab 2</a></li>
-<li><a href="bomblab.html">bomb 랩</a></li>
-<li><a href="problems.html">문제 세트</a></li>
-<li><a href="problems-mixed.html">혼합 문제 세트</a></li>
-<li><a href="https://csapp.cs.cmu.edu/3e/labs.html" target="_blank" rel="noopener">CS:APP 3e 공식 Lab 목록</a> · <a href="https://www.cs.cmu.edu/~213/exams.html" target="_blank" rel="noopener">CMU 15-213 공개 시험</a></li>
-</ul>
-  </div>
-  <div class="pnav"><a href="problems-mixed.html">&larr; 이전</a><a href="index.html">목록</a><a href="plan.html">다음 &rarr;</a></div>
 </div>
+
+<h2><span class="n">S</span>가장 먼저 — 핵심 18개</h2>
+<p>다른 것보다 우선. 01~06은 Data Lab의 핵심 비트/float 구현, 07~13은 GDB·Bomb, 14~18은 시험형 어셈블리·스택·실수·구조체 기출. 진도순이 아니라 시험·실습 연결성에 가중치를 준 순서.</p>
+<ul class="ckl">
+<li><span class="ck-no">01</span><b>addOK(x,y)</b> — Lec2 · 직접 일치 · 부호비트/XOR로 signed overflow 판정. 동일 부호 + 결과 부호 역전 설명하기</li>
+<li><span class="ck-no">02</span><b>logicalShift(x,n)</b> — Lec2 · 직접 일치 · 산술/논리 시프트, n = 0·31 경계 처리. 허용 연산자 지키기</li>
+<li><span class="ck-no">03</span><b>isLess(x,y)</b> — Lec2 · 직접 일치 · x−y를 무작정 쓰지 않고 overflow를 피해 비교하기</li>
+<li><span class="ck-no">04</span><b>float_twice(uf)</b> — Lec3 · 직접 일치 · S/E/F 분리, 0·denorm·normal·∞·NaN 구분</li>
+<li><span class="ck-no">05</span><b>float_f2i(uf)</b> — Lec3 · 직접 일치 · 지수에 따른 shift와 음수/범위 초과/NaN 처리</li>
+<li><span class="ck-no">06</span><b>float_i2f(x)</b> — Lec3 · 직접 일치 · leading 1 탐색과 round-to-even. 어려워서 04~05 이후 추천</li>
+<li><span class="ck-no">07</span><b>pwn.college Debugging Refresher</b> — Lec4~6 · 실전 자동 채점 · Inspecting Registers → Examining Memory → Setting Breakpoints 3개부터. Bomb Lab 전에 권장</li>
+<li><span class="ck-no">08</span><b>pwn.college Control Flow</b> — Lec4~5 · 실전 자동 채점 · Comparing Values, Recognizing/Writing Loops 중심으로 cmp/test/jcc 익히기</li>
+<li><span class="ck-no">09</span><b>bomb 랩 phase 1·2</b> — Lec5 · 실습 원본 · loop, cmp, 주소 증가 규칙을 disassembly로 복원</li>
+<li><span class="ck-no">10</span><b>bomb 랩 phase 3</b> — Lec5 · 실습 원본 · 간접 점프와 case 매핑. LeetCode로는 직접 대체 불가</li>
+<li><span class="ck-no">11</span><b>bomb 랩 phase 4</b> — Lec6 · 실습 원본 · call·ret·인자 전달·재귀 함수 동작 복원</li>
+<li><span class="ck-no">12</span><b>bomb 랩 phase 5</b> — Lec5~7 · 실습 원본 · 배열을 따라가는 루프와 포인터 해석</li>
+<li><span class="ck-no">13</span><b>bomb 랩 phase 6</b> — Lec6~7 · 실습 원본 · 구조체 포인터, 노드 재연결, 순서 조건 복원</li>
+<li><span class="ck-no">14</span><b>CMU Fall 2012 P7 · Switch</b> — Lec5 · 기출 동일 개념 · jump table → C switch 복원</li>
+<li><span class="ck-no">15</span><b>CMU Fall 2012 P8 · Stack discipline</b> — Lec6 · 기출 동일 개념 · call 반환 주소, saved registers, stack frame 계산</li>
+<li><span class="ck-no">16</span><b>CMU Fall 2012 P5·P6 · Struct</b> — Lec7 · 기출 동일 개념 · alignment/padding/필드 offset/lea 주소 계산</li>
+<li><span class="ck-no">17</span><b>CMU Fall 2012 P3 · Floating point</b> — Lec3 · 기출 동일 개념 · IEEE 754 인코딩/예외값/반올림을 손계산</li>
+<li><span class="ck-no">18</span><b>CMU Fall 2012 P4 · Loops</b> — Lec5 · 기출 동일 개념 · 어셈블리 분기/반복문을 C로 복원</li>
+</ul>
+
+<h2><span class="n">A</span>중요 보강 — 19~33</h2>
+<p>S를 대부분 끝냈다면 진행. LeetCode가 Data Lab 연산자 제한을 검사해 주지는 않음.</p>
+<ul class="ckl">
+<li><span class="ck-no">19</span><b>bitNor · absVal</b> — Lec2 · 직접 일치 · De Morgan 및 sign mask. 01~03 막힐 때 앞서 해도 좋음</li>
+<li><span class="ck-no">20</span><b>negate · float_abs</b> — Lec2~3 · 직접 일치 · two's complement와 float sign bit/NaN</li>
+<li><span class="ck-no">21</span><b>LeetCode 405 · Convert a Number to Hexadecimal</b> — Lec2 · 개념 매우 유사 · 32비트 2의 보수로 음수의 16진수 표현</li>
+<li><span class="ck-no">22</span><b>LeetCode 371 · Sum of Two Integers</b> — Lec2 · 기술 유사 · XOR와 carry로 덧셈. Data Lab의 연산자 제약과는 다름</li>
+<li><span class="ck-no">23</span><b>LeetCode 190 · Reverse Bits</b> — Lec2 · 기술 유사 · mask/shift. 라이브러리 없이 32비트 직접 구현</li>
+<li><span class="ck-no">24</span><b>LeetCode 201 · Bitwise AND of Numbers Range</b> — Lec2 · 기술 유사 · 상위 공통 prefix와 AND의 의미를 설명</li>
+<li><span class="ck-no">25</span><b>LeetCode 29 · Divide Two Integers</b> — Lec2 · 관련 심화 · 시프트 기반 정수 나눗셈, TMin 및 0 방향 반올림</li>
+<li><span class="ck-no">26</span><b>pwn.college Endian Escapades</b> — Lec2·7 · 자동 채점 · Little-Endian Bytes, Cracking a Struct 중심</li>
+<li><span class="ck-no">27</span><b>pwn.college The Stack, Revisited</b> — Lec6·8 · 자동 채점 · caller frame, rsp, return address와 stack layout</li>
+<li><span class="ck-no">28</span><b>pwn.college Assembly Assortment</b> — Lec4~5 · 자동 채점 · Reverse the Calculation, Masking Bits, Shifting Left/Right, Loops on Data</li>
+<li><span class="ck-no">29</span><b>CMU Fall 2011 P5 · Stack discipline</b> — Lec6 · 기출 추가 · 재귀 호출과 stack 추적 심화</li>
+<li><span class="ck-no">30</span><b>CMU Fall 2010 P3·P4·P5 · Arrays/Struct</b> — Lec7 · 기출 추가 · 배열 스케일링, 구조체 정렬, 필드 접근</li>
+<li><span class="ck-no">31</span><b>CMU Fall 2012 P2 · Integer encoding</b> — Lec2 · 기출 추가 · signed/unsigned 변환, 2의 보수 및 확장</li>
+<li><span class="ck-no">32</span><b>LeetCode 191 · Number of 1 Bits</b> — Lec2 · 보조 기초 · bit counting, mask/shift. 위 문제들이 어렵다면 첫 문제로 이동 가능</li>
+<li><span class="ck-no">33</span><b>LeetCode 231 · Power of Two</b> — Lec2 · 보조 기초 · x &amp; (x−1) 관찰. 범위가 좁아 우선도 낮음</li>
+</ul>
+
+<h2><span class="n">B</span>확장 / 이후 진도 — 34~38</h2>
+<p>Lec8 버퍼 오버플로는 10/20 강의에 포함되지만, Attack Lab과 Cache Lab은 별도 실습 — 실제로 주어지면 우선순위를 다시 조정.</p>
+<ul class="ckl">
+<li><span class="ck-no">34</span><b>CS:APP Attack Lab (자가학습)</b> — Lec8 확장 · buffer overflow, return address, code injection/ROP. 강의에서 Attack Lab 실습을 시작하면 순위를 올리기</li>
+<li><span class="ck-no">35</span><b>pwn.college Computer Memory</b> — Lec7~8 · 메모리 접근 챌린지</li>
+<li><span class="ck-no">36</span><b>CS:APP Cache Lab (자가학습)</b> — memory hierarchy/cache 진도 이후. 중간고사 최우선 문제와 혼합하지 않기</li>
+<li><span class="ck-no">37</span><b>CMU Fall 2012 P1 · Mixed warm-up</b> — 기출 종합 점검 · 정수·어셈블리·스택·데이터 분야의 빈 개념 찾기</li>
+<li><span class="ck-no">38</span><b>C → x86-64 역컴파일 미니 실습</b> — 짧은 C 함수 if, for, switch, 재귀, struct를 -O0과 -O2에서 비교</li>
+</ul>
+
+<h2><span class="n">3</span>오늘 바로 시작할 6문제</h2>
+<ul class="ckl">
+<li><span class="ck-no">01</span>Data Lab addOK → signed overflow 설명하기</li>
+<li><span class="ck-no">02</span>Data Lab logicalShift → n = 0, n = 31 경계 테스트</li>
+<li><span class="ck-no">04</span>float_twice → NaN/∞/denorm/normal 나누기</li>
+<li><span class="ck-no">07</span>GDB: Inspecting Registers, Examining Memory, Setting Breakpoints</li>
+<li><span class="ck-no">10</span>Bomb Lab Phase 3 → switch/jump table 분석</li>
+<li><span class="ck-no">15</span>CMU F12 P8 → 호출 깊이·stack 크기 직접 계산</li>
+</ul>
+<ul>
+<li>막히면 19/20/32/33으로 돌아가 기초 보충. 이미 Lab을 제출했더라도 해설을 보지 않고 20분 안에 재작성·설명할 수 있으면 체크</li>
+</ul>
+
+<h2><span class="n">4</span>강의 ↔ 문제 연결 지도</h2>
+<div class="tblwrap"><table class="tbl">
+<thead><tr><th>강의/실습</th><th>관련 번호</th><th>핵심 실력</th></tr></thead>
+<tbody>
+<tr><td>Lec2 Bits·Integers / Data Lab 1</td><td>01~03, 19, 21~25, 31~33</td><td>2의 보수, mask, shift, overflow</td></tr>
+<tr><td>Lec3 Floating Point / Data Lab 2</td><td>04~06, 17, 20</td><td>IEEE 754, S/E/F, rounding</td></tr>
+<tr><td>Lec4~5 Machine Level·Control</td><td>07~10, 14, 18, 28</td><td>register, jump, loop, switch</td></tr>
+<tr><td>Lec6 Procedures</td><td>07, 11, 15, 27, 29</td><td>call/ret, saved register, stack</td></tr>
+<tr><td>Lec7 Data</td><td>12~13, 16, 26, 30</td><td>array, struct, padding, pointer</td></tr>
+<tr><td>Lec8 Memory·Overflow</td><td>27, 34~35</td><td>stack layout, overflow, 방어</td></tr>
+</tbody></table></div>
+
+<h2><span class="n">5</span>채점·운영 방식</h2>
+<ul>
+<li>Data Lab: btest/dlc로 검증. 기본 동작이 맞아도 연산 규칙을 어기면 완료 표시 X</li>
+<li>Bomb Lab: 개인 바이너리와 GDB/objdump 사용. phase별 해답을 기록하는 것보다 cmp/test/jcc/call/ret/lea의 역할을 설명할 수 있어야 완료</li>
+<li>CMU 기출: 파일 전체를 풀지 말고 지정한 P 번호만. 일부 과거 문제는 IA32 — x86-64 calling convention과 혼동하지 않기</li>
+<li>pwn.college: Computing 101 기준. 옛 Assembly Crash Course는 아카이브라 새 Computing 101을 우선</li>
+<li>LeetCode: C로 풀이 권장. 부호/자료형/오버플로 규칙을 명시하고 Python의 무제한 정수와 C의 32-bit 정수를 구분</li>
+</ul>
+
+<h2><span class="n">6</span>같이 보기</h2>
+<div class="grid">
+<a class="card" href="datalab.html"><div class="c-k">LAB</div><div class="c-t">Data Lab 정리</div><div class="c-d">규칙, Q0~Q5 풀이, 손계산 모음, 연습문제</div></a>
+<a class="card" href="bomblab.html"><div class="c-k">LAB</div><div class="c-t">Bomb Lab 정리</div><div class="c-d">phase 1~6 disassembly 분석과 정답</div></a>
+<a class="card" href="problems.html"><div class="c-k">연습</div><div class="c-t">문제 풀이 (중요도순)</div><div class="c-d">자작 21 + CMU 기출 + LeetCode 보조</div></a>
+</div>
+
+</div>
+<div class="pnav"><a href="bomblab.html">← Bomb Lab</a><a href="plan.html">플랜 →</a></div>
+</main>
 </body>
 </html>
