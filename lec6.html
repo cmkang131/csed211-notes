@@ -31,8 +31,8 @@
 <p class="bx-h"><b>세 가지 메커니즘과 ABI</b></p>
 프로시저(함수)를 부르고 돌아오는 데는 세 가지가 필요:
 <ul>
-<li><b>Passing control</b>: 부른 프로시저 code의 시작으로 가고, 끝나면 호출한 자리(return point)로 돌아옴</li>
-<li><b>Passing data</b>: 인자(procedure arguments)와 반환값(return value)</li>
+<li><b>Passing control</b>: 부른 프로시저 code의 시작으로 가고, 끝나면 호출한 자리로 돌아옴</li>
+<li><b>Passing data</b>: 인자와 반환값</li>
 <li><b>Memory management</b>: 프로시저가 실행되는 동안 공간을 할당하고, return하면 해제</li>
 </ul>
 셋 모두 machine instruction으로 구현되고 x86-64는 필요한 메커니즘만 씀 (인자도 local 변수도 없는 프로시저는 그 부분을 구현하지 않아도 됨). machine instruction으로 어떻게 구현할지는 <b>ABI (Application Binary Interface)</b>가 표준으로 정해 둠.<br>
@@ -240,7 +240,7 @@ long mult2(long a, long b) { long s = a * b; return s; }</pre>
     ...</pre>
 <ul>
 <li>yoo는 %rdx에 15213을 넣어 두고 who를 부른 뒤 그 값을 다시 읽음. who가 %rdx에서 18213을 빼 버리면 yoo의 15213은 사라짐 → 되돌릴 수 없음</li>
-<li>함수마다 일일이 확인할 수는 없음 → <b>누가 보관할 책임을 지는지 약속(coordination)이 필요</b></li>
+<li>함수마다 일일이 확인할 수는 없음 → <b>누가 보관할 책임을 지는지 약속이 필요</b></li>
 </ul>
 <div class="nb">
 <p class="bx-h"><b>손계산 5 · who가 %rdx를 덮어쓰면 (who는 %rax = 100 반환 가정)</b></p>
@@ -259,7 +259,7 @@ long mult2(long a, long b) { long s = a * b; return s; }</pre>
 <li><b>caller-saved</b>: caller가 call 전에 임시 값을 자기 stack frame에 저장하고 call 뒤에 복원 → callee는 이 register를 제약 없이 덮어써도 됨</li>
 <li><b>callee-saved</b>: callee가 register를 쓰기 전에 값을 자기 stack frame에 저장하고 ret 전에 복원 → caller 입장에서는 call 전후로 값이 보존됨. <b>callee가 그 register를 수정할 때만</b> 저장·복원 책임이 생김</li>
 </ul>
-다른 방식도 있음: 아주 단순한 architecture는 call 전에 모든 register를 memory에 저장(전부 caller-save), ARM은 shadow register 세트로 통째 복사(교수님도 "맞다면"이라고 조심스럽게 말함, 확인 안 됨). x86은 두 방식을 섞어 register마다 책임을 나눔. ABI가 정하는 정책이라 architecture마다 다를 수 있음.
+다른 방식도 있음: 아주 단순한 architecture는 call 전에 모든 register를 memory에 저장(전부 caller-save). x86은 두 방식을 섞어 register마다 책임을 나눔. ABI가 정하는 정책이라 architecture마다 다를 수 있음.
 </div>
 <h3>x86-64 Linux register 분류</h3>
 <div class="tblwrap"><table>
@@ -303,7 +303,6 @@ long mult2(long a, long b) { long s = a * b; return s; }</pre>
     popq  %rbx          <span class="cm"># 내 caller의 %rbx 복원</span>
     ret</pre>
 <ul>
-<li>(보충) 8바이트만 쓰는데 16을 잡는 이유는 call 시점에 %rsp가 16바이트 경계에 맞아야 하는 ABI 규칙 때문 (수업 범위 밖)</li>
 <li>복원은 저장의 역순(LIFO): addq $16, %rsp → popq %rbx → ret. 이때 %rsp가 return address를 가리켜야 ret이 제대로 돌아감</li>
 <li>저장·복원 장소에 정해진 한 방법은 없음. 남는 register를 쓰는 편이 memory보다 빠름 (compiler 최적화)</li>
 </ul>
@@ -375,8 +374,7 @@ long mult2(long a, long b) { long s = a * b; return s; }</pre>
 <li>인자는 stack top에 두고, 결과는 %rax로</li>
 <li>포인터는 값의 주소(stack 또는 global)</li>
 <li>local 값은 stack frame에 두되 너무 크게 잡지 않음. stack은 계속 자라다 다른 영역과 겹칠 수 있음</li>
-<li>stack 크기에는 한도가 있음 ((보충) Linux 기본 stack 한도는 <code>ulimit -s</code> 기준 8192 KB = 8 MB; 수업 녹취의 "8K"는 불명확)</li>
-<li>지역 변수가 아주 크면 heap(malloc)을 쓰라는 취지로 들림 (녹취 불명확, 확인 안 됨)</li>
+<li>stack 크기에는 한도가 있음</li>
 <li>stack은 다른 데이터 영역과 반대 방향(낮은 주소)으로 자람</li>
 </ul>
 
