@@ -121,9 +121,9 @@ void echo() {
 void smash() { printf("I've been smashed!\n"); exit(0); }</pre>
 <figure class="fig" style="--figw:620px">
 <svg viewBox="0 0 620 180" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
-  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">attack string = 24바이트 filler + 8바이트 주소 (0x4006fb = smash)</text>
+  <text x="24" y="22" font-size="12.5" font-weight="800" fill="#23252d">attack string = 64바이트 filler + 8바이트 주소 (0x4006fb = smash)</text>
   <g font-size="11" font-family="ui-monospace,monospace">
-    <rect x="24" y="40" width="288" height="34" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="61" fill="#23252d">ff ff ff ff × 6 (filler 24byte)</text>
+    <rect x="24" y="40" width="288" height="34" fill="#f3f4f8" stroke="#dcdfe8"/><text x="38" y="61" fill="#23252d">ff ff ff ff × 16 (filler 64byte)</text>
     <rect x="312" y="40" width="288" height="34" fill="#fbe9e7" stroke="#e0a49c"/><text x="326" y="61" fill="#23252d">fb 06 40 00 00 00 00 00</text>
     <path d="M456 74 L456 96 L120 96 L120 118" stroke="#c0433a" stroke-width="1.6" fill="none" marker-end="url(#arr8)"/>
     <rect x="24" y="118" width="192" height="34" fill="#fbe9e7" stroke="#e0a49c"/><text x="38" y="140" fill="#23252d">return address 자리</text>
@@ -131,7 +131,7 @@ void smash() { printf("I've been smashed!\n"); exit(0); }</pre>
     <defs><marker id="arr8" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#c0433a"/></marker></defs>
   </g>
 </svg>
-<figcaption>gets가 입력을 buf부터 순서대로 쓰므로, 24바이트 뒤의 8바이트가 return address를 smash의 주소로 바꿈</figcaption>
+<figcaption>gets가 입력을 buf부터 순서대로 쓰므로, buf[64]를 지난 8바이트가 return address를 smash의 주소로 바꿈</figcaption>
 </figure>
 <h3>Code injection</h3>
 <ul>
@@ -190,7 +190,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 <ul>
 <li>배경: stack randomization + non-executable stack → code injection이 어려워짐. 대안: <b>이미 존재하는 code/library code를 재사용</b>해 fragment(gadget)를 이어 붙임</li>
 <li><b>gadget</b>: ret(0xc3)으로 끝나는 instruction sequence — code 위치는 fixed, executable</li>
-<li>예: ab_plus_c gadget (0x4004d4): <code>imul %rsi,%rdi; lea (%rdi,%rdx,1),%rax; ret</code> · setval gadget (0x4004dc): immediate bytes c7 07 d4 48 89 c7가 movq %rax,%rdi를 encode</li>
+<li>예: ab_plus_c gadget (0x4004d4): <code>imul %rsi,%rdi; lea (%rdi,%rdx,1),%rax; ret</code> · setval gadget (0x4004dc): 바이트열 c7 07 d4 48 89 c7 안에 48 89 c7 (movq %rax,%rdi)이 숨어 있고 뒤에 c3 (ret)이 이어짐 — 중간 지점부터 실행하면 gadget이 됨</li>
 </ul>
 <figure class="fig" style="--figw:560px">
 <svg viewBox="0 0 560 220" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
