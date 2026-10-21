@@ -182,3 +182,6 @@ div.card-off{border:1.5px solid var(--rule);padding:16px 22px;margin-top:14px;co
 @media (max-width:760px){.body{font-size:15.5px}}
 @media (max-width:640px){h1.t-title{font-size:22px}}
 @media print{article.prob-page{page-break-before:always}article.prob-page:first-of-type{page-break-before:avoid}}
+
+/* Korean/other fallback chars inside MathJax SVG <text>: use page font, not bare serif */
+.mjx text, .mjx-display text { font-family: inherit; }
