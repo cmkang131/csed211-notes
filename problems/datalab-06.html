@@ -41,6 +41,7 @@ logical shift = arithmetic &gt;&gt; 후 채워진 상위 1들을 mask로 지우�
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
 <ol class="steps"><li>(1 &lt;&lt; 31) &gt;&gt; 31 = 0xFFFFFFFF → &lt;&lt; 1 = 0xFFFFFFFE → mask = ~ = 0x00000001</li>
+<li class="note" style="color:#555">1 &lt;&lt; 31은 Data Lab의 32-bit 비트벡터 모델 기준 — 일반 ISO C에서는 signed int의 최상위 비트 시프트가 UB일 수 있음</li>
 <li>x &gt;&gt; 31 = 0xFFFFFFFF → 결과 = 0xFFFFFFFF &amp; 0x00000001 = 1</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">mask = 0x00000001, 결과 1</span></div>
 </div></details>
