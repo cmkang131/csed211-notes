@@ -121,7 +121,7 @@ void echo() {
     gets(buf);              // return address A를 다른 code S의 주소로 덮으면
 }                           // Q가 ret할 때 A 대신 S로 점프
 
-void smash() { printf("I've been smashed!\n"); exit; }</pre>
+void smash() { printf("I've been smashed!\n"); exit; }  /* 슬라이드 표기 — 실제로는 exit(0)처럼 호출해야 함 */</pre>
 <figure class="fig" style="--figw:620px">
 <svg viewBox="0 0 620 180" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
   <text x="24" y="22" font-size="12.5" font-weight="800" fill="#1a1a1a">attack string = 64바이트 filler + 8바이트 주소 (0x4006fb = smash)</text>
@@ -146,7 +146,7 @@ void smash() { printf("I've been smashed!\n"); exit; }</pre>
 <h2><span class="h2no">4</span>Defenses</h2>
 <h3>code 수준(길이 제한 함수)</h3>
 <ul>
-<li><code>gets(buf)</code> → <code>fgets(buf, 4, stdin)</code>: 최대 3문자 + null · <code>strcpy</code> → <code>strncpy</code> · <code>scanf %s</code> → fgets 또는 <code>%ns</code> (n은 buffer 크기)</li>
+<li><code>gets(buf)</code> → <code>fgets(buf, 4, stdin)</code>: 최대 3문자 + null · <code>strcpy</code> → <code>strncpy</code> (널 종료를 보장하지 않으므로 별도 처리 필요) · <code>scanf %s</code> → fgets 또는 <code>%ns</code> (n은 널 문자 자리를 뺀 최대 문자 수 — char buf[4]라면 %3s)</li>
 <li>code 수준 수정은 기본이지만 legacy code를 모두 고칠 수 없음 → system·compiler 수준 방어가 함께 필요</li>
 </ul>
 <h3>system 수준 1(ASLR)</h3>
@@ -170,7 +170,7 @@ void smash() { printf("I've been smashed!\n"); exit; }</pre>
     <rect x="364" y="38" width="172" height="32" fill="#f2f2f2" stroke="#9e2b25"/><text x="378" y="59" fill="#1a1a1a">return addr — %rsp+24</text>
     <text x="24" y="100" fill="#666" font-family="inherit" font-size="11.5">buffer 바로 뒤에 special value(canary)를 놓고, function exit 전에 check → 값이 바뀌면 something wrong</text>
     <text x="24" y="122" fill="#666" font-family="inherit" font-size="11.5">보호된 프로그램에 9바이트 입력 → *** stack smashing detected ***</text>
-    <text x="24" y="144" fill="#666" font-family="inherit" font-size="11.5">GCC -fstack-protector : 현재 기본값</text>
+    <text x="24" y="144" fill="#666" font-family="inherit" font-size="11.5">GCC -fstack-protector : 스택 카나리 활성화 옵션 (기본 활성화 여부는 GCC 버전·배포판 빌드 설정에 따라 다름)</text>
   </g>
 </svg>
 <figcaption>canary가 buf와 return address 사이를 지킴. overflow가 return address에 닿으려면 canary를 먼저 덮어야 함</figcaption>
@@ -242,14 +242,14 @@ ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 �
     <rect x="24" y="156" width="112" height="20" fill="#f2f2f2" stroke="#d9d9d9"/><text x="34" y="170" fill="#1a1a1a">i[0..1] (8B)</text>
     <rect x="24" y="176" width="14" height="20" fill="#f2f2f2" stroke="#d9d9d9"/><text x="44" y="190" fill="#1a1a1a">c (1B)</text>
   </g>
-  <text x="160" y="160" fill="#666" font-family="inherit" font-size="11.5">같은 8byte를 c, i, v 중 한 가지로만 읽음 — 한 번에 한 field만 사용</text>
+  <text x="160" y="160" fill="#666" font-family="inherit" font-size="11.5">같은 8byte를 c, i, v 중 한 가지로만 읽음 — 한 번에 한 field만 사용 (마지막으로 쓴 member와 다른 member를 읽는 것은 구현 의존)</text>
 </svg>
 <figcaption>같은 member 목록인데 struct는 24byte, union은 8byte</figcaption>
 </figure>
 <h3>bit pattern 재해석</h3>
 <pre class="c">union { float f; unsigned u; };
 
-float bit2float(unsigned u0) { u = u0; return f; }  // u에 bit pattern을 쓰고 f로 읽음
+float bit2float(unsigned u0) { u = u0; return f; }  // u에 bit pattern을 쓰고 f로 읽음 (슬라이드 축약 — 실제로는 union 변수를 선언해 x.u = u0; return x.f; 형태로 사용. C 표준상 타입 재해석은 구현 의존이라 이식성이 필요하면 memcpy 사용)
 unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 읽음</pre>
 <ul>
 <li><code>(float) u</code> / <code>(unsigned) f</code>는 <b>값 변환</b> · union은 <b>같은 bit의 재해석</b>. 둘은 완전히 다름</li>
@@ -258,7 +258,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 
 <h2><span class="h2no">7</span>Byte ordering</h2>
 <ul>
-<li>short/int/long: memory에 2/4/8개의 연속 byte. 어느 byte가 가장 낮은 주소에 오는가가 endian</li>
+<li>short/int/long: memory에 2/4/8개의 연속 byte (long 8byte는 Linux x86-64 LP64 기준 — Windows x64는 4byte). 어느 byte가 가장 낮은 주소에 오는가가 endian</li>
 </ul>
 <dl class="def"><dt>Big endian</dt><dd>most significant byte가 가장 낮은 주소 (SPARC)</dd><dt>Little endian</dt><dd>least significant byte가 가장 낮은 주소 (Intel x86)</dd><dt>Bi-endian</dt><dd>설정에 따라 둘 다 (ARM)</dd></dl>
 <ul>
@@ -297,12 +297,12 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>memory layout: Text 0x400000 근처 · Data (global·static·string constant) · Heap (malloc, 위로 자람) · Shared Libraries · Stack 0x7FFFFFFFFFFF 근처 (기본 8 MiB, 아래로 자람)</li>
 <li>struct_t: a[0] offset 0, a[1] offset 4, d offset 8 → a[2]부터 d를 덮음 · 결과는 시스템마다 다를 수 있음 (padding·stack 배치가 compiler·OS에 따라 다름)</li>
 <li>echo frame: buf %rsp, return address %rsp+24 · 24바이트 입력 + null이 return address 첫 byte를 덮음 · gets/strcpy/strcat/%s는 길이 제한이 없어 위험</li>
-<li>방어, code 수준: fgets·strncpy·%ns</li>
+<li>방어, code 수준: fgets·strncpy (널 종료 미보장 — 별도 처리 필요)·%ns (n은 buffer 크기-1)</li>
 <li>방어, system 수준: ASLR (stack 주소를 매번 이동), non-executable stack (고전 injection은 막지만 ROP는 못 막음)</li>
 <li>방어, compiler 수준: stack canary (%fs:0x28, __stack_chk_fail, GCC -fstack-protector 기본값)</li>
 <li>canary 한계: 최하위 byte 0x00인 경우가 많아 off-by-one null 덮기는 통과 가능 · buffer 앞쪽 local variable 손상은 못 막음</li>
-<li>ROP: ret(0xc3)으로 끝나는 gadget을 이어 붙임 · non-executable stack과 ASLR 우회, canary는 우회 못 함</li>
-<li>struct S1: offset c@0, i[0]@4, i[1]@8, v@16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만)</li>
+<li>ROP: ret(0xc3)으로 끝나는 gadget을 이어 붙임 · non-executable stack과 ASLR 우회 · canary는 반환 주소 변조를 탐지해 일반적인 ROP에는 추가 장벽이 되지만, 카나리 값 유출 등의 조건에서는 우회 가능</li>
+<li>struct S1: offset c@0, i[0]@4, i[1]@8, v@16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만 — 다른 member를 읽는 것은 구현 의존)</li>
 <li>union은 같은 bit의 재해석, cast는 값 변환. bit2float/float2bit에 사용</li>
 <li>endian: dw.c = f0..f7일 때 little endian s[0]=0xf1f0, i[0]=0xf3f2f1f0, l[0]=0xf7f6f5f4f3f2f1f0 · big endian은 그대로 0xf0f1, 0xf0f1f2f3, 0xf0f1f2f3f4f5f6f7</li>
 </ul>
