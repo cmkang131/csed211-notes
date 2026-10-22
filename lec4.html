@@ -83,6 +83,17 @@
 <ul>
 <li>register: 가장 빠르고 가장 작은 "cache"로 볼 수 있음. 1 cycle 접근, x86-64 기준 8 byte짜리 16개</li>
 </ul>
+<table>
+<thead><tr><th>64-bit</th><th>32-bit</th><th>16-bit</th><th>8-bit</th></tr></thead>
+<tbody>
+<tr><td>%rax %rbx %rcx %rdx %rsi %rdi %rbp %rsp</td><td>%eax %ebx %ecx %edx %esi %edi %ebp %esp</td><td>%ax %bx %cx %dx %si %di %bp %sp</td><td>%al %bl %cl %dl %sil %dil %bpl %spl</td></tr>
+<tr><td>%r8 – %r15</td><td>%r8d – %r15d</td><td>%r8w – %r15w</td><td>%r8b – %r15b</td></tr>
+</tbody>
+</table>
+<ul>
+<li>32-bit register에 쓰면 상위 32-bit는 0으로 clear됨 · 16/8-bit 쓰기는 상위 비트 유지</li>
+<li>함수 인자 전달: 첫 6개 정수·포인터 인자 = %rdi, %rsi, %rdx, %rcx, %r8, %r9 (순서대로) · 7번째부터는 stack · 반환값 = %rax</li>
+</ul>
 
 <h3>AMD와 x86-64의 탄생</h3>
 <ul>

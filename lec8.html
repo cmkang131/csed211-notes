@@ -302,7 +302,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>방어, compiler 수준: stack canary (%fs:0x28, __stack_chk_fail, GCC -fstack-protector 기본값)</li>
 <li>canary 한계: 최하위 byte 0x00인 경우가 많아 off-by-one null 덮기는 통과 가능 · buffer 앞쪽 local variable 손상은 못 막음</li>
 <li>ROP: ret(0xc3)으로 끝나는 gadget을 이어 붙임 · non-executable stack과 ASLR 우회, canary는 우회 못 함</li>
-<li>struct S1: offset 0/8/16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만)</li>
+<li>struct S1: offset c@0, i[0]@4, i[1]@8, v@16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만)</li>
 <li>union은 같은 bit의 재해석, cast는 값 변환. bit2float/float2bit에 사용</li>
 <li>endian: dw.c = f0..f7일 때 little endian s[0]=0xf1f0, i[0]=0xf3f2f1f0, l[0]=0xf7f6f5f4f3f2f1f0 · big endian은 그대로 0xf0f1, 0xf0f1f2f3, 0xf0f1f2f3f4f5f6f7</li>
 </ul>
