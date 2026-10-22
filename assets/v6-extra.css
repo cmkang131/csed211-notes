@@ -1,0 +1,558 @@
+/* ============================================================
+   CSED211 / V6 Teaching Widgets
+   Shared styles for all 13 widgets
+
+   Palette:
+   Ink        #1a1a1a
+   Accent     #9e2b25
+   Grid       #e8e6e0
+   Background #ffffff
+   ============================================================ */
+
+.v6-widget {
+  --v6-ink: #1a1a1a;
+  --v6-red: #9e2b25;
+  --v6-grid: #e8e6e0;
+  --v6-white: #ffffff;
+
+  box-sizing: border-box;
+
+  width: 100%;
+  max-width: 100%;
+
+  margin: 20px 0 32px;
+  padding: 22px 0;
+
+  background: var(--v6-white);
+  color: var(--v6-ink);
+
+  font-family:
+    "Noto Sans KR",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.v6-widget *,
+.v6-widget *::before,
+.v6-widget *::after {
+  box-sizing: border-box;
+}
+
+.v6-widget h3 {
+  margin: 0 0 18px;
+  padding: 0 0 12px;
+
+  border-bottom: 1px solid var(--v6-ink);
+
+  color: var(--v6-ink);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.025em;
+}
+
+.v6-widget h4,
+.v6-widget .v6-section-title {
+  margin: 24px 0 11px;
+  padding: 0 0 7px;
+
+  border-bottom: 1px solid var(--v6-grid);
+
+  color: var(--v6-ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.v6-widget p {
+  margin: 8px 0;
+}
+
+/* ------------------------------------------------------------
+   Controls
+   ------------------------------------------------------------ */
+
+.v6-widget .v6-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+
+  margin: 12px 0;
+
+  width: 100%;
+}
+
+.v6-widget .v6-controls label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+
+  min-height: 40px;
+
+  color: var(--v6-ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.v6-widget .v6-controls label[hidden] {
+  display: none !important;
+}
+
+.v6-widget .v6-val {
+  display: inline-block;
+
+  min-width: 34px;
+
+  color: var(--v6-ink);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  font-variant-numeric: tabular-nums;
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+}
+
+/* ------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------ */
+
+.v6-widget .v6-btn,
+.v6-widget button.v6-btn {
+  appearance: none;
+  -webkit-appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 40px;
+  min-width: 40px;
+
+  padding: 8px 13px;
+
+  border: 1px solid var(--v6-ink);
+  border-radius: 3px;
+
+  background: var(--v6-white);
+  color: var(--v6-ink);
+
+  font-family:
+    "Noto Sans KR",
+    sans-serif;
+
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 90ms ease;
+
+  touch-action: manipulation;
+}
+
+@media (hover: hover) {
+  .v6-widget .v6-btn:hover:not(:disabled) {
+    background: var(--v6-grid);
+  }
+}
+
+.v6-widget .v6-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  background: var(--v6-grid);
+}
+
+.v6-widget .v6-btn:focus-visible {
+  outline: 2px solid var(--v6-red);
+  outline-offset: 3px;
+}
+
+.v6-widget .v6-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.v6-widget .v6-btn.is-selected,
+.v6-widget .v6-btn[aria-pressed="true"] {
+  border-color: var(--v6-red);
+  background: var(--v6-grid);
+  color: var(--v6-red);
+  font-weight: 700;
+}
+
+@media (hover: hover) {
+  .v6-widget .v6-btn.is-selected:hover:not(:disabled),
+  .v6-widget .v6-btn[aria-pressed="true"]:hover:not(:disabled) {
+    background: var(--v6-grid);
+  }
+}
+
+/* ------------------------------------------------------------
+   Input and select
+   ------------------------------------------------------------ */
+
+.v6-widget input[type="text"],
+.v6-widget input[type="number"],
+.v6-widget select,
+.v6-widget textarea {
+  appearance: none;
+  -webkit-appearance: none;
+
+  min-height: 40px;
+  max-width: 100%;
+
+  padding: 7px 10px;
+
+  border: 1px solid var(--v6-ink);
+  border-radius: 3px;
+
+  background: var(--v6-white);
+  color: var(--v6-ink);
+
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.v6-widget select {
+  cursor: pointer;
+  padding-right: 20px;
+}
+
+.v6-widget input[type="text"]:focus-visible,
+.v6-widget input[type="number"]:focus-visible,
+.v6-widget select:focus-visible,
+.v6-widget textarea:focus-visible {
+  outline: 2px solid var(--v6-red);
+  outline-offset: 2px;
+}
+
+.v6-widget input:disabled,
+.v6-widget select:disabled,
+.v6-widget textarea:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.v6-widget input[type="range"] {
+  width: 130px;
+  height: 20px;
+
+  margin: 0;
+
+  accent-color: var(--v6-ink);
+  cursor: pointer;
+}
+
+.v6-widget input[type="range"]:focus-visible {
+  outline: 2px solid var(--v6-red);
+  outline-offset: 4px;
+}
+
+.v6-widget input[type="checkbox"],
+.v6-widget input[type="radio"] {
+  width: 17px;
+  height: 17px;
+
+  accent-color: var(--v6-red);
+  cursor: pointer;
+}
+
+.v6-widget input::placeholder,
+.v6-widget textarea::placeholder {
+  color: var(--v6-ink);
+  opacity: 0.5;
+}
+
+/* ------------------------------------------------------------
+   State and explanatory content
+   ------------------------------------------------------------ */
+
+.v6-widget .v6-state {
+  margin: 13px 0;
+  padding: 13px 15px;
+
+  border-left: 2px solid var(--v6-ink);
+  background: var(--v6-white);
+
+  color: var(--v6-ink);
+
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+
+  font-size: 13px;
+  line-height: 1.85;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  tab-size: 4;
+}
+
+.v6-widget .v6-changed {
+  color: var(--v6-red) !important;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------
+   Step / code trace
+   ------------------------------------------------------------ */
+
+.v6-widget .v6-stepbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  margin: 12px 0;
+  padding: 8px 0;
+}
+
+.v6-widget .v6-code-list {
+  max-width: 100%;
+
+  border-top: 1px solid var(--v6-grid);
+  border-bottom: 1px solid var(--v6-grid);
+
+  overflow-x: auto;
+}
+
+.v6-widget .v6-code-list > div {
+  min-height: 29px;
+
+  padding: 5px 12px;
+
+  border-left: 3px solid transparent;
+
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+
+  font-size: 13px;
+  line-height: 1.65;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.v6-widget .v6-code-list > div.is-current {
+  border-left-color: var(--v6-red);
+  background: var(--v6-grid);
+  color: var(--v6-red);
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------
+   Tables
+   ------------------------------------------------------------ */
+
+.v6-widget .v6-table-scroll {
+  width: 100%;
+  max-width: 100%;
+
+  margin: 10px 0 16px;
+
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.v6-widget .v6-table {
+  width: 100%;
+  min-width: max-content;
+
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  color: var(--v6-ink);
+
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.v6-widget .v6-table th,
+.v6-widget .v6-table td {
+  padding: 9px 11px;
+
+  border: 1px solid var(--v6-ink);
+
+  text-align: left;
+  vertical-align: top;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.v6-widget .v6-table th {
+  background: var(--v6-white);
+  font-weight: 700;
+}
+
+.v6-widget .v6-table td {
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+
+  font-weight: 400;
+}
+
+.v6-widget .v6-table tbody tr:hover {
+  background: var(--v6-grid);
+}
+
+.v6-widget .v6-table td.v6-changed {
+  font-weight: 700;
+}
+
+/* Existing tables from the other widget batches */
+
+.v6-widget .v6-state table {
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.v6-widget .v6-state table th,
+.v6-widget .v6-state table td {
+  padding: 8px 10px;
+  border: 1px solid var(--v6-ink);
+}
+
+/* ------------------------------------------------------------
+   Byte-level encoding display
+   ------------------------------------------------------------ */
+
+.v6-widget .v6-byte-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+
+  margin: 12px 0;
+}
+
+.v6-widget .v6-byte-button {
+  min-width: 46px;
+
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.v6-widget .v6-byte-sequence {
+  white-space: nowrap;
+  font-family:
+    monospace,
+    "Noto Sans KR",
+    sans-serif;
+}
+
+/* ------------------------------------------------------------
+   Canvas and SVG
+   ------------------------------------------------------------ */
+
+.v6-widget canvas {
+  display: block;
+
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+
+  margin: 12px auto;
+
+  background: var(--v6-white);
+}
+
+.v6-widget svg {
+  display: block;
+
+  max-width: 100%;
+  height: auto;
+
+  color: var(--v6-ink);
+}
+
+/* ------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+  .v6-widget {
+    margin: 16px 0 24px;
+    padding: 16px 0;
+    font-size: 13px;
+  }
+
+  .v6-widget h3 {
+    font-size: 17px;
+  }
+
+  .v6-widget .v6-controls {
+    gap: 8px;
+  }
+
+  .v6-widget .v6-controls label {
+    flex: 1 1 auto;
+  }
+
+  .v6-widget input[type="range"] {
+    width: 105px;
+  }
+
+  .v6-widget .v6-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .v6-widget .v6-state {
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .v6-widget .v6-table {
+    font-size: 12px;
+  }
+
+  .v6-widget .v6-table th,
+  .v6-widget .v6-table td {
+    padding: 7px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v6-widget *,
+  .v6-widget *::before,
+  .v6-widget *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
