@@ -153,7 +153,7 @@ void sumstore(long x, long y, long *dest) {
     movq  %rdx, %rbx  <span class="cm"># dest를 rbx로</span>
     call  plus        <span class="cm"># t = plus(x, y), 결과는 %rax</span>
     movq  %rax, (%rbx)<span class="cm"># *dest = t</span>
-    popq  %rbx        <span class="cm"># rbx 복원</span>
+    popq  %rbx        <span class="cm"># rbx 되돌림</span>
     ret</pre>
 <ul>
 <li><code>gcc -Og -S sum.c</code> → sum.s 생성. 같은 코드라도 기계·GCC 버전·설정에 따라 결과가 크게 다름</li>
