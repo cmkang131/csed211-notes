@@ -128,7 +128,7 @@
 <div><dt>분기가 비싼 이유</dt><dd>pipeline: 조건이 정해지기 전 다음 명령 위치를 모름</dd></div>
 <div><dt>cmov</dt><dd>then과 else를 둘 다 계산해 하나를 고름 → <span class="k-blue">비싼 계산, 위험한 계산(null 역참조), 부작용 있는 식에는 사용 불가</span></dd></div>
 <div><dt>while 변환</dt><dd>-Og는 jump-to-middle (goto Test; Loop: body; Test: if(test) goto Loop) · -O1은 do-while conversion (guard + do-while) → 점프가 적음</dd></div>
-<div><dt>switch</dt><dd>jump table은 case label 주소의 배열 (엔트리 8 byte, .quad), <code>jmp *.L4(,%rdi,8)</code>로 한 번에 점프 · <span class="k-blue">경계 비교는 index = x − 최소 case 뒤 unsigned 비교(ja)라 범위 밖(음수 입력 포함)은 default로 감 — case 값이 음수여도 최솟값을 빼 정규화해 처리</span> · 빠진 case는 default label, 같은 코드의 case는 같은 label을 가리킴 · sparse하면 if-else 연쇄로 컴파일</dd></div>
+<div><dt>switch</dt><dd>jump table은 case label 주소의 배열 (엔트리 8 byte, .quad), <code>jmp *.L4(,%rdi,8)</code>로 한 번에 점프 · <span class="k-blue">경계 비교는 index = x − 최소 case로 정규화한 뒤 unsigned 비교(ja) — 정규화된 index가 범위 밖이면 default로 감 (음수 입력도 case가 음수면 정규화 뒤 유효할 수 있음)</span> · 빠진 case는 default label, 같은 코드의 case는 같은 label을 가리킴 · sparse하면 if-else 연쇄로 컴파일</dd></div>
 </dl>
 
 <h2><span class="h2no">6</span>Lecture 6 · 프로시저</h2>
@@ -216,7 +216,7 @@
 <div><dt>int ↔ float cast</dt><dd>int → float는 값이 바뀔 수 있음 (16777217 → 16777216) · float → int는 0 방향 truncate</dd></div>
 <div><dt>leaq</dt><dd>memory를 읽지 않음 · movq만 읽음 · memory → memory 불가</dd></div>
 <div><dt>denorm</dt><dd>E = 1 − Bias (≠ −Bias), M = 0.f · +0 = −0으로 비교됨</dd></div>
-<div><dt>switch 경계 비교 ja</dt><dd>index = x − 최소 case 뒤 unsigned 비교라 범위 밖 입력(음수 포함)은 default · 음수 case 자체는 최솟값을 빼 정규화</dd></div>
+<div><dt>switch 경계 비교 ja</dt><dd>index = x − 최소 case로 정규화 뒤 unsigned 비교 — 정규화된 index가 범위 밖일 때만 default (음수 입력은 case가 음수면 유효)</dd></div>
 <div><dt>caller-saved</dt><dd>call 뒤에 caller-saved register 값이 남아 있다고 믿으면 틀림 · callee-saved를 썼으면 push/pop 짝 (역순)</dd></div>
 <div><dt>5×</dt><dd>leaq (x + 4x) · scale은 1, 2, 4, 8뿐 · 포인터 +1은 원소 크기만큼</dd></div>
 <div><dt>struct·union</dt><dd>struct는 선언 순서 그대로 · K = 가장 큰 정렬 요구, 전체 길이도 K의 배수 · union은 모두 offset 0</dd></div>
