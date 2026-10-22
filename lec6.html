@@ -13,6 +13,9 @@
 <link rel="prev" href="lec5.html">
 <link rel="next" href="lec7.html">
 <link rel="stylesheet" href="assets/v5-layer.css">
+<link rel="stylesheet" href="assets/v6.css">
+<script src="assets/v6.js" defer></script>
+<script src="assets/v6-extra.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -201,6 +204,7 @@ long mult2(long a, long b) { long s = a * b; return s; }</pre>
 <li>(보충) 7번째 이후 인자는 caller가 call 전에 stack에 두므로 return address보다 높은 주소에 있음 → callee 진입 직후 7번째 인자는 8(%rsp) (연습문제 9의 add10이 이 경우)</li>
 </ul>
 
+<div class="v6-widget" data-widget="stack-frames" data-config='{"mode":"normal"}'></div>
 <h2><span class="h2no">6</span>Register를 건드려도 되는가</h2>
 <h3>읽기와 쓰기: incr 예제</h3>
 <ul>

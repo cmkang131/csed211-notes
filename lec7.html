@@ -13,6 +13,9 @@
 <link rel="prev" href="lec6.html">
 <link rel="next" href="lec8.html">
 <link rel="stylesheet" href="assets/v5-layer.css">
+<link rel="stylesheet" href="assets/v6.css">
+<script src="assets/v6.js" defer></script>
+<script src="assets/v6-extra.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -348,6 +351,7 @@ int var_ele(size_t n, int a[n][n], int i, int j) { return a[i][j]; }
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">주소는 둘 다 a + 4·n·i + 4·j. 행 크기가 상수여야 곱셈을 shift로 바꿀 수 있음</span></div>
 </div>
 
+<div class="v6-widget" data-widget="array-index" data-config='{"i":1,"j":2}'></div>
 <h2><span class="h2no">7</span>struct: 표현과 멤버 접근</h2>
 <pre class="c">struct rec {
     int a[4];
@@ -549,6 +553,7 @@ short get_j(int idx) {
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">절약이 생기는 경우: 작은 type 사이에 큰 type이 끼어 안쪽 padding이 커질 때. S1(24) → S2(24)는 순서를 바꿔도 그대로였음</span></div>
 </div>
 
+<div class="v6-widget" data-widget="struct-layout" data-config='{}'></div>
 <h2><span class="h2no">10</span>Floating point</h2>
 <h3>배경: x87, SSE, AVX</h3>
 <ul>

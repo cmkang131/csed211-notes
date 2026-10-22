@@ -509,17 +509,17 @@ reg("bit-ops",function(el,cfg){
         "비교: A || B (논리 OR)는 "+((ua||C.b2u(B,w))?1:0)+".";break;
       case "xor": h="A ^ B: 같은 자리 비트가 다르면 1. x ^ x = 0, x ^ 0 = x, (A ^ B) ^ B = A.";break;
       case "shl": var lost=C.b2u(A,w)*P>=Math.pow(2,w);
-        h="A << "+k+": 왼쪽으로 "+k+"칸, 오른쪽 빈자리는 0으로 채움. 값 = A·2"+sup(k)+" mod 2"+sup(w)+": "+ua+"·"+P+" mod "+Math.pow(2,w)+" = "+(res.ub?"? (UB)":ur)+(res.ub?"":" (unsigned)");
-        if(!res.ub&&lost)h+="\n"+R+"1인 비트가 위로 밀려나 버려짐 → unsigned 오버플로(값이 2"+sup(w)+"로 나눈 나머지가 됨)"+E;
+        h="A << "+k+": 왼쪽으로 "+k+"칸, 오른쪽 빈자리는 0으로 채움. 값 = A·2^k mod 2^w: "+ua+"·"+P+" mod "+Math.pow(2,w)+" = "+(res.ub?"? (UB)":ur)+(res.ub?"":" (unsigned)");
+        if(!res.ub&&lost)h+="\n"+R+"1인 비트가 위로 밀려나 버려짐 → unsigned 오버플로(값이 2^w로 나눈 나머지가 됨)"+E;
         if(!res.ub&&ta*P!==tr)h+="\n"+R+"signed로 보면 "+mns(ta)+"·"+P+" = "+mns(ta*P)+" 이지만 결과 비트열은 "+mns(tr)+" → signed 오버플로 (C에서 signed 오버플로·음수의 << 는 UB; 하드웨어는 보통 이 비트열을 낸다)"+E;
         break;
-      case "lshr": h="A >> "+k+" (logical, 논리): 왼쪽 빈자리를 0으로 채움 → unsigned 나눗셈 ⌊U/2"+sup(k)+"⌋ = ⌊"+ua+"/"+P+"⌋ = "+(res.ub?"? (UB)":ur)+".\nC에서 unsigned 의 >> 는 항상 논리 시프트.";
+      case "lshr": h="A >> "+k+" (logical, 논리): 왼쪽 빈자리를 0으로 채움 → unsigned 나눗셈 ⌊U/2^k⌋ = ⌊"+ua+"/"+P+"⌋ = "+(res.ub?"? (UB)":ur)+".\nC에서 unsigned 의 >> 는 항상 논리 시프트.";
         if(!res.ub&&(A>>(w-1))&1)h+="\n"+R+"A의 부호 비트가 1 → 산술 시프트였다면 "+C.hex(C.bitop("ashr",A,0,k,w).r,w)+" (왼쪽이 1로 채워짐)"+E;
         break;
       case "ashr": var sb=(A>>(w-1))&1,fl=Math.floor(ta/P),tz=Math.trunc(ta/P);
-        h="A >> "+k+" (arithmetic, 산술): 왼쪽 빈자리를 부호 비트 a"+sub(w-1)+" = "+sb+" 로 채움 → signed 나눗셈 ⌊T/2"+sup(k)+"⌋ = ⌊"+mns(ta)+"/"+P+"⌋ = "+(res.ub?"? (UB)":mns(tr))+".";
+        h="A >> "+k+" (arithmetic, 산술): 왼쪽 빈자리를 부호 비트 a"+(w-1)+" = "+sb+" 로 채움 → signed 나눗셈 ⌊T/2^k⌋ = ⌊"+mns(ta)+"/"+P+"⌋ = "+(res.ub?"? (UB)":mns(tr))+".";
         if(sb===0)h+="\n부호 비트가 0이면 산술 시프트 = 논리 시프트.";
-        else if(!res.ub&&fl!==tz)h+="\n"+R+"C의 정수 나눗셈 "+mns(ta)+"/"+P+" 은 0 쪽으로 자르므로 "+mns(tz)+" ≠ "+mns(fl)+E+" → 같게 하려면 (A + 2"+sup(k)+" − 1) >> k (bias 더하기).";
+        else if(!res.ub&&fl!==tz)h+="\n"+R+"C의 정수 나눗셈 "+mns(ta)+"/"+P+" 은 0 쪽으로 자르므로 "+mns(tz)+" ≠ "+mns(fl)+E+" → 같게 하려면 (A + 2^k − 1) >> k (bias 더하기).";
         h+="\nC에서 signed 의 >> 는 구현 정의(implementation-defined)지만 거의 모든 컴파일러가 산술 시프트를 쓴다.";
         break;
     }
@@ -1009,3 +1009,4071 @@ function later(){setTimeout(fallbackBoot,0);}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",later);else later();
 })();
 
+/* ===== Batch 2: Lec4-5 (addr-modes, asm-sim, asm-encode) ===== */
+
+(function () {
+  "use strict";
+
+  const V6 = window.V6;
+  if (!V6 || typeof V6.register !== "function") return;
+
+  const INK = V6.INK || "#1a1a1a";
+  const RED = V6.RED || "#9e2b25";
+  const GRID = V6.GRID || "#e8e6e0";
+  const FONT = '"Noto Sans KR", sans-serif';
+
+  const U64 = 1n << 64n;
+  const MASK64 = U64 - 1n;
+  const SIGN64 = 1n << 63n;
+  const MASK32 = (1n << 32n) - 1n;
+  const SIGN32 = 1n << 31n;
+
+  const REGISTERS = [
+    "rax", "rbx", "rcx", "rdx",
+    "rsi", "rdi", "rsp", "rbp"
+  ];
+
+  const REG_CODE = [
+    "rax", "rcx", "rdx", "rbx",
+    "rsp", "rbp", "rsi", "rdi"
+  ];
+
+  function el(tag, parent, text, cls) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) {
+      e.textContent = String(text);
+    }
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function button(parent, text, handler) {
+    const b = el("button", parent, text, "v6-btn");
+    b.type = "button";
+    b.addEventListener("click", handler);
+    return b;
+  }
+
+  function controls(parent) {
+    return el("div", parent, "", "v6-controls");
+  }
+
+  function output(parent) {
+    const e = el("div", parent, "", "v6-state");
+    e.style.whiteSpace = "pre-wrap";
+    e.style.overflowWrap = "anywhere";
+    e.setAttribute("role", "status");
+    return e;
+  }
+
+  function title(parent, text) {
+    if (typeof V6.title === "function") {
+      V6.title(parent, text);
+    } else {
+      el("h3", parent, text);
+    }
+  }
+
+  function label(parent, text, control) {
+    const l = el("label", parent);
+    el("span", l, text + " ");
+    l.appendChild(control);
+    return l;
+  }
+
+  function slider(parent, name, min, max, value, callback) {
+    const input = document.createElement("input");
+    input.type = "range";
+    input.min = String(min);
+    input.max = String(max);
+    input.step = "1";
+    input.value = String(value);
+
+    const l = label(parent, name, input);
+    const current = el("span", l, "", "v6-val");
+
+    function show() {
+      current.textContent = "0x" +
+        Number(input.value).toString(16).toUpperCase();
+    }
+
+    show();
+
+    input.addEventListener("input", () => {
+      show();
+      callback(Number(input.value));
+    });
+
+    return { input, current };
+  }
+
+  function setError(target, error) {
+    target.textContent = "안내: " +
+      (error instanceof Error ? error.message : String(error));
+  }
+
+  function hex(value, width) {
+    const v = BigInt(value);
+    const digits = width === undefined ? 16 : width;
+    return "0x" +
+      v.toString(16).toUpperCase().padStart(digits, "0");
+  }
+
+  function u64(v) {
+    return BigInt.asUintN(64, BigInt(v));
+  }
+
+  function s64(v) {
+    return BigInt.asIntN(64, BigInt(v));
+  }
+
+  function u32(v) {
+    return BigInt.asUintN(32, BigInt(v));
+  }
+
+  function s32(v) {
+    return BigInt.asIntN(32, BigInt(v));
+  }
+
+  function parseInteger(value) {
+    const s = String(value).trim();
+
+    if (/^[+-]?0x[0-9a-f]+$/i.test(s)) {
+      const negative = s.startsWith("-");
+      const unsigned = s.replace(/^[+-]/, "");
+      const n = BigInt(unsigned);
+      return negative ? -n : n;
+    }
+
+    if (/^[+-]?\d+$/.test(s)) {
+      return BigInt(s);
+    }
+
+    throw new Error(
+      "정수는 10진수 또는 0x로 시작하는 16진수로 입력하세요."
+    );
+  }
+
+  function byteHex(v) {
+    return Number(v).toString(16).padStart(2, "0");
+  }
+
+  function signedDisp(n) {
+    const x = BigInt(n);
+    if (x === 0n) return "";
+    return x.toString();
+  }
+
+  function littleEndian(value, count) {
+    const bits = BigInt(count * 8);
+    let v = BigInt.asUintN(Number(bits), BigInt(value));
+    const result = [];
+
+    for (let i = 0; i < count; i++) {
+      result.push(Number(v & 255n));
+      v >>= 8n;
+    }
+
+    return result;
+  }
+
+  function readLittle(bytes, offset, size) {
+    if (offset < 0 || offset + size > bytes.length) {
+      throw new Error("바이트열이 잘렸습니다.");
+    }
+
+    let value = 0n;
+
+    for (let i = 0; i < size; i++) {
+      value |= BigInt(bytes[offset + i]) << BigInt(i * 8);
+    }
+
+    return value;
+  }
+
+  function signExtend(v, bits) {
+    return BigInt.asIntN(bits, BigInt(v));
+  }
+
+  function formatBytes(bytes) {
+    return bytes.map(byteHex).join(" ");
+  }
+
+  function clear(parent) {
+    parent.replaceChildren();
+  }
+
+  function makeTable(parent, headers) {
+    const table = el("table", parent);
+
+    table.style.borderCollapse = "collapse";
+    table.style.fontSize = "12px";
+    table.style.width = "100%";
+
+    const head = el("thead", table);
+    const row = el("tr", head);
+
+    headers.forEach(h => {
+      const th = el("th", row, h);
+      th.style.border = "1px solid " + INK;
+      th.style.padding = "5px";
+      th.style.textAlign = "left";
+    });
+
+    const body = el("tbody", table);
+
+    return {
+      table,
+      body,
+      add(values, highlighted) {
+        const tr = el("tr", body);
+
+        values.forEach((value, index) => {
+          const td = el("td", tr, value);
+          td.style.border = "1px solid " + INK;
+          td.style.padding = "5px";
+          td.style.fontFamily = "monospace, 'Noto Sans KR', sans-serif";
+
+          if (highlighted && highlighted.includes(index)) {
+            td.style.color = RED;
+          }
+        });
+
+        return tr;
+      }
+    };
+  }
+
+  // ============================================================
+  // Widget 1 — Effective address calculator
+  // ============================================================
+
+  V6.register("addr-modes", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+
+    title(root, "유효주소(effective address) 계산기");
+
+    const state = {
+      rbx: 0x40n,
+      rcx: 0x10n,
+      scale: 2n,
+      disp: 0n,
+      mode: "lea",
+      error: ""
+    };
+
+    try {
+      if (cfg.rbx !== undefined) {
+        const n = parseInteger(cfg.rbx);
+        if (n < 0n || n > 0x200n) throw new Error("rbx 범위 초과");
+        state.rbx = n;
+      }
+      if (cfg.rcx !== undefined) {
+        const n = parseInteger(cfg.rcx);
+        if (n < 0n || n > 0x200n) throw new Error("rcx 범위 초과");
+        state.rcx = n;
+      }
+      if (cfg.scale !== undefined) {
+        const n = parseInteger(cfg.scale);
+        if (![1n, 2n, 4n, 8n].includes(n)) {
+          throw new Error("scale은 1, 2, 4, 8 중 하나여야 합니다.");
+        }
+        state.scale = n;
+      }
+      if (cfg.disp !== undefined) {
+        state.disp = parseInteger(cfg.disp);
+      }
+    } catch (e) {
+      state.error = e.message + " — 기본값을 사용합니다.";
+    }
+
+    // Pre-filled byte-addressed little-endian example memory.
+    // This is a teaching memory, not actual process memory.
+    const memory = new Map();
+
+    function writeQ(addr, value) {
+      const bytes = littleEndian(value, 8);
+
+      bytes.forEach((b, i) => {
+        memory.set(addr + BigInt(i), b);
+      });
+    }
+
+    for (let a = 0n; a <= 0x1200n; a += 8n) {
+      writeQ(
+        a,
+        u64(0x1122334455660000n + a)
+      );
+    }
+
+    function readQ(addr) {
+      let result = 0n;
+
+      for (let i = 0n; i < 8n; i++) {
+        const b = memory.get(addr + i);
+
+        if (b === undefined) {
+          return null;
+        }
+
+        result |= BigInt(b) << (8n * i);
+      }
+
+      return result;
+    }
+
+    const top = controls(root);
+
+    slider(
+      top,
+      "%rbx",
+      0,
+      0x200,
+      Number(state.rbx),
+      v => {
+        state.rbx = BigInt(v);
+        render();
+      }
+    );
+
+    slider(
+      top,
+      "%rcx",
+      0,
+      0x200,
+      Number(state.rcx),
+      v => {
+        state.rcx = BigInt(v);
+        render();
+      }
+    );
+
+    const scaleControls = controls(root);
+    el("span", scaleControls, "배율(scale) S:");
+
+    const scaleButtons = [];
+
+    [1, 2, 4, 8].forEach(s => {
+      const b = button(scaleControls, String(s), () => {
+        state.scale = BigInt(s);
+        render();
+      });
+      scaleButtons.push([s, b]);
+    });
+
+    const dispControls = controls(root);
+    const dispInput = document.createElement("input");
+    dispInput.type = "text";
+    dispInput.value = state.disp.toString();
+    dispInput.style.width = "130px";
+
+    label(
+      dispControls,
+      "변위(displacement, 10진/16진)",
+      dispInput
+    );
+
+    const dispValue = el("span", dispControls, "", "v6-val");
+
+    dispInput.addEventListener("input", () => {
+      try {
+        const v = parseInteger(dispInput.value);
+
+        if (v < -(1n << 31n) || v > (1n << 31n) - 1n) {
+          throw new Error("변위는 signed 32비트 범위여야 합니다.");
+        }
+
+        state.disp = v;
+        state.error = "";
+      } catch (e) {
+        state.error = e.message;
+      }
+
+      render();
+    });
+
+    const modeControls = controls(root);
+
+    button(modeControls, "leaq — 주소 계산", () => {
+      state.mode = "lea";
+      render();
+    });
+
+    button(modeControls, "movq — 메모리 읽기", () => {
+      state.mode = "mov";
+      render();
+    });
+
+    const calculation = output(root);
+    const memoryHost = el("div", root);
+    const formsHost = el("div", root);
+    const note = output(root);
+
+    function render() {
+      scaleButtons.forEach(([s, b]) => {
+        b.style.borderColor =
+          BigInt(s) === state.scale ? RED : INK;
+      });
+
+      if (state.error) {
+        calculation.textContent = "안내: " + state.error;
+        return;
+      }
+
+      const index = state.rcx * state.scale;
+      const eaSigned = state.disp + state.rbx + index;
+      const ea = u64(eaSigned);
+
+      const operand =
+        signedDisp(state.disp) +
+        "(%rbx,%rcx," + state.scale + ")";
+
+      const memValue = readQ(ea);
+
+      dispValue.textContent =
+        state.disp.toString() +
+        " (" +
+        (state.disp < 0n ? "-" + hex(-state.disp) : hex(state.disp)) +
+        ")";
+
+      const lines = [
+        "어셈블리 피연산자: " + operand,
+        "",
+        "EA = Imm + R[%rbx] + R[%rcx] × S",
+        "   = " + state.disp +
+          " + " + state.rbx +
+          " + " + state.rcx +
+          " × " + state.scale,
+        "   = " + state.disp +
+          " + " + state.rbx +
+          " + " + index,
+        "   = " + eaSigned,
+        "   = " + hex(ea) + " (64비트 유효주소)",
+        ""
+      ];
+
+      if (state.mode === "lea") {
+        lines.push(
+          "leaq " + operand + ", %rax",
+          "결과: %rax = EA = " + hex(ea),
+          "메모리 참조 없음(no memory access)."
+        );
+      } else {
+        lines.push("movq " + operand + ", %rax");
+
+        if (memValue === null) {
+          lines.push(
+            "결과: 예시 메모리의 매핑 범위 밖입니다.",
+            "실제 CPU라면 유효한 메모리 접근인지 추가 확인이 필요합니다."
+          );
+        } else {
+          lines.push(
+            "결과: %rax = M[EA] = " + hex(memValue),
+            "주소 EA에서 8바이트를 리틀 엔디안으로 읽습니다."
+          );
+        }
+      }
+
+      calculation.textContent = lines.join("\n");
+
+      clear(memoryHost);
+      el("h4", memoryHost, "예시 메모리(memory)");
+
+      const table = makeTable(memoryHost, [
+        "주소(address)",
+        "바이트 0..7 (낮은 주소부터)",
+        "64비트 값"
+      ]);
+
+      const base = ea & ~7n;
+
+      for (let offset = -16n; offset <= 16n; offset += 8n) {
+        const address = base + offset;
+        if (address < 0n) continue;
+
+        const bytes = [];
+
+        for (let i = 0n; i < 8n; i++) {
+          const b = memory.get(address + i);
+          bytes.push(b === undefined ? "??" : byteHex(b));
+        }
+
+        const value = readQ(address);
+
+        table.add(
+          [
+            hex(address),
+            bytes.join(" "),
+            value === null ? "미매핑" : hex(value)
+          ],
+          address <= ea && ea < address + 8n ? [0, 1] : []
+        );
+      }
+
+      if (ea % 8n !== 0n && memValue !== null) {
+        el(
+          "div",
+          memoryHost,
+          "현재 EA는 8바이트 경계에 정렬되지 않았습니다. " +
+          "movq는 해당 주소부터 연속된 8바이트를 읽습니다."
+        );
+      }
+
+      clear(formsHost);
+      el("h4", formsHost, "다른 주소 지정 형태(addressing forms)");
+
+      const forms = makeTable(formsHost, [
+        "피연산자",
+        "유효주소 계산"
+      ]);
+
+      forms.add(["(%rbx)", "R[%rbx]"]);
+      forms.add(["(%rbx,%rcx)", "R[%rbx] + R[%rcx]"]);
+      forms.add(["16(%rbx)", "16 + R[%rbx]"]);
+      forms.add([
+        "16(%rbx,%rcx,4)",
+        "16 + R[%rbx] + 4×R[%rcx]"
+      ]);
+      forms.add([
+        "16(,%rcx,4)",
+        "16 + 4×R[%rcx]"
+      ]);
+      forms.add([
+        "16",
+        "변위(displacement)만 사용하는 주소 형태"
+      ]);
+
+      note.textContent =
+        "핵심: leaq는 메모리 값을 읽지 않고 주소 계산 결과를 저장합니다.\n" +
+        "movq는 계산한 주소에서 8바이트를 읽습니다.\n" +
+        "AT&T 문법에서는 source가 먼저, destination이 뒤에 옵니다.\n" +
+        "실제 x86-64의 일반적인 주소 계산은 64비트 모듈러 연산입니다.";
+    }
+
+    render();
+  });
+
+  // ============================================================
+  // Widget 2 — Mini x86-64 simulator
+  // ============================================================
+
+  V6.register("asm-sim", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+
+    title(root, "x86-64 한 단계 실행기");
+
+    const STACK_BASE = 0x1000n;
+    const STACK_SIZE = 256;
+    const STACK_END = STACK_BASE + BigInt(STACK_SIZE);
+
+    const PROGRAMS = [
+      {
+        name: "산술: OF / CF",
+        code: [
+          "movq $0x7fffffffffffffff, %rax",
+          "addq $1, %rax",
+          "movq $0xffffffffffffffff, %rbx",
+          "addq $1, %rbx",
+          "subq $1, %rbx",
+          "negq %rbx",
+          "notq %rbx"
+        ]
+      },
+      {
+        name: "leaq 산술 트릭",
+        code: [
+          "movq $7, %rdi",
+          "leaq (%rdi,%rdi,2), %rax",
+          "leaq 5(%rax,%rdi,4), %rbx",
+          "subq $1, %rbx"
+        ]
+      },
+      {
+        name: "cmp + jcc 카운트다운",
+        code: [
+          "movq $4, %rcx",
+          "movq $0, %rax",
+          "loop:",
+          "addq %rcx, %rax",
+          "decq %rcx",
+          "cmpq $0, %rcx",
+          "jg loop"
+        ]
+      },
+      {
+        name: "조건문: 분기 버전",
+        code: [
+          "movq $9, %rdi",
+          "movq $12, %rsi",
+          "cmpq %rsi, %rdi",
+          "jge use_a",
+          "movq %rsi, %rax",
+          "jmp done",
+          "use_a:",
+          "movq %rdi, %rax",
+          "done:",
+          "nop"
+        ]
+      },
+      {
+        name: "조건문: cmov 버전",
+        code: [
+          "movq $9, %rdi",
+          "movq $12, %rsi",
+          "movq %rsi, %rax",
+          "cmpq %rsi, %rdi",
+          "cmovge %rdi, %rax",
+          "nop"
+        ]
+      },
+      {
+        name: "swap: 스택과 레지스터",
+        code: [
+          "movq $17, %rax",
+          "movq $42, %rbx",
+          "pushq %rax",
+          "movq %rbx, %rax",
+          "popq %rbx",
+          "nop"
+        ]
+      }
+    ];
+
+    let selectedProgram = Number.isInteger(cfg.preset)
+      ? cfg.preset : 0;
+
+    if (
+      selectedProgram < 0 ||
+      selectedProgram >= PROGRAMS.length
+    ) {
+      selectedProgram = 0;
+    }
+
+    let program = [];
+    let labels = new Map();
+    let timer = null;
+    let history = [];
+    let machine = null;
+    let lastChanges = null;
+    let lastExplanation = "";
+
+    function initialState() {
+      const regs = {};
+
+      REGISTERS.forEach(r => {
+        regs[r] = 0n;
+      });
+
+      regs.rsp = STACK_END;
+      regs.rbp = STACK_END;
+
+      return {
+        regs,
+        flags: {
+          ZF: 0,
+          SF: 0,
+          CF: 0,
+          OF: 0
+        },
+        pc: 0,
+        memory: new Uint8Array(STACK_SIZE),
+        halted: false,
+        steps: 0
+      };
+    }
+
+    function cloneMachine(m) {
+      return {
+        regs: { ...m.regs },
+        flags: { ...m.flags },
+        pc: m.pc,
+        memory: new Uint8Array(m.memory),
+        halted: m.halted,
+        steps: m.steps
+      };
+    }
+
+    function compile(lines) {
+      const instructions = [];
+      const labelMap = new Map();
+
+      lines.forEach((line, lineNumber) => {
+        const cleaned = line
+          .split("#")[0]
+          .trim();
+
+        if (!cleaned) return;
+
+        if (/^[A-Za-z_]\w*:$/.test(cleaned)) {
+          labelMap.set(cleaned.slice(0, -1), instructions.length);
+          return;
+        }
+
+        instructions.push({
+          text: cleaned,
+          sourceLine: lineNumber
+        });
+      });
+
+      return { instructions, labels: labelMap };
+    }
+
+    function splitOperands(text) {
+      const result = [];
+      let depth = 0;
+      let start = 0;
+
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] === "(") depth++;
+        if (text[i] === ")") depth--;
+
+        if (depth < 0) {
+          throw new Error("메모리 피연산자의 괄호가 잘못되었습니다.");
+        }
+
+        if (text[i] === "," && depth === 0) {
+          result.push(text.slice(start, i).trim());
+          start = i + 1;
+        }
+      }
+
+      if (depth !== 0) {
+        throw new Error("메모리 피연산자의 괄호가 잘못되었습니다.");
+      }
+
+      const remaining = text.slice(start).trim();
+      if (remaining) result.push(remaining);
+
+      return result;
+    }
+
+    function parseOperand(text) {
+      const s = text.trim();
+
+      if (s.startsWith("$")) {
+        return { type: "imm", value: parseInteger(s.slice(1)) };
+      }
+
+      if (/^%[a-z0-9]+$/.test(s)) {
+        return { type: "reg", name: s.slice(1) };
+      }
+
+      const m = /^([^()]*)\((%[a-z0-9]+)(?:,(%[a-z0-9]+)(?:,([1248]))?)?\)$/.exec(s);
+
+      if (m) {
+        return {
+          type: "mem",
+          disp: m[1] ? parseInteger(m[1]) : 0n,
+          base: m[2].slice(1),
+          index: m[3] ? m[3].slice(1) : null,
+          scale: m[4] ? BigInt(m[4]) : 1n
+        };
+      }
+
+      if (/^[A-Za-z_]\w*$/.test(s)) {
+        // Branch targets are bare labels, not arithmetic operands.
+        return { type: "label", name: s };
+      }
+
+      throw new Error("지원하지 않는 피연산자: " + s);
+    }
+
+    function resolveRegName(name, bits) {
+      if (bits === 64 && REGISTERS.includes(name)) return name;
+
+      const map32 = {
+        eax: "rax", ebx: "rbx", ecx: "rcx", edx: "rdx",
+        esi: "rsi", edi: "rdi", esp: "rsp", ebp: "rbp"
+      };
+
+      if (bits === 32 && map32[name]) return map32[name];
+
+      return null;
+    }
+
+    function readRegister(name, bits) {
+      const full = resolveRegName(name, bits);
+
+      if (!full) {
+        throw new Error("지원하지 않는 레지스터: %" + name);
+      }
+
+      return bits === 32
+        ? u32(machine.regs[full])
+        : u64(machine.regs[full]);
+    }
+
+    function writeRegister(name, value, bits) {
+      const full = resolveRegName(name, bits);
+
+      if (!full) {
+        throw new Error("지원하지 않는 레지스터: %" + name);
+      }
+
+      // Writing a 32-bit general-purpose register zero-extends to 64 bits.
+      machine.regs[full] = bits === 32
+        ? u32(value)
+        : u64(value);
+    }
+
+    function address(op) {
+      if (op.type !== "mem") {
+        throw new Error("메모리 피연산자가 아닙니다.");
+      }
+
+      const base = readRegister(op.base, 64);
+      const index = op.index
+        ? readRegister(op.index, 64)
+        : 0n;
+
+      return u64(base + op.disp + index * op.scale);
+    }
+
+    function memOffset(addr, size) {
+      const offset = addr - STACK_BASE;
+
+      if (
+        offset < 0n ||
+        offset + BigInt(size) > BigInt(STACK_SIZE)
+      ) {
+        throw new Error(
+          "메모리 접근 범위 초과: " +
+          hex(addr) +
+          " (스택 창 " +
+          hex(STACK_BASE) +
+          "–" +
+          hex(STACK_END - 1n) +
+          ")"
+        );
+      }
+
+      return Number(offset);
+    }
+
+    function readMemory(addr, size) {
+      const offset = memOffset(addr, size);
+      let value = 0n;
+
+      for (let i = 0; i < size; i++) {
+        value |=
+          BigInt(machine.memory[offset + i]) <<
+          BigInt(i * 8);
+      }
+
+      return value;
+    }
+
+    function writeMemory(addr, value, size) {
+      const offset = memOffset(addr, size);
+      const bytes = littleEndian(value, size);
+
+      bytes.forEach((b, i) => {
+        machine.memory[offset + i] = b;
+      });
+    }
+
+    function readOperand(op, bits) {
+      if (op.type === "imm") {
+        return BigInt.asUintN(bits, op.value);
+      }
+
+      if (op.type === "reg") {
+        return readRegister(op.name, bits);
+      }
+
+      if (op.type === "mem") {
+        return readMemory(address(op), bits / 8);
+      }
+
+      throw new Error("잘못된 피연산자입니다.");
+    }
+
+    function writeOperand(op, value, bits) {
+      if (op.type === "reg") {
+        writeRegister(op.name, value, bits);
+      } else if (op.type === "mem") {
+        writeMemory(address(op), value, bits / 8);
+      } else {
+        throw new Error("즉시값(immediate)은 목적지가 될 수 없습니다.");
+      }
+    }
+
+    function signBit(v, bits) {
+      return Number(
+        (BigInt.asUintN(bits, v) >> BigInt(bits - 1)) & 1n
+      );
+    }
+
+    function updateZS(result, bits) {
+      const r = BigInt.asUintN(bits, result);
+      machine.flags.ZF = r === 0n ? 1 : 0;
+      machine.flags.SF = signBit(r, bits);
+    }
+
+    function flagsAdd(a, b, bits) {
+      const A = BigInt.asUintN(bits, a);
+      const B = BigInt.asUintN(bits, b);
+      const full = A + B;
+      const result = BigInt.asUintN(bits, full);
+
+      const sa = signBit(A, bits);
+      const sb = signBit(B, bits);
+      const sr = signBit(result, bits);
+
+      updateZS(result, bits);
+
+      machine.flags.CF =
+        full >> BigInt(bits) ? 1 : 0;
+
+      machine.flags.OF =
+        sa === sb && sr !== sa ? 1 : 0;
+
+      return result;
+    }
+
+    function flagsSub(a, b, bits) {
+      const A = BigInt.asUintN(bits, a);
+      const B = BigInt.asUintN(bits, b);
+      const result = BigInt.asUintN(bits, A - B);
+
+      const sa = signBit(A, bits);
+      const sb = signBit(B, bits);
+      const sr = signBit(result, bits);
+
+      updateZS(result, bits);
+
+      machine.flags.CF = A < B ? 1 : 0;
+      machine.flags.OF =
+        sa !== sb && sr !== sa ? 1 : 0;
+
+      return result;
+    }
+
+    function flagsLogic(result, bits) {
+      updateZS(result, bits);
+      machine.flags.CF = 0;
+      machine.flags.OF = 0;
+    }
+
+    function condition(suffix) {
+      const f = machine.flags;
+      const Z = f.ZF, S = f.SF, C = f.CF, O = f.OF;
+
+      if ([Z, S, C, O].some(v => v === null)) {
+        throw new Error("조건 평가에 미정의 플래그가 포함되어 있습니다.");
+      }
+
+      switch (suffix) {
+        case "e":
+        case "z": return Z === 1;
+        case "ne":
+        case "nz": return Z === 0;
+        case "s": return S === 1;
+        case "ns": return S === 0;
+        case "g": return Z === 0 && S === O;
+        case "ge": return S === O;
+        case "l": return S !== O;
+        case "le": return Z === 1 || S !== O;
+        case "a": return C === 0 && Z === 0;
+        case "ae": return C === 0;
+        case "b": return C === 1;
+        case "be": return C === 1 || Z === 1;
+        default:
+          throw new Error("지원하지 않는 조건 코드: " + suffix);
+      }
+    }
+
+    function instructionStep() {
+      if (machine.halted || machine.pc >= program.length) {
+        machine.halted = true;
+        return;
+      }
+
+      const instruction = program[machine.pc];
+      const match = /^([a-z][a-z0-9]*)\s*(.*)$/i.exec(instruction.text);
+
+      if (!match) {
+        throw new Error("명령어 구문 오류");
+      }
+
+      const op = match[1].toLowerCase();
+      const args = splitOperands(match[2]).map(parseOperand);
+
+      const beforePC = machine.pc;
+      let explanation = "";
+      let nextPC = machine.pc + 1;
+
+      const need = n => {
+        if (args.length !== n) {
+          throw new Error(op + "에는 피연산자 " + n + "개가 필요합니다.");
+        }
+      };
+
+      const bin = fn => {
+        need(2);
+        const source = readOperand(args[0], 64);
+        const dest = readOperand(args[1], 64);
+        const result = fn(dest, source);
+        writeOperand(args[1], result, 64);
+        return result;
+      };
+
+      if (op === "nop") {
+        need(0);
+        explanation = "nop: 상태를 변경하지 않습니다.";
+      }
+
+      else if (op === "movq" || op === "movl") {
+        need(2);
+        const bits = op === "movq" ? 64 : 32;
+
+        if (args[0].type === "mem" && args[1].type === "mem") {
+          throw new Error("mov는 메모리→메모리 직접 이동을 지원하지 않습니다.");
+        }
+
+        const value = readOperand(args[0], bits);
+        writeOperand(args[1], value, bits);
+
+        explanation = op === "movl"
+          ? "movl: 32비트를 기록하며 레지스터 목적지의 상위 32비트는 0으로 클리어됩니다."
+          : "movq: 64비트 값을 이동합니다. 플래그는 변경되지 않습니다.";
+      }
+
+      else if (op === "movzbl") {
+        need(2);
+
+        let byteValue;
+
+        if (args[0].type === "mem") {
+          byteValue = readMemory(address(args[0]), 1);
+        } else if (args[0].type === "reg") {
+          const low8 = {
+            al: "rax", bl: "rbx", cl: "rcx", dl: "rdx",
+            sil: "rsi", dil: "rdi", spl: "rsp", bpl: "rbp"
+          };
+          const reg = low8[args[0].name];
+
+          if (!reg) throw new Error("지원하지 않는 8비트 레지스터");
+          byteValue = machine.regs[reg] & 255n;
+        } else {
+          throw new Error("movzbl의 source는 8비트 레지스터 또는 메모리입니다.");
+        }
+
+        writeOperand(args[1], byteValue, 32);
+        explanation = "movzbl: 8비트를 unsigned로 확장해 32비트 목적지에 기록합니다.";
+      }
+
+      else if (op === "leaq") {
+        need(2);
+
+        if (args[0].type !== "mem" || args[1].type !== "reg") {
+          throw new Error("leaq는 메모리 주소식과 목적지 레지스터가 필요합니다.");
+        }
+
+        const ea = address(args[0]);
+        writeOperand(args[1], ea, 64);
+
+        explanation =
+          "leaq: 메모리 읽기 없이 유효주소 " +
+          hex(ea) +
+          "를 계산했습니다.";
+      }
+
+      else if (op === "addq") {
+        const result = bin((a, b) => flagsAdd(a, b, 64));
+        explanation =
+          "addq: 결과 " + hex(result) +
+          "; OF=" + machine.flags.OF +
+          ", CF=" + machine.flags.CF +
+          ". OF는 signed overflow, CF는 unsigned carry-out입니다.";
+      }
+
+      else if (op === "subq") {
+        const result = bin((a, b) => flagsSub(a, b, 64));
+        explanation =
+          "subq: destination − source = " + hex(result) +
+          "; CF=" + machine.flags.CF +
+          "는 unsigned borrow를 나타냅니다.";
+      }
+
+      else if (op === "imulq") {
+        need(2);
+        const a = s64(readOperand(args[0], 64));
+        const b = s64(readOperand(args[1], 64));
+        const product = a * b;
+        const truncated = s64(product);
+
+        writeOperand(args[1], truncated, 64);
+
+        const overflow = product !== truncated ? 1 : 0;
+
+        machine.flags.CF = overflow;
+        machine.flags.OF = overflow;
+        machine.flags.SF = null;
+        machine.flags.ZF = null;
+
+        explanation =
+          "imulq: signed 128비트 곱의 하위 64비트만 저장합니다. " +
+          "상위 절반이 부호 확장과 다르면 CF=OF=1. " +
+          "SF/ZF는 미정의입니다.";
+      }
+
+      else if (["xorq", "andq", "orq"].includes(op)) {
+        const result = bin((a, b) => {
+          const r =
+            op === "xorq" ? a ^ b :
+            op === "andq" ? a & b :
+            a | b;
+
+          flagsLogic(r, 64);
+          return r;
+        });
+
+        explanation =
+          op + ": 결과 " + hex(result) +
+          "; CF=OF=0, ZF/SF는 결과에서 결정됩니다.";
+      }
+
+      else if (["salq", "sarq", "shrq"].includes(op)) {
+        need(2);
+
+        const sourceCount = readOperand(args[0], 64);
+        const count = Number(sourceCount & 63n);
+        const old = readOperand(args[1], 64);
+
+        if (count !== 0) {
+          let result;
+          let cf;
+
+          if (op === "salq") {
+            cf = Number((old >> BigInt(64 - count)) & 1n);
+            result = u64(old << BigInt(count));
+          } else if (op === "shrq") {
+            cf = Number((old >> BigInt(count - 1)) & 1n);
+            result = old >> BigInt(count);
+          } else {
+            cf = Number((old >> BigInt(count - 1)) & 1n);
+            result = u64(s64(old) >> BigInt(count));
+          }
+
+          writeOperand(args[1], result, 64);
+          updateZS(result, 64);
+          machine.flags.CF = cf;
+
+          if (count === 1) {
+            if (op === "salq") {
+              machine.flags.OF =
+                signBit(result, 64) ^ cf;
+            } else if (op === "shrq") {
+              machine.flags.OF = signBit(old, 64);
+            } else {
+              machine.flags.OF = 0;
+            }
+          } else {
+            machine.flags.OF = null;
+          }
+
+          explanation =
+            op + ": 실효 이동 횟수 " + count +
+            "; CF는 마지막 밀려난 비트입니다. " +
+            (count === 1
+              ? "OF를 정의된 규칙으로 계산했습니다."
+              : "여러 비트 이동의 OF는 미정의입니다.");
+        } else {
+          explanation =
+            op + ": 64비트 피연산자의 이동 횟수는 하위 6비트만 사용합니다. " +
+            "실효 횟수 0이므로 값과 플래그가 유지됩니다.";
+        }
+      }
+
+      else if (op === "incq" || op === "decq") {
+        need(1);
+
+        const oldCF = machine.flags.CF;
+        const value = readOperand(args[0], 64);
+
+        const result = op === "incq"
+          ? flagsAdd(value, 1n, 64)
+          : flagsSub(value, 1n, 64);
+
+        machine.flags.CF = oldCF;
+        writeOperand(args[0], result, 64);
+
+        explanation =
+          op + ": 1을 " +
+          (op === "incq" ? "더했습니다." : "뺐습니다.") +
+          " CF는 변경하지 않습니다.";
+      }
+
+      else if (op === "negq") {
+        need(1);
+
+        const old = readOperand(args[0], 64);
+        const result = flagsSub(0n, old, 64);
+
+        machine.flags.CF = old === 0n ? 0 : 1;
+        writeOperand(args[0], result, 64);
+
+        explanation =
+          "negq: 0 − 값. 0이 아닌 피연산자는 CF=1입니다. " +
+          "TMin의 부호 반전은 OF=1입니다.";
+      }
+
+      else if (op === "notq") {
+        need(1);
+        const result = u64(~readOperand(args[0], 64));
+        writeOperand(args[0], result, 64);
+
+        explanation =
+          "notq: 모든 비트를 반전합니다. 조건 플래그는 변경하지 않습니다.";
+      }
+
+      else if (op === "cmpq") {
+        need(2);
+
+        const source = readOperand(args[0], 64);
+        const dest = readOperand(args[1], 64);
+
+        flagsSub(dest, source, 64);
+
+        explanation =
+          "cmpq b,a: a−b를 계산해 플래그만 갱신합니다. " +
+          "레지스터와 메모리 값은 바뀌지 않습니다.";
+      }
+
+      else if (op === "testq") {
+        need(2);
+
+        const a = readOperand(args[0], 64);
+        const b = readOperand(args[1], 64);
+
+        flagsLogic(a & b, 64);
+
+        explanation =
+          "testq: a & b의 결과로 플래그만 갱신합니다. CF=OF=0.";
+      }
+
+      else if (op === "pushq") {
+        need(1);
+
+        const value = readOperand(args[0], 64);
+        const newSP = u64(machine.regs.rsp - 8n);
+
+        writeMemory(newSP, value, 8);
+        machine.regs.rsp = newSP;
+
+        explanation =
+          "pushq: %rsp를 8 감소시킨 후 8바이트를 저장합니다.";
+      }
+
+      else if (op === "popq") {
+        need(1);
+
+        const oldSP = machine.regs.rsp;
+        const value = readMemory(oldSP, 8);
+
+        machine.regs.rsp = u64(oldSP + 8n);
+        writeOperand(args[0], value, 64);
+
+        explanation =
+          "popq: 스택에서 8바이트를 읽고 %rsp를 8 증가시킵니다.";
+      }
+
+      else if (op === "jmp" || /^j(e|ne|s|ns|g|ge|l|le|a|b)$/.test(op)) {
+        if (args.length !== 1) {
+          // Branch targets are labels, not arithmetic operands.
+          throw new Error("분기 명령에는 레이블 하나가 필요합니다.");
+        }
+      }
+
+      else if (/^cmov(e|ne|s|ns|g|ge|l|le|a|b)q?$/.test(op)) {
+        need(2);
+
+        const suffix = op
+          .replace(/^cmov/, "")
+          .replace(/q$/, "");
+
+        const take = condition(suffix);
+
+        if (args[1].type !== "reg") {
+          throw new Error("cmov 목적지는 레지스터여야 합니다.");
+        }
+
+        // x86 CMOV reads its source even if the condition is false.
+        const value = readOperand(args[0], 64);
+
+        if (take) {
+          writeOperand(args[1], value, 64);
+        }
+
+        explanation =
+          "cmov" + suffix +
+          ": 조건 " + (take ? "참" : "거짓") +
+          ". " + (take ? "값을 이동했습니다." : "목적지 값을 유지했습니다.") +
+          " 분기 없이 조건부 이동합니다.";
+      }
+
+      else {
+        throw new Error("지원하지 않는 명령어: " + op);
+      }
+
+      // Jump labels are parsed independently from arithmetic operands.
+      if (op === "jmp" || /^j(e|ne|s|ns|g|ge|l|le|a|b)$/.test(op)) {
+        const targetName = match[2].trim();
+
+        if (!labels.has(targetName)) {
+          throw new Error("존재하지 않는 레이블: " + targetName);
+        }
+
+        const take = op === "jmp"
+          ? true
+          : condition(op.slice(1));
+
+        if (take) nextPC = labels.get(targetName);
+
+        explanation =
+          op + ": " +
+          (take ? "분기합니다." : "분기하지 않습니다.") +
+          " 다음 PC=" + nextPC;
+      }
+
+      machine.pc = nextPC;
+      machine.steps++;
+
+      if (machine.pc >= program.length) {
+        machine.halted = true;
+      }
+
+      lastExplanation = explanation;
+    }
+
+    const top = controls(root);
+
+    const selector = document.createElement("select");
+
+    PROGRAMS.forEach((p, i) => {
+      const option = el("option", selector, p.name);
+      option.value = String(i);
+    });
+
+    selector.value = String(selectedProgram);
+    label(top, "예제 프로그램(preset)", selector);
+
+    selector.addEventListener("change", () => {
+      selectedProgram = Number(selector.value);
+      reset();
+    });
+
+    const actions = controls(root);
+
+    button(actions, "한 단계(step)", () => step());
+    button(actions, "되돌리기(undo)", () => undo());
+    button(actions, "자동 재생(auto)", () => toggleAuto());
+    button(actions, "리셋(reset)", () => reset());
+
+    const status = output(root);
+    const codeHost = el("div", root);
+    const registersHost = el("div", root);
+    const flagsHost = el("div", root);
+    const stackHost = el("div", root);
+    const explanationHost = output(root);
+
+    function stopAuto() {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function reset() {
+      stopAuto();
+
+      const result = compile(PROGRAMS[selectedProgram].code);
+      program = result.instructions;
+      labels = result.labels;
+      machine = initialState();
+      history = [];
+
+      lastChanges = null;
+      lastExplanation =
+        "명령어를 한 단계씩 실행하면서 레지스터, 플래그, 스택의 변화를 관찰하세요.";
+
+      render();
+    }
+
+    function step() {
+      stopAuto();
+
+      if (machine.halted) return;
+
+      const before = cloneMachine(machine);
+
+      try {
+        instructionStep();
+        history.push(before);
+        findChanges(before, machine);
+      } catch (e) {
+        machine = before;
+        lastExplanation = "실행 오류: " + e.message;
+        lastChanges = null;
+      }
+
+      render();
+    }
+
+    function undo() {
+      stopAuto();
+
+      if (history.length === 0) {
+        lastExplanation = "되돌릴 실행 기록이 없습니다.";
+        render();
+        return;
+      }
+
+      machine = history.pop();
+      lastChanges = null;
+      lastExplanation = "이전 상태로 되돌렸습니다.";
+      render();
+    }
+
+    function toggleAuto() {
+      if (timer !== null) {
+        stopAuto();
+        return;
+      }
+
+      if (machine.halted) return;
+
+      timer = setInterval(() => {
+        if (machine.halted || machine.steps >= 200) {
+          stopAuto();
+
+          if (machine.steps >= 200 && !machine.halted) {
+            lastExplanation =
+              "자동 재생 안전 제한: 200단계에서 중지했습니다.";
+          }
+
+          render();
+          return;
+        }
+
+        const before = cloneMachine(machine);
+
+        try {
+          instructionStep();
+          history.push(before);
+          findChanges(before, machine);
+        } catch (e) {
+          machine = before;
+          lastExplanation = "실행 오류: " + e.message;
+          stopAuto();
+        }
+
+        render();
+      }, 550);
+    }
+
+    function findChanges(before, after) {
+      const regs = new Set();
+      const flags = new Set();
+      const bytes = new Set();
+
+      REGISTERS.forEach(r => {
+        if (before.regs[r] !== after.regs[r]) {
+          regs.add(r);
+        }
+      });
+
+      ["ZF", "SF", "CF", "OF"].forEach(f => {
+        if (before.flags[f] !== after.flags[f]) {
+          flags.add(f);
+        }
+      });
+
+      for (let i = 0; i < STACK_SIZE; i++) {
+        if (before.memory[i] !== after.memory[i]) {
+          bytes.add(i);
+        }
+      }
+
+      lastChanges = { regs, flags, bytes };
+    }
+
+    function render() {
+      status.textContent =
+        "PC=" + machine.pc +
+        " · 실행 단계=" + machine.steps +
+        " · 상태=" + (machine.halted ? "종료" : "실행 가능");
+
+      clear(codeHost);
+      el("h4", codeHost, "명령어(instructions)");
+
+      const code = el("div", codeHost);
+      code.style.fontFamily = "monospace, 'Noto Sans KR', sans-serif";
+      code.style.fontSize = "12px";
+
+      program.forEach((ins, i) => {
+        const row = el(
+          "div",
+          code,
+          String(i).padStart(2, "0") + "  " + ins.text
+        );
+
+        row.style.padding = "3px 6px";
+
+        if (i === machine.pc && !machine.halted) {
+          row.style.borderLeft = "3px solid " + RED;
+          row.style.background = GRID;
+        }
+      });
+
+      clear(registersHost);
+      el("h4", registersHost, "레지스터(registers)");
+
+      const regTable = makeTable(registersHost, [
+        "레지스터", "64비트 hex", "signed 10진"
+      ]);
+
+      REGISTERS.forEach(r => {
+        const value = machine.regs[r];
+        const changed =
+          lastChanges && lastChanges.regs.has(r);
+
+        regTable.add(
+          ["%" + r, hex(value), s64(value).toString()],
+          changed ? [0, 1, 2] : []
+        );
+      });
+
+      clear(flagsHost);
+      el("h4", flagsHost, "조건 코드(condition codes)");
+
+      const flagTable = makeTable(flagsHost, [
+        "ZF", "SF", "CF", "OF"
+      ]);
+
+      const tr = el("tr", flagTable.body);
+
+      ["ZF", "SF", "CF", "OF"].forEach(f => {
+        const v = machine.flags[f];
+        const td = el("td", tr, v === null ? "미정의" : v);
+
+        td.style.border = "1px solid " + INK;
+        td.style.padding = "8px";
+        td.style.textAlign = "center";
+
+        if (lastChanges && lastChanges.flags.has(f)) {
+          td.style.color = RED;
+        }
+      });
+
+      clear(stackHost);
+      el("h4", stackHost, "스택 메모리(stack, 256 bytes)");
+
+      const memoryTable = makeTable(stackHost, [
+        "주소", "8바이트 (낮은 주소 → 높은 주소)"
+      ]);
+
+      for (let i = 0; i < STACK_SIZE; i += 8) {
+        const address = STACK_BASE + BigInt(i);
+        const chunks = [];
+
+        for (let j = 0; j < 8; j++) {
+          const byte = machine.memory[i + j];
+
+          chunks.push({
+            text: byteHex(byte),
+            changed:
+              lastChanges &&
+              lastChanges.bytes.has(i + j)
+          });
+        }
+
+        const row = memoryTable.add(
+          [hex(address), ""],
+          address === machine.regs.rsp ? [0] : []
+        );
+
+        const cell = row.children[1];
+
+        chunks.forEach((part, j) => {
+          const span = el("span", cell, part.text);
+
+          if (part.changed) span.style.color = RED;
+
+          if (j !== 7) el("span", cell, " ");
+        });
+      }
+
+      explanationHost.textContent =
+        lastExplanation +
+        "\n\n주의: 이 실행기는 교육용 x86-64 부분집합입니다. " +
+        "일반적인 프로세스 메모리·시스템 호출·전체 ISA는 구현하지 않습니다. " +
+        "OF 등 미정의 플래그는 '미정의'로 표시합니다.";
+    }
+
+    // Branch operands are labels, so they must not go through parseOperand.
+    // Wrap instructionStep to use the original raw label in branch cases.
+    // The ordinary dispatch already checks the branch opcode before updating PC.
+    const originalStep = instructionStep;
+
+    // Replace the step function's branch parsing using a small source wrapper
+    // by preprocessing branch operand strings as symbolic operands.
+    // The branch dispatcher only examines their count, not their numeric value.
+    const rawCompile = compile;
+
+    // Provide parseOperand-compatible symbolic labels.
+    const originalParseOperand = parseOperand;
+
+    // Branch labels are accepted as symbolic operands.
+    // This is handled in parseOperand below by the fallback definition.
+    // The execution dispatcher uses match[2] to resolve the label.
+    // For JavaScript function declarations, the declaration below is hoisted.
+    // (See parseOperand definition above.)
+
+    reset();
+  });
+
+  // ============================================================
+  // Widget 3 — x86-64 encoding / decoding classroom
+  // ============================================================
+
+  V6.register("asm-encode", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+
+    title(root, "x86-64 인코딩·디코딩 교실");
+
+    const COVERAGE = [
+      "pushq %rbp / popq %rbp",
+      "retq / nop / leaveq",
+      "movq %rsp,%rbp / movq %rbp,%rsp",
+      "movq reg↔mem (REX.W + 89/8B + ModRM + 필요 시 SIB/disp)",
+      "subq $imm8,%rsp (48 83 EC ib)",
+      "movq $imm32,%r64 (REX.W + C7 /0 id, sign extension)",
+      "movabsq $imm64,%r64 (REX.W + B8+r io)",
+      "call rel32 (E8 cd)"
+    ];
+
+    const coverage = output(root);
+
+    coverage.textContent =
+      "지원 범위(coverage)\n" +
+      COVERAGE.map(x => "• " + x).join("\n") +
+      "\n\n지원하지 않는 명령어·주소 지정 방식은 추측하지 않고 오류로 표시합니다.";
+
+    const modeControls = controls(root);
+    const encodeButton = button(modeControls, "인코드(encode)", () => {
+      state.mode = "encode";
+      render();
+    });
+    const decodeButton = button(modeControls, "디코드(decode)", () => {
+      state.mode = "decode";
+      render();
+    });
+
+    const state = {
+      mode: "encode",
+      selected: "push",
+      bytes: [],
+      fields: [],
+      asm: "",
+      error: ""
+    };
+
+    const selectors = controls(root);
+    const select = document.createElement("select");
+
+    const OPTIONS = [
+      ["push", "pushq %rbp"],
+      ["pop", "popq %rbp"],
+      ["ret", "retq"],
+      ["nop", "nop"],
+      ["leave", "leaveq"],
+      ["mov-rsp-rbp", "movq %rsp,%rbp"],
+      ["mov-rbp-rsp", "movq %rbp,%rsp"],
+      ["mov-mem-store", "movq %rax,disp(%rbx,%rcx,4)"],
+      ["mov-mem-load", "movq disp(%rbx,%rcx,4),%rax"],
+      ["sub-rsp", "subq $imm8,%rsp"],
+      ["mov-imm32", "movq $imm32,%r64"],
+      ["movabs", "movabsq $imm64,%r64"],
+      ["call", "call rel32"]
+    ];
+
+    OPTIONS.forEach(([value, text]) => {
+      const option = el("option", select, text);
+      option.value = value;
+    });
+
+    label(selectors, "명령 선택", select);
+
+    const registerSelect = document.createElement("select");
+
+    REG_CODE.forEach(r => {
+      const option = el("option", registerSelect, "%" + r);
+      option.value = r;
+    });
+
+    label(selectors, "레지스터", registerSelect);
+
+    const memoryBase = document.createElement("select");
+    const memoryIndex = document.createElement("select");
+    const memoryScale = document.createElement("select");
+
+    REG_CODE.forEach(r => {
+      const option = el("option", memoryBase, "%" + r);
+      option.value = r;
+
+      const indexOption = el("option", memoryIndex, "%" + r);
+      indexOption.value = r;
+    });
+
+    memoryBase.value = "rbx";
+    memoryIndex.value = "rcx";
+
+    [1, 2, 4, 8].forEach(s => {
+      const option = el("option", memoryScale, String(s));
+      option.value = String(s);
+    });
+
+    memoryScale.value = "4";
+
+    label(selectors, "메모리 base", memoryBase);
+    label(selectors, "메모리 index", memoryIndex);
+    label(selectors, "SIB scale", memoryScale);
+
+    const values = controls(root);
+
+    const immediate = document.createElement("input");
+    immediate.type = "text";
+    immediate.value = "8";
+    immediate.style.width = "145px";
+    label(values, "즉시값(imm)", immediate);
+
+    const displacement = document.createElement("input");
+    displacement.type = "text";
+    displacement.value = "16";
+    displacement.style.width = "120px";
+    label(values, "변위(disp)", displacement);
+
+    const hexInput = document.createElement("input");
+    hexInput.type = "text";
+    hexInput.value = "48 89 e5";
+    hexInput.style.width = "280px";
+    label(values, "hex 바이트열", hexInput);
+
+    const actions = controls(root);
+    button(actions, "실행 / 분석", () => render());
+
+    const byteHost = el("div", root);
+    const details = output(root);
+    const example = output(root);
+
+    select.addEventListener("change", () => {
+      state.selected = select.value;
+      render();
+    });
+
+    [
+      registerSelect,
+      memoryBase,
+      memoryIndex,
+      memoryScale,
+      immediate,
+      displacement
+    ].forEach(e => {
+      e.addEventListener("change", render);
+    });
+
+    state.selected = OPTIONS.some(
+      x => x[0] === cfg.preset
+    ) ? cfg.preset : "push";
+
+    select.value = state.selected;
+
+    function regCode(name) {
+      const index = REG_CODE.indexOf(name);
+
+      if (index < 0) {
+        throw new Error("지원하지 않는 레지스터: " + name);
+      }
+
+      return index;
+    }
+
+    function modrm(mod, reg, rm) {
+      return (mod << 6) | (reg << 3) | rm;
+    }
+
+    function sib(scale, index, base) {
+      const shift =
+        scale === 1 ? 0 :
+        scale === 2 ? 1 :
+        scale === 4 ? 2 : 3;
+
+      return (shift << 6) | (index << 3) | base;
+    }
+
+    function makeField(text, meaning, bytes) {
+      return {
+        text,
+        meaning,
+        bytes: bytes || []
+      };
+    }
+
+    function encode() {
+      const type = state.selected;
+      const reg = registerSelect.value;
+      const imm = parseInteger(immediate.value);
+      const disp = parseInteger(displacement.value);
+
+      const bytes = [];
+      const fields = [];
+      let asm = "";
+
+      function put(byte, labelText, meaning) {
+        const index = bytes.length;
+        bytes.push(byte & 255);
+
+        fields.push(makeField(
+          labelText,
+          meaning,
+          [index]
+        ));
+      }
+
+      function putLE(value, count, name, meaning) {
+        const start = bytes.length;
+        const encoded = littleEndian(value, count);
+        bytes.push(...encoded);
+
+        fields.push(makeField(
+          name,
+          meaning,
+          Array.from({ length: count }, (_, i) => start + i)
+        ));
+      }
+
+      if (type === "push") {
+        put(0x55, "55", "pushq %rbp: opcode 50+r, r=5");
+        asm = "pushq %rbp";
+      }
+
+      else if (type === "pop") {
+        put(0x5d, "5D", "popq %rbp: opcode 58+r, r=5");
+        asm = "popq %rbp";
+      }
+
+      else if (type === "ret") {
+        put(0xc3, "C3", "retq: 스택에서 반환 주소를 꺼냅니다.");
+        asm = "retq";
+      }
+
+      else if (type === "nop") {
+        put(0x90, "90", "nop: 1바이트 no-operation");
+        asm = "nop";
+      }
+
+      else if (type === "leave") {
+        put(0xc9, "C9", "leaveq: movq %rbp,%rsp; popq %rbp");
+        asm = "leaveq";
+      }
+
+      else if (type === "mov-rsp-rbp") {
+        put(0x48, "REX.W", "01001000: W=1 → 64비트 피연산자");
+        put(0x89, "opcode 89", "mov r64 → r/m64");
+        put(0xe5, "ModRM E5",
+          "mod=11(레지스터), reg=100(%rsp), r/m=101(%rbp)");
+        asm = "movq %rsp,%rbp";
+      }
+
+      else if (type === "mov-rbp-rsp") {
+        put(0x48, "REX.W", "W=1 → 64비트 피연산자");
+        put(0x89, "opcode 89", "mov r64 → r/m64");
+        put(0xec, "ModRM EC",
+          "mod=11, reg=101(%rbp), r/m=100(%rsp)");
+        asm = "movq %rbp,%rsp";
+      }
+
+      else if (
+        type === "mov-mem-store" ||
+        type === "mov-mem-load"
+      ) {
+        const base = memoryBase.value;
+        const index = memoryIndex.value;
+        const scale = Number(memoryScale.value);
+        const baseCode = regCode(base);
+        const indexCode = regCode(index);
+        const dataCode = regCode(reg);
+
+        if (indexCode === 4) {
+          throw new Error("%rsp는 SIB index로 사용할 수 없습니다.");
+        }
+
+        if (disp < -(1n << 31n) || disp > (1n << 31n) - 1n) {
+          throw new Error("disp32 범위를 초과했습니다.");
+        }
+
+        let mod;
+        let displacementSize;
+
+        if (disp === 0n && baseCode !== 5) {
+          mod = 0;
+          displacementSize = 0;
+        } else if (disp >= -128n && disp <= 127n) {
+          mod = 1;
+          displacementSize = 1;
+        } else {
+          mod = 2;
+          displacementSize = 4;
+        }
+
+        if (baseCode === 5 && mod === 0) {
+          mod = 1;
+          displacementSize = 1;
+        }
+
+        const store = type === "mov-mem-store";
+
+        put(0x48, "REX.W", "W=1, R=X=B=0");
+        put(
+          store ? 0x89 : 0x8b,
+          "opcode",
+          store
+            ? "89: 레지스터 → 메모리"
+            : "8B: 메모리 → 레지스터"
+        );
+
+        put(
+          modrm(mod, dataCode, 4),
+          "ModRM",
+          "mod=" + mod.toString(2).padStart(2, "0") +
+          ", reg=" + dataCode.toString(2).padStart(3, "0") +
+          ", r/m=100 → SIB 사용"
+        );
+
+        put(
+          sib(scale, indexCode, baseCode),
+          "SIB",
+          "scale=" + scale +
+          ", index=%" + index +
+          ", base=%" + base
+        );
+
+        if (displacementSize > 0) {
+          putLE(
+            disp,
+            displacementSize,
+            "disp" + displacementSize * 8,
+            "signed displacement, 리틀 엔디안"
+          );
+        }
+
+        const addressText =
+          signedDisp(disp) +
+          "(%" + base + ",%" + index + "," + scale + ")";
+
+        asm = store
+          ? "movq %" + reg + "," + addressText
+          : "movq " + addressText + ",%" + reg;
+      }
+
+      else if (type === "sub-rsp") {
+        if (imm < -128n || imm > 127n) {
+          throw new Error("imm8은 -128..127 범위여야 합니다.");
+        }
+
+        put(0x48, "REX.W", "64비트 피연산자");
+        put(0x83, "opcode 83", "Group 1 연산, sign-extended imm8");
+        put(0xec, "ModRM EC", "mod=11, /5=sub, r/m=100(%rsp)");
+        putLE(imm, 1, "imm8", "signed imm8을 64비트로 부호 확장");
+
+        asm = "subq $" + imm + ",%rsp";
+      }
+
+      else if (type === "mov-imm32") {
+        if (imm < -(1n << 31n) || imm > (1n << 31n) - 1n) {
+          throw new Error(
+            "C7 /0 id는 signed imm32를 64비트로 부호 확장합니다."
+          );
+        }
+
+        const r = regCode(reg);
+
+        put(0x48, "REX.W", "64비트 목적지");
+        put(0xc7, "opcode C7", "r/m64 ← sign_extend(imm32)");
+        put(
+          modrm(3, 0, r),
+          "ModRM",
+          "mod=11, /0, r/m=" + r + "(%" + reg + ")"
+        );
+
+        putLE(
+          imm,
+          4,
+          "imm32",
+          "signed 32비트 즉시값, 리틀 엔디안"
+        );
+
+        asm = "movq $" + imm + ",%" + reg;
+      }
+
+      else if (type === "movabs") {
+        if (imm < -(1n << 63n) || imm > MASK64) {
+          throw new Error("imm64 범위를 초과했습니다.");
+        }
+
+        const r = regCode(reg);
+
+        put(0x48, "REX.W", "W=1 → 64비트 피연산자");
+        put(
+          0xb8 + r,
+          "B8+r",
+          "레지스터 번호 r=" + r + " (%" + reg + ")"
+        );
+
+        putLE(
+          imm,
+          8,
+          "imm64",
+          "64비트 즉시값을 리틀 엔디안으로 저장"
+        );
+
+        asm = "movabsq $" + hex(u64(imm)) + ",%" + reg;
+      }
+
+      else if (type === "call") {
+        if (imm < -(1n << 31n) || imm > (1n << 31n) - 1n) {
+          throw new Error("call rel32 범위를 초과했습니다.");
+        }
+
+        put(0xe8, "E8", "call rel32: 다음 RIP 기준 상대 호출");
+        putLE(
+          imm,
+          4,
+          "rel32",
+          "signed rel32, 리틀 엔디안. target=next RIP+rel32"
+        );
+
+        asm = "call " + (imm >= 0n ? "+" : "") + imm;
+      }
+
+      return { bytes, fields, asm };
+    }
+
+    function parseHexBytes(text) {
+      const clean = String(text).trim();
+
+      if (!clean) {
+        throw new Error("hex 바이트열을 입력하세요.");
+      }
+
+      const normalized = clean
+        .replace(/0x/gi, "")
+        .replace(/[,:\s]/g, "");
+
+      if (!/^[0-9a-f]+$/i.test(normalized)) {
+        throw new Error("16진수 문자만 입력하세요.");
+      }
+
+      if (normalized.length % 2 !== 0) {
+        throw new Error("hex 자릿수는 짝수여야 합니다.");
+      }
+
+      if (normalized.length > 30) {
+        throw new Error("x86 명령어의 최대 길이는 15바이트입니다.");
+      }
+
+      const bytes = [];
+
+      for (let i = 0; i < normalized.length; i += 2) {
+        bytes.push(parseInt(normalized.slice(i, i + 2), 16));
+      }
+
+      return bytes;
+    }
+
+    function decode(bytes) {
+      const fields = [];
+      let pos = 0;
+
+      function take(name, meaning) {
+        if (pos >= bytes.length) {
+          throw new Error("바이트열이 잘렸습니다.");
+        }
+
+        const index = pos++;
+        fields.push(makeField(name, meaning, [index]));
+        return bytes[index];
+      }
+
+      function takeLE(count, name, meaning) {
+        const start = pos;
+        const value = readLittle(bytes, pos, count);
+        pos += count;
+
+        fields.push(makeField(
+          name,
+          meaning,
+          Array.from({ length: count }, (_, i) => start + i)
+        ));
+
+        return value;
+      }
+
+      let asm = "";
+      const first = bytes[0];
+
+      if ([0x55, 0x5d, 0xc3, 0x90, 0xc9].includes(first)) {
+        const names = {
+          0x55: "pushq %rbp",
+          0x5d: "popq %rbp",
+          0xc3: "retq",
+          0x90: "nop",
+          0xc9: "leaveq"
+        };
+
+        take("opcode", names[first]);
+        asm = names[first];
+      }
+
+      else if (first === 0xe8) {
+        take("E8", "call rel32");
+        const relative = signExtend(
+          takeLE(4, "rel32", "signed 상대변위, little-endian"),
+          32
+        );
+
+        asm = "call " +
+          (relative >= 0n ? "+" : "") +
+          relative;
+      }
+
+      else if (first === 0x48) {
+        take("REX.W", "W=1, R=X=B=0 → 64비트 피연산자");
+
+        const opcode = take("opcode", "명령어 opcode");
+
+        if (opcode >= 0xb8 && opcode <= 0xbf) {
+          const r = opcode - 0xb8;
+          const imm = takeLE(
+            8, "imm64", "64비트 즉시값, little-endian"
+          );
+
+          asm = "movabsq $" +
+            hex(imm) + ",%" + REG_CODE[r];
+        }
+
+        else if (opcode === 0x83) {
+          const modrmByte = take("ModRM", "mod/reg/r-m 필드");
+
+          if (modrmByte !== 0xec) {
+            throw new Error("83 인코딩은 subq imm8,%rsp만 지원합니다.");
+          }
+
+          const imm = signExtend(
+            takeLE(1, "imm8", "signed 8비트 즉시값"),
+            8
+          );
+
+          asm = "subq $" + imm + ",%rsp";
+        }
+
+        else if (opcode === 0xc7) {
+          const m = take("ModRM", "mod=11, /0, r/m=register");
+
+          const mod = (m >> 6) & 3;
+          const extension = (m >> 3) & 7;
+          const rm = m & 7;
+
+          if (mod !== 3 || extension !== 0) {
+            throw new Error("C7은 레지스터 목적지 /0만 지원합니다.");
+          }
+
+          const imm = signExtend(
+            takeLE(4, "imm32", "signed 32비트 즉시값"),
+            32
+          );
+
+          asm = "movq $" + imm + ",%" + REG_CODE[rm];
+        }
+
+        else if (opcode === 0x89 || opcode === 0x8b) {
+          const m = take(
+            "ModRM",
+            "mod(2비트) | reg(3비트) | r/m(3비트)"
+          );
+
+          const mod = (m >> 6) & 3;
+          const reg = (m >> 3) & 7;
+          const rm = m & 7;
+
+          let location = "";
+
+          if (mod === 3) {
+            location = "%" + REG_CODE[rm];
+          } else {
+            let base = rm;
+            let index = null;
+            let scale = 1;
+
+            if (rm === 4) {
+              const s = take(
+                "SIB",
+                "scale(2) | index(3) | base(3)"
+              );
+
+              scale = 1 << ((s >> 6) & 3);
+              const indexCode = (s >> 3) & 7;
+              base = s & 7;
+
+              if (indexCode !== 4) {
+                index = REG_CODE[indexCode];
+              }
+            }
+
+            let disp = 0n;
+            let hasBase = true;
+
+            if (mod === 0 && base === 5) {
+              // mod=00, base=101:
+              // SIB case: no base + disp32
+              // non-SIB case: RIP-relative disp32
+              disp = signExtend(
+                takeLE(4, "disp32", "signed displacement"),
+                32
+              );
+
+              hasBase = false;
+            } else if (mod === 1) {
+              disp = signExtend(
+                takeLE(1, "disp8", "signed displacement"),
+                8
+              );
+            } else if (mod === 2) {
+              disp = signExtend(
+                takeLE(4, "disp32", "signed displacement"),
+                32
+              );
+            }
+
+            if (mod === 0 && rm === 5) {
+              location = disp + "(%rip)";
+            } else {
+              const prefix = disp === 0n ? "" : disp.toString();
+
+              if (index !== null) {
+                location =
+                  prefix +
+                  "(" +
+                  (hasBase ? "%" + REG_CODE[base] : "") +
+                  ",%" + index +
+                  "," + scale + ")";
+              } else if (hasBase) {
+                location =
+                  prefix + "(%" + REG_CODE[base] + ")";
+              } else {
+                location = disp.toString();
+              }
+            }
+          }
+
+          if (opcode === 0x89) {
+            asm = "movq %" + REG_CODE[reg] + "," + location;
+          } else {
+            asm = "movq " + location + ",%" + REG_CODE[reg];
+          }
+        }
+
+        else {
+          throw new Error(
+            "REX.W 뒤의 opcode " +
+            byteHex(opcode) +
+            "는 지원 범위 밖입니다."
+          );
+        }
+      }
+
+      else {
+        throw new Error(
+          "지원하지 않는 opcode: 0x" +
+          byteHex(first)
+        );
+      }
+
+      if (pos !== bytes.length) {
+        throw new Error(
+          "하나의 명령어 뒤에 추가 바이트가 있습니다. " +
+          "이 교실은 한 번에 명령어 하나만 디코딩합니다."
+        );
+      }
+
+      return { bytes, fields, asm };
+    }
+
+    function show(result) {
+      clear(byteHost);
+
+      el("h4", byteHost, "명령어 바이트(command bytes)");
+
+      const row = el("div", byteHost);
+
+      row.style.display = "flex";
+      row.style.flexWrap = "wrap";
+      row.style.gap = "4px";
+      row.style.margin = "10px 0";
+
+      const description = output(byteHost);
+
+      result.bytes.forEach((byte, i) => {
+        const b = button(row, byteHex(byte));
+
+        b.style.fontFamily = "monospace, 'Noto Sans KR', sans-serif";
+        b.style.fontSize = "16px";
+        b.style.minWidth = "45px";
+
+        b.addEventListener("click", () => {
+          const field = result.fields.find(
+            f => f.bytes.includes(i)
+          );
+
+          if (field) {
+            description.textContent =
+              "바이트 " + i + ": " +
+              field.text + "\n" +
+              field.meaning;
+          }
+        });
+      });
+
+      const fieldTable = makeTable(byteHost, [
+        "필드(field)",
+        "바이트",
+        "의미"
+      ]);
+
+      result.fields.forEach(f => {
+        fieldTable.add([
+          f.text,
+          f.bytes.map(i => byteHex(result.bytes[i])).join(" "),
+          f.meaning
+        ]);
+      });
+
+      details.textContent =
+        "어셈블리(disassembly)\n" +
+        result.asm +
+        "\n\n" +
+        "인코딩 바이트\n" +
+        formatBytes(result.bytes);
+
+      const address = 0x401000n;
+
+      example.textContent =
+        "objdump 스타일 예시\n" +
+        hex(address, 8).slice(2) +
+        ":  " +
+        formatBytes(result.bytes).padEnd(44, " ") +
+        result.asm +
+        "\n\n" +
+        "Bomb Lab 포인트:\n" +
+        "왼쪽은 명령 주소, 가운데는 기계어 바이트, 오른쪽은 디스어셈블입니다.\n" +
+        "REX.W는 64비트 피연산자 크기, ModRM은 레지스터·주소 지정 방식, " +
+        "SIB는 scale/index/base, immediate와 displacement는 little-endian입니다.\n" +
+        "call rel32의 목표 주소는 현재 명령 주소가 아니라 다음 RIP에 상대적입니다.";
+    }
+
+    function render() {
+      state.error = "";
+
+      encodeButton.style.borderColor =
+        state.mode === "encode" ? RED : INK;
+
+      decodeButton.style.borderColor =
+        state.mode === "decode" ? RED : INK;
+
+      try {
+        const result = state.mode === "encode"
+          ? encode()
+          : decode(parseHexBytes(hexInput.value));
+
+        state.bytes = result.bytes;
+        state.fields = result.fields;
+        state.asm = result.asm;
+
+        if (state.mode === "encode") {
+          hexInput.value = formatBytes(result.bytes);
+        }
+
+        show(result);
+      } catch (e) {
+        clear(byteHost);
+        setError(details, e);
+        example.textContent =
+          "지원 범위에 해당하는 명령어 또는 유효한 바이트열을 입력하세요.";
+      }
+    }
+
+    render();
+  });
+
+})();
+
+/* ===== Batch 3: Lec6-8 (stack-frames, struct-layout, array-index, buf-overflow, byte-order, mem-layout) ===== */
+
+(function () {
+  "use strict";
+
+  if (!window.V6 || typeof window.V6.register !== "function") return;
+
+  const V6 = window.V6;
+  const INK = V6.INK;
+  const RED = V6.RED;
+  const GRID = V6.GRID;
+  const FONT = '"Noto Sans KR", sans-serif';
+
+  const U64 = 1n << 64n;
+  const MASK64 = U64 - 1n;
+
+  function E(tag, parent, text, cls) {
+    const x = document.createElement(tag);
+    if (cls) x.className = cls;
+    if (text !== undefined) x.textContent = String(text);
+    if (parent) parent.appendChild(x);
+    return x;
+  }
+
+  function B(parent, text, fn) {
+    const b = E("button", parent, text, "v6-btn");
+    b.type = "button";
+    b.addEventListener("click", fn);
+    return b;
+  }
+
+  function C(parent) {
+    return E("div", parent, "", "v6-controls");
+  }
+
+  function S(parent) {
+    const x = E("div", parent, "", "v6-state");
+    x.style.whiteSpace = "pre-wrap";
+    x.style.overflowWrap = "anywhere";
+    x.setAttribute("role", "status");
+    return x;
+  }
+
+  function T(parent, text) {
+    V6.title(parent, text);
+  }
+
+  function H(parent, text) {
+    return E("h4", parent, text);
+  }
+
+  function L(parent, text, input) {
+    const l = E("label", parent);
+    E("span", l, text + " ");
+    l.appendChild(input);
+    return l;
+  }
+
+  function inputText(parent, text, value, fn) {
+    const x = document.createElement("input");
+    x.type = "text";
+    x.value = String(value);
+    x.style.width = "150px";
+    L(parent, text, x);
+    if (fn) x.addEventListener("input", fn);
+    return x;
+  }
+
+  function range(parent, text, min, max, value, fn) {
+    const x = document.createElement("input");
+    x.type = "range";
+    x.min = min;
+    x.max = max;
+    x.step = 1;
+    x.value = value;
+
+    const l = L(parent, text, x);
+    const current = E("span", l, String(value), "v6-val");
+
+    x.addEventListener("input", () => {
+      current.textContent = x.value;
+      fn(Number(x.value));
+    });
+
+    return { input: x, current };
+  }
+
+  function table(parent, heads) {
+    const t = E("table", parent);
+    t.style.borderCollapse = "collapse";
+    t.style.width = "100%";
+    t.style.fontSize = "12px";
+
+    const h = E("tr", E("thead", t));
+    heads.forEach(v => {
+      const c = E("th", h, v);
+      c.style.border = "1px solid " + INK;
+      c.style.padding = "5px";
+      c.style.textAlign = "left";
+    });
+
+    const body = E("tbody", t);
+
+    return {
+      table: t,
+      row(values, redColumns = []) {
+        const tr = E("tr", body);
+        values.forEach((v, i) => {
+          const td = E("td", tr, v);
+          td.style.border = "1px solid " + INK;
+          td.style.padding = "5px";
+          if (redColumns.includes(i)) td.style.color = RED;
+        });
+        return tr;
+      }
+    };
+  }
+
+  function hex(v, digits = 16) {
+    return "0x" +
+      BigInt(v).toString(16).toUpperCase().padStart(digits, "0");
+  }
+
+  function u64(v) {
+    return BigInt.asUintN(64, BigInt(v));
+  }
+
+  function signed64(v) {
+    return BigInt.asIntN(64, BigInt(v));
+  }
+
+  function parseIntExact(text) {
+    const s = String(text).trim();
+    if (/^[+-]?0x[0-9a-f]+$/i.test(s)) {
+      const neg = s.startsWith("-");
+      const value = BigInt(s.replace(/^[+-]/, ""));
+      return neg ? -value : value;
+    }
+    if (/^[+-]?\d+$/.test(s)) return BigInt(s);
+    throw new Error("10진수 또는 0x 형식의 16진수를 입력하세요.");
+  }
+
+  function goodInteger(value, fallback, lo, hi) {
+    const n = Number(value);
+    return Number.isSafeInteger(n) && n >= lo && n <= hi
+      ? n : fallback;
+  }
+
+  function clear(parent) {
+    parent.replaceChildren();
+  }
+
+  function notice(parent, message) {
+    parent.textContent = "안내: " + message;
+  }
+
+  function box(parent, text, red = false) {
+    const x = E("div", parent, text);
+    x.style.border = "1px solid " + INK;
+    x.style.padding = "7px";
+    x.style.background = "white";
+    x.style.color = red ? RED : INK;
+    x.style.fontFamily = FONT;
+    x.style.fontSize = "12px";
+    return x;
+  }
+
+  function line(parent) {
+    const x = E("div", parent);
+    x.style.borderTop = "1px solid " + GRID;
+    x.style.margin = "12px 0";
+    return x;
+  }
+
+  function drawArrow(ctx, x1, y1, x2, y2, color) {
+    ctx.strokeStyle = color || INK;
+    ctx.fillStyle = color || INK;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const size = 7;
+
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(
+      x2 - size * Math.cos(angle - Math.PI / 6),
+      y2 - size * Math.sin(angle - Math.PI / 6)
+    );
+    ctx.lineTo(
+      x2 - size * Math.cos(angle + Math.PI / 6),
+      y2 - size * Math.sin(angle + Math.PI / 6)
+    );
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ============================================================
+  // 1. Stack Frames
+  // ============================================================
+
+  V6.register("stack-frames", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+    T(root, "프로시저 호출과 스택 프레임(stack frames)");
+
+    const TOP = 0x8000n;
+    const args = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n];
+    const argRegs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
+
+    const state = {
+      mode: cfg.mode === "recursive" ? "recursive" : "normal",
+      index: 0,
+      snapshots: [],
+      timer: null,
+      machine: null,
+      instructions: [],
+      explanation: "",
+      changed: null
+    };
+
+    function fresh() {
+      return {
+        rsp: TOP,
+        rbp: TOP,
+        rax: 0n,
+        rbx: 0n,
+        registers: Object.fromEntries(argRegs.map(x => [x, 0n])),
+        slots: new Map(),
+        frames: [{ name: "main", rbp: TOP, entry: TOP }],
+        pc: 0,
+        note: ""
+      };
+    }
+
+    function clone(m) {
+      return {
+        ...m,
+        registers: { ...m.registers },
+        slots: new Map(
+          [...m.slots].map(([k, v]) => [k, { ...v }])
+        ),
+        frames: m.frames.map(f => ({ ...f }))
+      };
+    }
+
+    function push(m, value, label) {
+      m.rsp -= 8n;
+      m.slots.set(m.rsp, { value: u64(value), label });
+      return m.rsp;
+    }
+
+    function pop(m) {
+      const slot = m.slots.get(m.rsp);
+      if (!slot) throw new Error("스택 아래에 읽을 값이 없습니다.");
+      m.slots.delete(m.rsp);
+      m.rsp += 8n;
+      return slot.value;
+    }
+
+    function reserve(m, bytes, label) {
+      if (bytes % 8 !== 0 || bytes < 0) {
+        throw new Error("로컬 공간 크기가 유효하지 않습니다.");
+      }
+      for (let i = 0; i < bytes; i += 8) {
+        push(m, 0n, label + " +" + i);
+      }
+    }
+
+    function drop(m, bytes) {
+      for (let i = 0; i < bytes; i += 8) {
+        m.slots.delete(m.rsp);
+        m.rsp += 8n;
+      }
+    }
+
+    function buildNormal() {
+      return [
+        ["main: 인자 1~6을 레지스터에 배정", m => {
+          argRegs.forEach((r, i) => m.registers[r] = args[i]);
+          return "System V AMD64: 정수·포인터 인자 1~6은 %rdi, %rsi, %rdx, %rcx, %r8, %r9입니다.";
+        }],
+        ["subq $16,%rsp — outgoing args 공간", m => {
+          reserve(m, 16, "인자 전달 공간");
+          return "7·8번째 인자를 위해 호출자가 16바이트 공간을 마련합니다. call 직전 %rsp는 16바이트 정렬됩니다.";
+        }],
+        ["movq $7,0(%rsp); movq $8,8(%rsp)", m => {
+          m.slots.set(m.rsp, { value: 7n, label: "foo arg7" });
+          m.slots.set(m.rsp + 8n, { value: 8n, label: "foo arg8" });
+          return "foo의 arg7은 호출 전 0(%rsp), arg8은 8(%rsp)에 위치합니다.";
+        }],
+        ["call foo", m => {
+          push(m, 0x401020n, "main → 복귀 주소(return address)");
+          m.frames.push({ name: "foo", rbp: null, entry: m.rsp });
+          return "call이 다음 명령 주소를 8바이트 push합니다. foo 진입 시 %rsp mod 16 = 8.";
+        }],
+        ["foo: pushq %rbp", m => {
+          push(m, m.rbp, "saved %rbp (foo)");
+          return "기존 frame pointer를 저장합니다.";
+        }],
+        ["movq %rsp,%rbp", m => {
+          m.rbp = m.rsp;
+          m.frames[m.frames.length - 1].rbp = m.rbp;
+          return "%rbp가 foo의 현재 프레임 기준점이 됩니다. arg7은 16(%rbp), arg8은 24(%rbp).";
+        }],
+        ["subq $16,%rsp", m => {
+          reserve(m, 16, "foo local");
+          return "foo의 로컬 변수 공간 16바이트를 확보합니다.";
+        }],
+        ["movq %rbx,0(%rsp) — callee-saved 저장", m => {
+          m.slots.set(m.rsp, {
+            value: m.rbx,
+            label: "saved %rbx (foo local slot)"
+          });
+          return "%rbx는 callee-saved입니다. 사용 전에 기존 값을 저장합니다.";
+        }],
+        ["movq $99,%rbx — foo 본문", m => {
+          m.rbx = 99n;
+          return "foo에서 %rbx를 변경했습니다. 반환 전 복원해야 합니다.";
+        }],
+        ["call bar (8바이트 정렬 패딩 확보)", m => {
+          reserve(m, 8, "bar 호출 정렬 패딩");
+          push(m, 0x401080n, "foo → 복귀 주소");
+          m.frames.push({ name: "bar", rbp: null, entry: m.rsp });
+          return "foo는 bar 호출 전에 %rsp를 16바이트 정렬합니다. call이 return address를 push합니다.";
+        }],
+        ["bar: pushq %rbp", m => {
+          push(m, m.rbp, "saved %rbp (bar)");
+          return "bar의 frame pointer를 저장합니다.";
+        }],
+        ["bar: movq %rsp,%rbp", m => {
+          m.rbp = m.rsp;
+          m.frames[m.frames.length - 1].rbp = m.rbp;
+          return "bar 프레임을 설정했습니다.";
+        }],
+        ["bar: movq $42,%rax", m => {
+          m.rax = 42n;
+          return "반환값(return value)은 %rax에 저장합니다.";
+        }],
+        ["bar: leave", m => {
+          m.rsp = m.rbp;
+          m.rbp = pop(m);
+          return "leave = movq %rbp,%rsp; popq %rbp.";
+        }],
+        ["bar: ret", m => {
+          const address = pop(m);
+          m.frames.pop();
+          return "ret은 복귀 주소 " + hex(address) + "를 pop한 뒤 그 주소로 점프합니다.";
+        }],
+        ["foo: addq $8,%rsp", m => {
+          drop(m, 8);
+          return "bar 호출 전 마련한 8바이트 정렬 패딩을 제거합니다.";
+        }],
+        ["foo: %rbx 복원", m => {
+          const slot = m.slots.get(m.rsp);
+          if (!slot) throw new Error("saved %rbx가 없습니다.");
+          m.rbx = slot.value;
+          return "callee-saved %rbx를 원래 값으로 복원했습니다.";
+        }],
+        ["foo: movq $56,%rax", m => {
+          m.rax = 56n;
+          return "foo의 반환값을 %rax에 기록합니다.";
+        }],
+        ["foo: leave", m => {
+          m.rsp = m.rbp;
+          m.rbp = pop(m);
+          return "foo의 local 공간을 한꺼번에 해제하고 saved %rbp를 복구합니다.";
+        }],
+        ["foo: ret", m => {
+          const address = pop(m);
+          m.frames.pop();
+          return "main으로 복귀합니다. 반환 주소 " + hex(address);
+        }],
+        ["main: addq $16,%rsp", m => {
+          drop(m, 16);
+          return "caller인 main이 arg7·arg8의 16바이트 공간을 정리합니다.";
+        }]
+      ];
+    }
+
+    // Recursive factorial simulation with genuine push/pop nesting.
+    // Educational trace uses 16-byte local allocation to preserve
+    // 16-byte stack alignment at recursive call sites.
+    function buildRecursive() {
+      const ops = [];
+      const n0 = 4;
+      const returns = [];
+
+      ops.push(["main: movq $4,%rdi", m => {
+        m.registers.rdi = 4n;
+        return "팩토리얼 factorial(4)을 호출합니다.";
+      }]);
+
+      ops.push(["main: call fact", m => {
+        push(m, 0x402000n, "main 복귀 주소");
+        m.frames.push({ name: "fact(4)", rbp: null, entry: m.rsp });
+        return "첫 번째 fact(4) 프레임으로 진입합니다.";
+      }]);
+
+      for (let n = n0; n >= 1; n--) {
+        ops.push(["fact(" + n + "): pushq %rbp", m => {
+          push(m, m.rbp, "fact(" + n + ") saved rbp");
+          return "fact(" + n + ")의 frame pointer를 저장합니다.";
+        }]);
+
+        ops.push(["fact(" + n + "): movq %rsp,%rbp", m => {
+          m.rbp = m.rsp;
+          m.frames[m.frames.length - 1].rbp = m.rbp;
+          return "새 프레임 기준점을 설정합니다.";
+        }]);
+
+        ops.push(["fact(" + n + "): subq $16,%rsp", m => {
+          reserve(m, 16, "fact(" + n + ") local");
+          m.slots.set(m.rbp - 8n, {
+            value: BigInt(n),
+            label: "fact(" + n + ") saved n"
+          });
+          return "재귀 호출 뒤 곱할 n=" + n + "을 로컬 슬롯에 저장합니다.";
+        }]);
+
+        if (n > 1) {
+          ops.push(["fact(" + n + "): call fact(" + (n - 1) + ")", m => {
+            push(m, BigInt(0x402100 + n * 16), "fact(" + n + ") 복귀 주소");
+            m.frames.push({
+              name: "fact(" + (n - 1) + ")",
+              rbp: null,
+              entry: m.rsp
+            });
+            return "재귀 호출로 프레임 깊이가 증가합니다. 현재 %rsp mod 16 = 8 (callee 진입).";
+          }]);
+        } else {
+          ops.push(["fact(1): movq $1,%rax", m => {
+            m.rax = 1n;
+            return "기저 사례(base case): factorial(1)=1.";
+          }]);
+        }
+      }
+
+      for (let n = 1; n <= n0; n++) {
+        if (n > 1) {
+          ops.push(["fact(" + n + "): imulq n,%rax", m => {
+            const slot = m.slots.get(m.rbp - 8n);
+            if (!slot) throw new Error("로컬 n이 없습니다.");
+            m.rax = u64(m.rax * slot.value);
+            return "factorial(" + n + ") = " + n +
+              " × factorial(" + (n - 1) + ") = " + m.rax;
+          }]);
+        }
+
+        ops.push(["fact(" + n + "): leave", m => {
+          m.rsp = m.rbp;
+          m.rbp = pop(m);
+          return "fact(" + n + ")의 로컬 공간을 반환합니다.";
+        }]);
+
+        ops.push(["fact(" + n + "): ret", m => {
+          const a = pop(m);
+          m.frames.pop();
+          return "복귀 주소 " + hex(a) + "로 돌아갑니다.";
+        }]);
+      }
+
+      return ops;
+    }
+
+    const controls = C(root);
+    const selector = document.createElement("select");
+
+    [
+      ["normal", "main → foo(8인자) → bar"],
+      ["recursive", "재귀(recursion): factorial(4)"]
+    ].forEach(([v, text]) => {
+      const o = E("option", selector, text);
+      o.value = v;
+    });
+
+    selector.value = state.mode;
+    L(controls, "프로그램", selector);
+
+    selector.addEventListener("change", () => {
+      state.mode = selector.value;
+      reset();
+    });
+
+    B(controls, "한 단계(step)", step);
+    B(controls, "뒤로(undo)", undo);
+    B(controls, "자동 재생", auto);
+    B(controls, "리셋", reset);
+
+    const info = S(root);
+    const registerHost = E("div", root);
+    const codeHost = E("div", root);
+    const stackHost = E("div", root);
+    const note = S(root);
+
+    function stop() {
+      if (state.timer !== null) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+    }
+
+    function reset() {
+      stop();
+      state.machine = fresh();
+      state.instructions =
+        state.mode === "normal" ? buildNormal() : buildRecursive();
+      state.index = 0;
+      state.snapshots = [];
+      state.changed = null;
+      state.explanation = "첫 명령을 실행해 호출 규약을 관찰하세요.";
+      render();
+    }
+
+    function execute() {
+      if (state.index >= state.instructions.length) return false;
+
+      const previous = clone(state.machine);
+      const beforeIndex = state.index;
+
+      try {
+        const [name, action] = state.instructions[state.index];
+        const description = action(state.machine);
+
+        state.snapshots.push({
+          machine: previous,
+          index: beforeIndex
+        });
+
+        state.index++;
+        state.explanation = description;
+
+        state.changed = {
+          rsp: previous.rsp !== state.machine.rsp,
+          rbp: previous.rbp !== state.machine.rbp,
+          rax: previous.rax !== state.machine.rax,
+          rbx: previous.rbx !== state.machine.rbx,
+          slots: new Set(
+            [...new Set([
+              ...previous.slots.keys(),
+              ...state.machine.slots.keys()
+            ])].filter(k => {
+              const a = previous.slots.get(k);
+              const b = state.machine.slots.get(k);
+              return !a || !b || a.value !== b.value || a.label !== b.label;
+            })
+          )
+        };
+
+        return true;
+      } catch (e) {
+        state.machine = previous;
+        state.explanation = "실행 오류: " + e.message;
+        stop();
+        return false;
+      }
+    }
+
+    function step() {
+      stop();
+      execute();
+      render();
+    }
+
+    function undo() {
+      stop();
+      const entry = state.snapshots.pop();
+      if (entry) {
+        state.machine = entry.machine;
+        state.index = entry.index;
+        state.changed = null;
+        state.explanation = "이전 단계로 되돌렸습니다.";
+      }
+      render();
+    }
+
+    function auto() {
+      if (state.timer !== null) {
+        stop();
+        render();
+        return;
+      }
+
+      state.timer = setInterval(() => {
+        const ok = execute();
+        render();
+        if (!ok || state.index >= state.instructions.length) stop();
+      }, 550);
+    }
+
+    function render() {
+      const m = state.machine;
+
+      info.textContent =
+        "단계 " + state.index + "/" + state.instructions.length +
+        " · 현재 프레임: " +
+        m.frames.map(f => f.name).join(" → ") +
+        "\n" + state.explanation;
+
+      clear(registerHost);
+      H(registerHost, "레지스터와 스택 정렬");
+
+      const rt = table(registerHost, ["레지스터", "현재 값", "설명"]);
+      rt.row(["%rsp", hex(m.rsp), "스택 최상단(top)"],
+        state.changed && state.changed.rsp ? [0, 1] : []);
+      rt.row(["%rbp", hex(m.rbp), "현재 프레임 기준점"],
+        state.changed && state.changed.rbp ? [0, 1] : []);
+      rt.row(["%rax", hex(m.rax), "반환값(return value)"],
+        state.changed && state.changed.rax ? [0, 1] : []);
+      rt.row(["%rbx", hex(m.rbx), "callee-saved"],
+        state.changed && state.changed.rbx ? [0, 1] : []);
+
+      argRegs.forEach((r, i) => {
+        rt.row(["%" + r, hex(m.registers[r]), "인자 " + (i + 1)]);
+      });
+
+      const aligned = m.rsp % 16n;
+      E(
+        "div",
+        registerHost,
+        "%rsp mod 16 = " + aligned +
+        (aligned === 0n
+          ? " · call 직전 요구 정렬과 일치"
+          : " · 함수 진입 직후에는 보통 8")
+      );
+
+      clear(codeHost);
+      H(codeHost, "실행 순서(assembly trace)");
+
+      const stepbar = E("div", codeHost, "", "v6-stepbar");
+
+      state.instructions.forEach(([name], i) => {
+        const row = E("div", stepbar, String(i).padStart(2, "0") + "  " + name);
+        row.style.fontFamily = "monospace, 'Noto Sans KR', sans-serif";
+        row.style.fontSize = "12px";
+        row.style.padding = "3px 6px";
+
+        if (i === state.index) {
+          row.style.borderLeft = "3px solid " + RED;
+          row.style.background = GRID;
+        }
+      });
+
+      clear(stackHost);
+      H(stackHost, "스택 지도(stack grows downward ↓)");
+
+      const slots = [...m.slots.entries()]
+        .sort((a, b) => a[0] < b[0] ? 1 : -1);
+
+      const grid = E("div", stackHost);
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns = "140px minmax(0,1fr) 120px";
+      grid.style.gap = "2px";
+
+      if (!slots.length) {
+        box(stackHost, "현재 사용 중인 스택 슬롯이 없습니다.");
+      }
+
+      slots.forEach(([address, slot]) => {
+        const changed =
+          state.changed && state.changed.slots.has(address);
+
+        box(grid, hex(address), changed);
+        box(grid, slot.label, changed);
+        box(grid, hex(slot.value), changed);
+
+        if (address === m.rsp) {
+          const pointer = E("div", grid, "← %rsp");
+          pointer.style.color = RED;
+        } else if (address === m.rbp) {
+          const pointer = E("div", grid, "← %rbp");
+          pointer.style.color = INK;
+        } else {
+          E("div", grid);
+        }
+      });
+
+      note.textContent =
+        "System V AMD64 기준:\n" +
+        "• 정수·포인터 인자 1~6 → rdi, rsi, rdx, rcx, r8, r9.\n" +
+        "• 7번째부터는 caller가 스택에 배치합니다.\n" +
+        "• caller-saved: rax, rcx, rdx, rsi, rdi, r8–r11.\n" +
+        "• callee-saved: rbx, rbp, r12–r15 (rsp도 복구).\n" +
+        "• call 직전 %rsp는 16바이트 정렬, 함수 진입 시 %rsp mod 16=8.\n" +
+        "• 고정 단계별 교육용 추적이며 실제 프로그램 카운터는 실행하지 않습니다.";
+    }
+
+    reset();
+  });
+
+  // ============================================================
+  // 2. Struct Layout
+  // ============================================================
+
+  V6.register("struct-layout", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+    T(root, "구조체 메모리 배치(struct layout)");
+
+    const TYPES = [
+      ["char", 1, 1],
+      ["short", 2, 2],
+      ["int", 4, 4],
+      ["long", 8, 8],
+      ["double", 8, 8],
+      ["void*", 8, 8],
+      ["char[n]", null, 1]
+    ];
+
+    let fields = [
+      { id: 1, type: "char", size: 1, align: 1, label: "a" },
+      { id: 2, type: "long", size: 8, align: 8, label: "b" },
+      { id: 3, type: "char", size: 1, align: 1, label: "c" }
+    ];
+
+    let nextId = 4;
+    let previousSize = null;
+    let message = "";
+
+    const controls = C(root);
+    const arrayInput = inputText(controls, "char[n]의 n", "5");
+    arrayInput.setAttribute("aria-label", "char 배열 길이");
+
+    TYPES.forEach(([type, size, align]) => {
+      B(controls, "+ " + type, () => {
+        try {
+          let actualSize = size;
+
+          if (type === "char[n]") {
+            const n = Number(arrayInput.value);
+            if (!Number.isSafeInteger(n) || n < 1 || n > 64) {
+              throw new Error("char[n] 길이는 1~64의 정수여야 합니다.");
+            }
+            actualSize = n;
+          }
+
+          if (fields.length >= 24) {
+            throw new Error("필드는 최대 24개까지 추가할 수 있습니다.");
+          }
+
+          fields.push({
+            id: nextId++,
+            type: type === "char[n]" ? "char[" + actualSize + "]" : type,
+            size: actualSize,
+            align,
+            label: "f" + nextId
+          });
+
+          message = type + " 필드를 추가했습니다.";
+          render();
+        } catch (e) {
+          notice(info, e.message);
+        }
+      });
+    });
+
+    B(controls, "정렬 최적화", () => {
+      const before = layout(fields).size;
+
+      fields.sort((a, b) =>
+        b.align - a.align || b.size - a.size || a.id - b.id
+      );
+
+      const after = layout(fields).size;
+      message =
+        "정렬 요구 K가 큰 필드부터 배치했습니다. " +
+        "sizeof " + before + " → " + after +
+        " B; 절약 " + (before - after) + " B.";
+      render();
+    });
+
+    B(controls, "초기화", () => {
+      fields = [
+        { id: 1, type: "char", size: 1, align: 1, label: "a" },
+        { id: 2, type: "long", size: 8, align: 8, label: "b" },
+        { id: 3, type: "char", size: 1, align: 1, label: "c" }
+      ];
+      nextId = 4;
+      message = "";
+      render();
+    });
+
+    const listHost = E("div", root);
+    const gridHost = E("div", root);
+    const info = S(root);
+
+    function roundUp(value, alignment) {
+      return Math.ceil(value / alignment) * alignment;
+    }
+
+    function layout(items) {
+      let cursor = 0;
+      let maximumAlignment = 1;
+      const positioned = [];
+      const padding = [];
+
+      items.forEach(f => {
+        const offset = roundUp(cursor, f.align);
+
+        for (let b = cursor; b < offset; b++) {
+          padding.push({ offset: b, type: "internal" });
+        }
+
+        positioned.push({ ...f, offset });
+
+        cursor = offset + f.size;
+        maximumAlignment = Math.max(maximumAlignment, f.align);
+      });
+
+      const size = roundUp(cursor, maximumAlignment);
+
+      for (let b = cursor; b < size; b++) {
+        padding.push({ offset: b, type: "external" });
+      }
+
+      return {
+        fields: positioned,
+        size,
+        maxAlign: maximumAlignment,
+        padding,
+        internal: padding.filter(p => p.type === "internal").length,
+        external: padding.filter(p => p.type === "external").length
+      };
+    }
+
+    function render() {
+      const result = layout(fields);
+
+      clear(listHost);
+      H(listHost, "필드 순서(field order)");
+
+      const tb = table(listHost, [
+        "필드", "타입", "크기", "정렬 K", "offset", "작업"
+      ]);
+
+      result.fields.forEach((f, index) => {
+        const row = tb.row([
+          f.label,
+          f.type,
+          f.size + " B",
+          f.align,
+          f.offset,
+          ""
+        ]);
+
+        const cell = row.children[5];
+
+        B(cell, "↑", () => {
+          if (index > 0) {
+            [fields[index - 1], fields[index]] =
+              [fields[index], fields[index - 1]];
+          }
+          render();
+        });
+
+        B(cell, "↓", () => {
+          if (index < fields.length - 1) {
+            [fields[index + 1], fields[index]] =
+              [fields[index], fields[index + 1]];
+          }
+          render();
+        });
+
+        B(cell, "삭제", () => {
+          fields = fields.filter(x => x.id !== f.id);
+          render();
+        });
+      });
+
+      clear(gridHost);
+      H(gridHost, "바이트 지도(byte map, 한 줄 8바이트)");
+
+      const cells = new Array(result.size).fill(null);
+
+      result.fields.forEach(f => {
+        for (let i = 0; i < f.size; i++) {
+          cells[f.offset + i] = {
+            text: f.label,
+            offset: i,
+            padding: false
+          };
+        }
+      });
+
+      result.padding.forEach(p => {
+        cells[p.offset] = {
+          text: "PAD",
+          padding: true,
+          type: p.type
+        };
+      });
+
+      const wrap = E("div", gridHost);
+      wrap.style.display = "grid";
+      wrap.style.gridTemplateColumns = "repeat(8, minmax(0,1fr))";
+      wrap.style.gap = "3px";
+
+      cells.forEach((c, i) => {
+        const x = E(
+          "div",
+          wrap,
+          c.padding ? "PAD" : c.text
+        );
+
+        x.style.border = "1px solid " + INK;
+        x.style.minHeight = "43px";
+        x.style.padding = "4px";
+        x.style.textAlign = "center";
+        x.style.fontSize = "11px";
+        x.style.color = c.padding ? RED : INK;
+
+        E("div", x, "+" + i).style.fontSize = "10px";
+        x.title = c.padding
+          ? (c.type === "internal" ? "내부 패딩" : "끝 패딩")
+          : ("offset " + i);
+      });
+
+      if (!result.size) {
+        box(gridHost, "필드가 없습니다.");
+      }
+
+      info.textContent =
+        (message ? message + "\n\n" : "") +
+        "sizeof(struct) = " + result.size + " B\n" +
+        "최대 정렬 요구(max alignment) = " + result.maxAlign + " B\n" +
+        "내부 패딩(internal padding) = " + result.internal + " B\n" +
+        "끝 패딩(tail padding) = " + result.external + " B\n" +
+        "실제 데이터 = " +
+        result.fields.reduce((sum, f) => sum + f.size, 0) + " B\n\n" +
+        "규칙: 각 field offset은 alignof(T)의 배수여야 합니다.\n" +
+        "sizeof(struct)는 최대 정렬 요구의 배수로 올림합니다.\n" +
+        "모델: 일반적인 x86-64 System V ABI, long/포인터/double=8B.";
+    }
+
+    render();
+  });
+
+  // ============================================================
+  // 3. Array Indexing
+  // ============================================================
+
+  V6.register("array-index", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+    T(root, "2차원 배열과 포인터 산술(array indexing)");
+
+    const ROWS = 4;
+    const COLS = 5;
+    const BASE = 0x1000n;
+    const POINTER_BASE = 0x2000n;
+
+    const state = {
+      i: goodInteger(cfg.i, 1, 0, ROWS - 1),
+      j: goodInteger(cfg.j, 2, 0, COLS - 1),
+      mode: "nested"
+    };
+
+    const rowAddresses = [
+      0x3000n, 0x4100n, 0x3500n, 0x5000n
+    ];
+
+    const controls = C(root);
+
+    B(controls, "중첩 배열(nested)", () => {
+      state.mode = "nested";
+      render();
+    });
+
+    B(controls, "다단계 배열(multi-level)", () => {
+      state.mode = "multi";
+      render();
+    });
+
+    const matrixHost = E("div", root);
+    const memoryHost = E("div", root);
+    const info = S(root);
+
+    function render() {
+      clear(matrixHost);
+      H(matrixHost, "int A[4][5] — 셀을 클릭하세요");
+
+      const grid = E("div", matrixHost);
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns = "repeat(5, minmax(0,1fr))";
+      grid.style.gap = "4px";
+
+      for (let i = 0; i < ROWS; i++) {
+        for (let j = 0; j < COLS; j++) {
+          const selected = state.i === i && state.j === j;
+
+          const b = B(grid, "A[" + i + "][" + j + "]", () => {
+            state.i = i;
+            state.j = j;
+            render();
+          });
+
+          b.style.color = selected ? RED : INK;
+          b.style.borderColor = selected ? RED : INK;
+          b.style.fontSize = "12px";
+        }
+      }
+
+      clear(memoryHost);
+
+      const i = state.i;
+      const j = state.j;
+
+      if (state.mode === "nested") {
+        H(memoryHost, "연속 메모리(row-major, 80바이트)");
+
+        const strip = E("div", memoryHost);
+        strip.style.display = "grid";
+        strip.style.gridTemplateColumns = "repeat(20, minmax(0,1fr))";
+        strip.style.gap = "2px";
+
+        const selectedOffset = (i * COLS + j) * 4;
+
+        for (let offset = 0; offset < 80; offset++) {
+          const active =
+            offset >= selectedOffset &&
+            offset < selectedOffset + 4;
+
+          const cell = E(
+            "div",
+            strip,
+            String(offset)
+          );
+
+          cell.style.border = "1px solid " + INK;
+          cell.style.padding = "5px 1px";
+          cell.style.fontSize = "10px";
+          cell.style.textAlign = "center";
+          cell.style.color = active ? RED : INK;
+          cell.title = hex(BASE + BigInt(offset));
+        }
+
+        const linear = i * COLS + j;
+        const offset = linear * 4;
+        const address = BASE + BigInt(offset);
+
+        info.textContent =
+          "선택: A[" + i + "][" + j + "]\n\n" +
+          "주소 = base + (i·C + j)·sizeof(int)\n" +
+          "     = " + hex(BASE) +
+          " + (" + i + "·5 + " + j + ")·4\n" +
+          "     = " + hex(BASE) + " + " + offset + "\n" +
+          "     = " + hex(address) + "\n\n" +
+          "sizeof(A) = 4·5·4 = 80 B\n" +
+          "int* p라면 p+1은 4바이트 전진합니다.\n" +
+          "int (*)[5] p라면 p+1은 20바이트 전진합니다.\n" +
+          "모든 행은 끊김 없이 연속 저장됩니다.";
+      } else {
+        H(memoryHost, "포인터 배열 → 행 데이터(2단계 역참조)");
+
+        const pointers = table(memoryHost, [
+          "A[i] 포인터 슬롯",
+          "저장된 행 주소"
+        ]);
+
+        for (let r = 0; r < ROWS; r++) {
+          pointers.row(
+            [
+              hex(POINTER_BASE + BigInt(r * 8)),
+              hex(rowAddresses[r])
+            ],
+            r === i ? [0, 1] : []
+          );
+        }
+
+        line(memoryHost);
+
+        const rows = table(memoryHost, [
+          "행", "시작 주소", "5개 int 요소"
+        ]);
+
+        for (let r = 0; r < ROWS; r++) {
+          rows.row(
+            [
+              "row " + r,
+              hex(rowAddresses[r]),
+              Array.from({ length: 5 }, (_, c) =>
+                hex(rowAddresses[r] + BigInt(c * 4))
+              ).join("  ")
+            ],
+            r === i ? [0, 1, 2] : []
+          );
+        }
+
+        const pointerSlot = POINTER_BASE + BigInt(i * 8);
+        const rowAddress = rowAddresses[i];
+        const target = rowAddress + BigInt(j * 4);
+
+        info.textContent =
+          "모델: int *A[4] (행 포인터 4개)\n\n" +
+          "1단계: &(A[" + i + "]) = " +
+          hex(POINTER_BASE) + " + " + i + "·8 = " +
+          hex(pointerSlot) + "\n" +
+          "2단계: A[" + i + "] = *(" +
+          hex(pointerSlot) + ") = " + hex(rowAddress) + "\n" +
+          "3단계: &A[" + i + "][" + j + "] = " +
+          hex(rowAddress) + " + " + j + "·4 = " +
+          hex(target) + "\n\n" +
+          "행마다 별도 위치에 저장될 수 있습니다.\n" +
+          "int *A[4]의 포인터 배열 자체 크기는 4·8=32B이며\n" +
+          "각 행 데이터 20B는 별도로 할당된 예시입니다.\n" +
+          "중첩 배열 int A[4][5]와 저장 구조가 다릅니다.";
+      }
+    }
+
+    render();
+  });
+
+  // ============================================================
+  // 4. Buffer Overflow
+  // ============================================================
+
+  V6.register("buf-overflow", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+    T(root, "스택 버퍼 오버플로(stack buffer overflow)");
+
+    let N = goodInteger(cfg.n, 8, 4, 16);
+    let input = "HELLO";
+    let canary = false;
+    let aslr = true;
+    let nx = true;
+    let retResult = "";
+
+    const controls = C(root);
+
+    range(controls, "buf 크기 N", 4, 16, N, v => {
+      N = v;
+      retResult = "";
+      render();
+    });
+
+    const text = inputText(
+      controls,
+      "입력 문자열",
+      input,
+      () => {
+        input = text.value;
+        retResult = "";
+        render();
+      }
+    );
+
+    text.style.width = "240px";
+
+    const defenses = C(root);
+
+    const protector = document.createElement("input");
+    protector.type = "checkbox";
+    L(defenses, "Stack protector(canary)", protector);
+
+    protector.addEventListener("change", () => {
+      canary = protector.checked;
+      retResult = "";
+      render();
+    });
+
+    const aslrInput = document.createElement("input");
+    aslrInput.type = "checkbox";
+    aslrInput.checked = true;
+    L(defenses, "ASLR", aslrInput);
+
+    aslrInput.addEventListener("change", () => {
+      aslr = aslrInput.checked;
+      render();
+    });
+
+    const nxInput = document.createElement("input");
+    nxInput.type = "checkbox";
+    nxInput.checked = true;
+    L(defenses, "NX", nxInput);
+
+    nxInput.addEventListener("change", () => {
+      nx = nxInput.checked;
+      render();
+    });
+
+    B(defenses, "ret 실행", () => {
+      const model = calculate();
+
+      if (canary && model.canaryCorrupt) {
+        retResult =
+          "__stack_chk_fail: canary 값이 변경되어 반환 전 프로그램을 중단합니다.";
+      } else if (model.returnCorrupt) {
+        retResult =
+          "반환 주소(return address)가 오염되었습니다. ret은 변조된 주소를 읽습니다.\n" +
+          "실제 결과는 주소·메모리 권한·시스템 방어에 따라 달라집니다. " +
+          "유효하지 않은 주소라면 segmentation fault가 발생할 수 있습니다.";
+      } else if (model.rbpCorrupt) {
+        retResult =
+          "saved %rbp가 손상되었지만 반환 주소 자체는 이 모델에서 보존되었습니다. " +
+          "이후 실행의 동작은 손상된 프레임 포인터 사용 여부에 따라 달라집니다.";
+      } else {
+        retResult =
+          "반환 주소와 saved %rbp가 보존되어 있습니다. 정상 복귀를 시뮬레이션합니다.";
+      }
+
+      render();
+    });
+
+    const diagram = E("div", root);
+    const info = S(root);
+
+    function utf8Bytes(s) {
+      return Array.from(new TextEncoder().encode(s));
+    }
+
+    function calculate() {
+      const bytes = utf8Bytes(input);
+      const writeLength = bytes.length + 1; // gets() writes terminating NUL.
+
+      // Teaching layout:
+      // buf[N], optional canary[8], saved rbp[8], return address[8].
+      const canaryStart = N;
+      const rbpStart = N + (canary ? 8 : 0);
+      const retStart = rbpStart + 8;
+
+      return {
+        bytes,
+        writeLength,
+        canaryStart,
+        rbpStart,
+        retStart,
+        canaryCorrupt: canary && writeLength > canaryStart,
+        rbpCorrupt: writeLength > rbpStart,
+        returnCorrupt: writeLength > retStart
+      };
+    }
+
+    function render() {
+      const m = calculate();
+      clear(diagram);
+
+      H(diagram, "스택 슬롯(낮은 주소 → 높은 주소)");
+
+      const base = 0x7fffffffe000n;
+      const total = m.retStart + 8;
+
+      const grid = E("div", diagram);
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns = "150px minmax(0,1fr)";
+      grid.style.gap = "2px";
+
+      function region(offset) {
+        if (offset < N) return "buf[" + offset + "]";
+        if (canary && offset < m.rbpStart) return "canary";
+        if (offset < m.retStart) return "saved %rbp";
+        return "return address";
+      }
+
+      for (let offset = 0; offset < total; offset++) {
+        const overwritten = offset < m.writeLength;
+        const corrupted = overwritten && offset >= N;
+
+        const address = base + BigInt(offset);
+
+        box(grid, hex(address), corrupted);
+
+        let value = "—";
+
+        if (offset < m.bytes.length) {
+          value = "0x" +
+            m.bytes[offset].toString(16).padStart(2, "0");
+        } else if (offset === m.bytes.length) {
+          value = "0x00 (NUL)";
+        }
+
+        box(
+          grid,
+          region(offset) +
+          " · " +
+          (overwritten ? "쓰기: " + value : "기존 값 유지"),
+          corrupted
+        );
+      }
+
+      const overflowCount = Math.max(0, m.writeLength - N);
+
+      info.textContent =
+        "buf 크기 = " + N + "바이트\n" +
+        "입력 UTF-8 길이 = " + m.bytes.length + "바이트\n" +
+        "gets()가 쓰는 크기 = " + m.writeLength +
+        "바이트 (끝 NUL 포함)\n" +
+        "buf 경계 초과 = " + overflowCount + "바이트\n\n" +
+        "saved %rbp 침범: " + (m.rbpCorrupt ? "예" : "아니오") + "\n" +
+        "return address 침범: " +
+        (m.returnCorrupt ? "예" : "아니오") + "\n" +
+        (canary
+          ? "canary 변경: " + (m.canaryCorrupt ? "예" : "아니오") + "\n"
+          : "") +
+        "\n" +
+        (retResult ? retResult + "\n\n" : "") +
+        "ASLR: " + (aslr ? "활성" : "비활성") +
+        " — 주소 배치를 예측하기 어렵게 합니다.\n" +
+        "NX: " + (nx ? "활성" : "비활성") +
+        " — 비실행 메모리의 코드 실행을 제한합니다.\n\n" +
+        "가장 중요한 방어는 애초에 버퍼 길이를 검사하는 안전한 입력 처리입니다.\n" +
+        "이 그림은 취약한 스택 배치를 단순화한 모델입니다. 실제 컴파일러는 패딩, canary 위치, 프레임 생략 등을 다르게 구성할 수 있습니다.";
+    }
+
+    render();
+  });
+
+  // ============================================================
+  // 5. Byte Ordering
+  // ============================================================
+
+  V6.register("byte-order", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+    T(root, "바이트 순서(endianness)");
+
+    let value = 0x01234567n;
+    let width = 4;
+    let mode = "number";
+    let ascii = "0123";
+
+    if (cfg.value !== undefined) {
+      try {
+        const parsed = parseIntExact(cfg.value);
+        if (parsed < 0n || parsed > 0xffffffffn) {
+          throw new Error("32비트 범위를 초과했습니다.");
+        }
+        value = parsed;
+      } catch (_) {}
+    }
+
+    const controls = C(root);
+    const text = inputText(
+      controls,
+      "32비트 값(hex/decimal)",
+      hex(value, 8),
+      update
+    );
+
+    B(controls, "32비트(int)", () => {
+      width = 4;
+      mode = "number";
+      update();
+    });
+
+    B(controls, "16비트(short)", () => {
+      width = 2;
+      mode = "number";
+      update();
+    });
+
+    B(controls, "문자열 ASCII", () => {
+      mode = "ascii";
+      render();
+    });
+
+    const diagram = E("div", root);
+    const info = S(root);
+
+    function update() {
+      try {
+        const n = parseIntExact(text.value);
+
+        if (n < 0n || n > 0xffffffffn) {
+          throw new Error("0..0xFFFFFFFF 범위여야 합니다.");
+        }
+
+        value = n;
+        mode = "number";
+        render();
+      } catch (e) {
+        notice(info, e.message);
+      }
+    }
+
+    function drawRow(parent, name, bytes, indices) {
+      H(parent, name);
+
+      const grid = E("div", parent);
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns =
+        "repeat(" + bytes.length + ", minmax(0,1fr))";
+      grid.style.gap = "5px";
+
+      bytes.forEach((b, i) => {
+        const cell = box(grid, "주소 +" + i + "\n0x" + b.toString(16).padStart(2, "0"));
+        cell.style.whiteSpace = "pre-wrap";
+        cell.style.textAlign = "center";
+        cell.title = "원래 값의 byte " + indices[i];
+      });
+    }
+
+    function render() {
+      clear(diagram);
+
+      if (mode === "ascii") {
+        const encoded = Array.from(new TextEncoder().encode(ascii));
+
+        H(diagram, '문자열 "0123" — 문자별 1바이트');
+
+        drawRow(
+          diagram,
+          "메모리 주소 증가 방향",
+          [...encoded, 0],
+          [0, 1, 2, 3, "NUL"]
+        );
+
+        info.textContent =
+          '문자열 "0123\\0"의 바이트:\n' +
+          "0x30 0x31 0x32 0x33 0x00\n\n" +
+          "문자열은 바이트 배열이므로 endianness 자체가 문자 순서를 바꾸지 않습니다.\n" +
+          "다만 이 바이트들을 하나의 다바이트 정수로 해석하면 값이 바뀔 수 있습니다.";
+        return;
+      }
+
+      const mask = (1n << BigInt(width * 8)) - 1n;
+      const v = value & mask;
+
+      const little = [];
+      const big = [];
+
+      for (let i = 0; i < width; i++) {
+        little.push(Number((v >> BigInt(i * 8)) & 255n));
+      }
+
+      for (let i = width - 1; i >= 0; i--) {
+        big.push(little[i]);
+      }
+
+      drawRow(
+        diagram,
+        "Little-endian (x86-64)",
+        little,
+        Array.from({ length: width }, (_, i) => i)
+      );
+
+      drawRow(
+        diagram,
+        "Big-endian",
+        big,
+        Array.from({ length: width }, (_, i) => width - 1 - i)
+      );
+
+      info.textContent =
+        "값: " + hex(v, width * 2) + "\n" +
+        "크기: " + width + "바이트\n\n" +
+        "Little-endian: " +
+        little.map(x => "0x" + x.toString(16).padStart(2, "0")).join(" ") +
+        "\nBig-endian: " +
+        big.map(x => "0x" + x.toString(16).padStart(2, "0")).join(" ") +
+        "\n\n" +
+        "Little-endian은 최하위 바이트(LSB)를 낮은 주소에 저장합니다.\n" +
+        "Big-endian은 최상위 바이트(MSB)를 낮은 주소에 저장합니다.\n" +
+        "바이트 순서는 다르지만, 해당 endian 규칙으로 읽으면 같은 정수 값입니다.";
+    }
+
+    render();
+  });
+
+  // ============================================================
+  // 6. Virtual Memory Layout
+  // ============================================================
+
+  V6.register("mem-layout", function (root, cfg) {
+    cfg = cfg && typeof cfg === "object" ? cfg : {};
+    T(root, "프로세스 가상주소 공간(virtual address space)");
+
+    // Illustrative Linux x86-64 process, 4-level paging (48-bit
+    // canonical addresses, 47-bit lower-half user range).
+    // Not an actual /proc/<pid>/maps representation.
+    const USER_TOP = 0x00007ffffffffffen;
+    const KERNEL_START = 0xffff800000000000n;
+
+    const BASES = {
+      text: 0x400000n,
+      data: 0x600000n,
+      heap: 0x800000n,
+      mmap: 0x7f0000000000n,
+      stack: 0x7fffffffe000n
+    };
+
+    let heapSize = 0x1000n;
+    let stackUsed = 0x1000n;
+    let selected = BASES.text;
+    let message = "";
+
+    const controls = C(root);
+
+    const addressInput = inputText(
+      controls,
+      "가상주소(hex)",
+      hex(selected),
+      () => {
+        try {
+          selected = parseIntExact(addressInput.value);
+          if (selected < 0n || selected > MASK64) {
+            throw new Error("64비트 주소 범위를 초과했습니다.");
+          }
+          message = "";
+          render();
+        } catch (e) {
+          notice(info, e.message);
+        }
+      }
+    );
+
+    addressInput.style.width = "225px";
+
+    B(controls, "malloc(+4KiB)", () => {
+      if (heapSize + 0x1000n > 0x100000n) {
+        notice(info, "교육용 heap 크기 상한(1MiB)에 도달했습니다.");
+        return;
+      }
+
+      heapSize += 0x1000n;
+      message = "malloc 시뮬레이션: heap의 높은 주소 방향으로 4KiB 증가.";
+      render();
+    });
+
+    B(controls, "함수 호출(stack −256B)", () => {
+      if (stackUsed + 256n > 0x10000n) {
+        notice(info, "교육용 stack 사용량 상한(64KiB)에 도달했습니다.");
+        return;
+      }
+
+      stackUsed += 256n;
+      message = "함수 호출 시뮬레이션: %rsp가 낮은 주소로 256B 이동.";
+      render();
+    });
+
+    B(controls, "반환(stack +256B)", () => {
+      stackUsed = stackUsed > 0x1000n
+        ? stackUsed - 256n
+        : 0x1000n;
+      message = "함수 반환으로 스택 사용량이 감소했습니다.";
+      render();
+    });
+
+    B(controls, "리셋", () => {
+      heapSize = 0x1000n;
+      stackUsed = 0x1000n;
+      message = "";
+      render();
+    });
+
+    const diagram = E("div", root);
+    const info = S(root);
+
+    function classify(addr) {
+      if (addr < 0n || addr > MASK64) {
+        return "잘못된 주소";
+      }
+
+      if (addr >= KERNEL_START) {
+        return "커널 영역(kernel canonical half) — 사용자 모드 접근 불가";
+      }
+
+      if (addr > 0x00007ffffffffffen) {
+        return "비정규 주소(non-canonical gap)";
+      }
+
+      if (addr >= BASES.stack - stackUsed &&
+          addr < BASES.stack) {
+        return "스택(stack) — 아래로 성장";
+      }
+
+      if (addr >= BASES.mmap &&
+          addr < BASES.mmap + 0x100000n) {
+        return "mmap/공유 라이브러리 영역(예시)";
+      }
+
+      if (addr >= BASES.heap &&
+          addr < BASES.heap + heapSize) {
+        return "힙(heap) — 위로 성장";
+      }
+
+      if (addr >= BASES.data &&
+          addr < BASES.data + 0x10000n) {
+        return "data/bss 영역(예시)";
+      }
+
+      if (addr >= BASES.text &&
+          addr < BASES.text + 0x10000n) {
+        return "text 코드 영역(예시, 읽기+실행)";
+      }
+
+      return "교육용 지도에서 매핑되지 않은 영역";
+    }
+
+    function render() {
+      clear(diagram);
+      H(diagram, "높은 주소 ↑ / 낮은 주소 ↓");
+
+      const regions = [
+        ["커널 영역(kernel)", "0xFFFF800000000000 ~", "사용자 접근 불가"],
+        ["비정규 주소 간격", "canonical hole", "접근 불가"],
+        ["스택(stack)", "0x00007FFFFFFFE000 부근", "↓ 낮은 주소 방향"],
+        ["mmap / 공유 라이브러리", "0x00007F0000000000 부근", "매핑 기반"],
+        ["미매핑 간격", "주소 범위는 실행마다 다름", ""],
+        ["힙(heap)", "0x0000000000800000 부근", "↑ 높은 주소 방향"],
+        ["data / bss", "0x0000000000600000 부근", "전역·정적 데이터"],
+        ["text", "0x0000000000400000 부근", "읽기 + 실행"],
+        ["낮은 주소 / 보호 영역", "0x0000000000000000 부근", "NULL 등"]
+      ];
+
+      const stack = E("div", diagram);
+      stack.style.display = "grid";
+      stack.style.gap = "3px";
+      stack.style.maxWidth = "650px";
+
+      regions.forEach(([name, address, explanation], index) => {
+        const region = E("div", stack);
+        region.style.border = "1px solid " + INK;
+        region.style.padding = "10px";
+        region.style.background = "white";
+
+        const heading = E("div", region, name);
+        heading.style.fontWeight = "bold";
+
+        E("div", region, address).style.fontFamily = "monospace, 'Noto Sans KR', sans-serif";
+        E("div", region, explanation).style.fontSize = "12px";
+
+        if (index === 2 || index === 5) {
+          const bar = E("div", region);
+          bar.style.height = "5px";
+          bar.style.border = "1px solid " + GRID;
+          bar.style.marginTop = "7px";
+
+          const fill = E("div", bar);
+          fill.style.height = "100%";
+          fill.style.background = RED;
+
+          const amount = index === 2
+            ? Number(stackUsed) / 65536
+            : Number(heapSize) / 1048576;
+
+          fill.style.width = Math.max(2, Math.min(100, amount * 100)) + "%";
+          fill.style.transition = "width 250ms ease";
+        }
+      });
+
+      const category = classify(selected);
+
+      info.textContent =
+        (message ? message + "\n\n" : "") +
+        "선택 주소: " + hex(selected) + "\n" +
+        "판정: " + category + "\n\n" +
+        "현재 heap 시뮬레이션 크기: " + heapSize + " B\n" +
+        "현재 stack 시뮬레이션 사용량: " + stackUsed + " B\n\n" +
+        "Linux x86-64의 전형적인 4단계 페이지 테이블(48비트 canonical 주소) 설명용 지도입니다.\n" +
+        "실제 매핑 주소·권한은 운영체제, ASLR, PIE, 프로세스 설정에 따라 달라집니다.\n" +
+        "특히 스택은 높은 주소에서 낮은 주소로, 전형적인 brk 기반 heap은 낮은 주소에서 높은 주소로 확장됩니다.\n" +
+        "Stack overflow 위젯에서는 스택 영역 안의 return address가 왜 중요한지 확인할 수 있습니다.";
+    }
+
+    render();
+  });
+
+})();

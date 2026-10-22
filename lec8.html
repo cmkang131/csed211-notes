@@ -12,6 +12,9 @@
 <link rel="stylesheet" href="assets/csed211.css">
 <link rel="prev" href="lec7.html">
 <link rel="stylesheet" href="assets/v5-layer.css">
+<link rel="stylesheet" href="assets/v6.css">
+<script src="assets/v6.js" defer></script>
+<script src="assets/v6-extra.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -43,6 +46,7 @@
 </svg>
 <figcaption>stack은 아래로, heap은 위로 자람. stack overflow와 heap overflow가 서로 반대 방향인 이유</figcaption>
 </figure>
+<div class="v6-widget" data-widget="mem-layout" data-config='{}'></div>
 <h3>array·heap·stack의 실제 주소</h3>
 <pre class="c">char big_array[1L&lt;&lt;24];   /* 16 MB global array */
 char huge_array[1L&lt;&lt;31];  /* 2 GB global array */
@@ -136,6 +140,7 @@ void smash() { printf("I've been smashed!\n"); exit; }  /* 슬라이드 표기 �
 </svg>
 <figcaption>gets가 입력을 buf부터 순서대로 쓰므로, buf[64]를 지난 8바이트가 return address를 smash의 주소로 바꿈</figcaption>
 </figure>
+<div class="v6-widget" data-widget="buf-overflow" data-config='{"n":8}'></div>
 <h3>Code injection</h3>
 <ul>
 <li>return address A를 <b>buf의 주소 B</b>로 덮고, buf 안에 실행할 machine code를 채움 → Q가 ret하면 %rip가 B로 이동해 stack 위 exploit code를 실행</li>
@@ -291,6 +296,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <figcaption>같은 byte열을 little endian은 뒤집어 읽고, big endian은 그대로 읽음</figcaption>
 </figure>
 
+<div class="v6-widget" data-widget="byte-order" data-config='{"value":"0x01234567"}'></div>
 <h2><span class="h2no">8</span>시험 포인트</h2>
 <div class="nb">
 <ul>
