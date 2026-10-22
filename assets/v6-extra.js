@@ -6813,719 +6813,738 @@ if (document.fonts && document.fonts.ready){
   // ============================================================
 
   V6.register("stack-frames", function (root, cfg) {
-    cfg = cfg && typeof cfg === "object" ? cfg : {};
+  cfg = cfg && typeof cfg === "object" ? cfg : {};
 
-    T(root, "프로시저 호출과 스택 프레임 — Stack Frames");
+  T(root, "프로시저 호출과 스택 프레임 — Stack Frames");
 
-    const TOP = 0x8000n;
-    const args = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n];
-    const argRegs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
+  const INK = "#1a1a1a";
+  const RED = "#9e2b25";
+  const GRID = "#e8e6e0";
+  const WHITE = "#ffffff";
+  const TOP = 0x8000n;
+  const args = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n];
+  const argRegs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
 
-    const state = {
-      mode: cfg.mode === "recursive" ? "recursive" : "normal",
-      index: 0,
-      snapshots: [],
-      timer: null,
-      machine: null,
-      instructions: [],
-      explanation: "",
-      changed: null,
-      error: ""
+  const state = {
+    mode: cfg.mode === "recursive" ? "recursive" : "normal",
+    index: 0,
+    snapshots: [],
+    timer: null,
+    machine: null,
+    instructions: [],
+    explanation: "",
+    changed: null,
+    error: ""
+  };
+
+  function fresh() {
+    return {
+      rsp: TOP,
+      rbp: TOP,
+      rax: 0n,
+      rbx: 0n,
+      registers: Object.fromEntries(argRegs.map(r => [r, 0n])),
+      slots: new Map(),
+      frames: [{ name: "main", rbp: TOP, entry: TOP }],
+      pc: 0,
+      note: ""
     };
+  }
 
-    function fresh() {
-      return {
-        rsp: TOP,
-        rbp: TOP,
-        rax: 0n,
-        rbx: 0n,
-        registers: Object.fromEntries(
-          argRegs.map(name => [name, 0n])
-        ),
-        slots: new Map(),
-        frames: [{
-          name: "main",
-          rbp: TOP,
-          entry: TOP
-        }],
-        pc: 0,
-        note: ""
-      };
+  function clone(m) {
+    return {
+      ...m,
+      registers: { ...m.registers },
+      slots: new Map([...m.slots].map(([k, v]) => [k, { ...v }])),
+      frames: m.frames.map(f => ({ ...f }))
+    };
+  }
+
+  function push(m, value, label, owner) {
+    m.rsp -= 8n;
+    m.slots.set(m.rsp, {
+      value: u64(value),
+      label,
+      owner: owner || (m.frames.length ? m.frames[m.frames.length - 1].name : "main"),
+      released: false
+    });
+    return m.rsp;
+  }
+
+  function pop(m) {
+    const slot = m.slots.get(m.rsp);
+    if (!slot) throw new Error("스택 아래에 읽을 값이 없습니다.");
+    m.slots.delete(m.rsp);
+    m.rsp += 8n;
+    return slot.value;
+  }
+
+  function reserve(m, bytes, label) {
+    if (bytes % 8 !== 0 || bytes < 0) {
+      throw new Error("로컬 공간 크기가 유효하지 않습니다.");
     }
-
-    function clone(m) {
-      return {
-        ...m,
-        registers: { ...m.registers },
-        slots: new Map(
-          [...m.slots].map(([k, v]) => [k, { ...v }])
-        ),
-        frames: m.frames.map(f => ({ ...f }))
-      };
+    for (let i = 0; i < bytes; i += 8) {
+      push(m, 0n, label + " +" + i);
     }
+  }
 
-    function push(m, value, label) {
-      m.rsp -= 8n;
-      m.slots.set(m.rsp, {
-        value: u64(value),
-        label
-      });
-      return m.rsp;
-    }
-
-    function pop(m) {
-      const slot = m.slots.get(m.rsp);
-
-      if (!slot) {
-        throw new Error("스택 아래에 읽을 값이 없습니다.");
-      }
-
+  function drop(m, bytes) {
+    for (let i = 0; i < bytes; i += 8) {
       m.slots.delete(m.rsp);
       m.rsp += 8n;
-      return slot.value;
     }
+  }
 
-    function reserve(m, bytes, label) {
-      if (bytes % 8 !== 0 || bytes < 0) {
-        throw new Error("로컬 공간 크기가 유효하지 않습니다.");
-      }
+  // Retired frames keep their old memory contents for illustration.
+  // The bytes remain visible but are no longer active stack slots.
+  function releaseFrame(m, name) {
+    m.slots.forEach(slot => {
+      if (slot.owner === name) slot.released = true;
+    });
+  }
 
-      for (let i = 0; i < bytes; i += 8) {
-        push(m, 0n, label + " +" + i);
-      }
-    }
+  function buildNormal() {
+    return [
+      ["main: 인자 1~6을 레지스터에 배정", m => {
+        argRegs.forEach((r, i) => { m.registers[r] = args[i]; });
+        return "System V AMD64: 정수·포인터 인자 1~6은 %rdi, %rsi, %rdx, %rcx, %r8, %r9입니다.";
+      }],
+      ["subq $16,%rsp — outgoing args 공간", m => {
+        reserve(m, 16, "인자 전달 공간");
+        return "7·8번째 인자를 위한 16바이트 공간입니다. call 직전 %rsp는 16바이트 정렬됩니다.";
+      }],
+      ["movq $7,0(%rsp); movq $8,8(%rsp)", m => {
+        m.slots.set(m.rsp, {
+          ...m.slots.get(m.rsp),
+          value: 7n,
+          label: "foo arg7",
+          owner: "main",
+          released: false
+        });
+        m.slots.set(m.rsp + 8n, {
+          ...m.slots.get(m.rsp + 8n),
+          value: 8n,
+          label: "foo arg8",
+          owner: "main",
+          released: false
+        });
+        return "foo의 arg7은 호출 전 0(%rsp), arg8은 8(%rsp)에 배치됩니다.";
+      }],
+      ["call foo", m => {
+        push(m, 0x401020n, "main → 복귀 주소(return address)", "foo");
+        m.frames.push({ name: "foo", rbp: null, entry: m.rsp });
+        return "call이 다음 명령 주소를 push합니다. foo 진입 시 %rsp mod 16 = 8.";
+      }],
+      ["foo: pushq %rbp", m => {
+        push(m, m.rbp, "saved %rbp (foo)", "foo");
+        return "호출자의 프레임 포인터를 저장합니다.";
+      }],
+      ["movq %rsp,%rbp", m => {
+        m.rbp = m.rsp;
+        m.frames[m.frames.length - 1].rbp = m.rbp;
+        return "%rbp가 foo의 프레임 기준점이 됩니다. arg7은 16(%rbp), arg8은 24(%rbp).";
+      }],
+      ["subq $16,%rsp", m => {
+        reserve(m, 16, "foo local");
+        return "foo의 로컬 공간 16바이트를 확보합니다.";
+      }],
+      ["movq %rbx,0(%rsp) — callee-saved 저장", m => {
+        m.slots.set(m.rsp, {
+          value: m.rbx,
+          label: "saved %rbx (foo local slot)",
+          owner: "foo",
+          released: false
+        });
+        return "callee-saved인 %rbx를 로컬 슬롯에 저장합니다. %rsp는 바뀌지 않습니다.";
+      }],
+      ["movq $99,%rbx — foo 본문", m => {
+        m.rbx = 99n;
+        return "foo에서 %rbx를 변경했습니다. 반환 전에 원래 값을 복원해야 합니다.";
+      }],
+      ["call bar", m => {
+        if (m.rsp % 16n !== 0n) {
+          throw new Error("bar 호출 직전 %rsp가 16바이트 정렬되지 않았습니다.");
+        }
+        push(m, 0x401080n, "foo → 복귀 주소", "bar");
+        m.frames.push({ name: "bar", rbp: null, entry: m.rsp });
+        return "call 직전 %rsp mod 16 = 0, bar 진입 직후 %rsp mod 16 = 8입니다.";
+      }],
+      ["bar: pushq %rbp", m => {
+        push(m, m.rbp, "saved %rbp (bar)", "bar");
+        return "bar의 프레임 포인터를 저장합니다.";
+      }],
+      ["bar: movq %rsp,%rbp", m => {
+        m.rbp = m.rsp;
+        m.frames[m.frames.length - 1].rbp = m.rbp;
+        return "bar의 프레임 기준점을 설정합니다.";
+      }],
+      ["bar: movq $42,%rax", m => {
+        m.rax = 42n;
+        return "반환값 42를 %rax에 저장합니다.";
+      }],
+      ["bar: leave", m => {
+        releaseFrame(m, "bar");
+        m.rsp = m.rbp;
+        m.rbp = pop(m);
+        return "leave는 movq %rbp,%rsp; popq %rbp와 같습니다. bar의 로컬 영역과 저장된 프레임 포인터를 정리합니다.";
+      }],
+      ["bar: ret", m => {
+        const address = pop(m);
+        releaseFrame(m, "bar");
+        m.frames.pop();
+        return "ret은 복귀 주소 " + hex(address) + "를 pop한 뒤 점프합니다. 반환한 bar의 잔존 메모리는 스택 슬롯으로 재사용될 수 있습니다.";
+      }],
+      ["foo: %rbx 복원", m => {
+        const slot = m.slots.get(m.rsp);
+        if (!slot || slot.label !== "saved %rbx (foo local slot)") {
+          throw new Error("saved %rbx 슬롯이 없습니다.");
+        }
+        m.rbx = slot.value;
+        return "foo의 로컬 슬롯에서 callee-saved %rbx를 복원합니다.";
+      }],
+      ["foo: movq $56,%rax", m => {
+        m.rax = 56n;
+        return "foo의 반환값 56을 %rax에 기록합니다.";
+      }],
+      ["foo: leave", m => {
+        releaseFrame(m, "foo");
+        m.rsp = m.rbp;
+        m.rbp = pop(m);
+        return "leave로 foo의 로컬 공간을 해제하고 saved %rbp를 복구합니다. 이전 슬롯의 값은 메모리에 남아 있을 수 있습니다.";
+      }],
+      ["foo: ret", m => {
+        const address = pop(m);
+        releaseFrame(m, "foo");
+        m.frames.pop();
+        return "main으로 복귀합니다. 반환 주소 " + hex(address) + ". foo의 반환된 프레임은 활성 프레임이 아닙니다.";
+      }],
+      ["main: addq $16,%rsp", m => {
+        drop(m, 16);
+        return "호출자 main이 arg7·arg8 전달 공간 16바이트를 정리합니다.";
+      }]
+    ];
+  }
 
-    function drop(m, bytes) {
-      for (let i = 0; i < bytes; i += 8) {
-        m.slots.delete(m.rsp);
-        m.rsp += 8n;
-      }
-    }
+  function buildRecursive() {
+    const ops = [];
+    const n0 = 4;
 
-    function buildNormal() {
-      return [
-        ["main: 인자 1~6을 레지스터에 배정", m => {
-          argRegs.forEach((r, i) => {
-            m.registers[r] = args[i];
-          });
+    ops.push(["main: movq $4,%rdi", m => {
+      m.registers.rdi = 4n;
+      return "팩토리얼 factorial(4)을 호출합니다.";
+    }]);
 
-          return "System V AMD64: 정수·포인터 인자 1~6은 %rdi, %rsi, %rdx, %rcx, %r8, %r9입니다.";
-        }],
+    ops.push(["main: call fact", m => {
+      push(m, 0x402000n, "main 복귀 주소", "fact(4)");
+      m.frames.push({ name: "fact(4)", rbp: null, entry: m.rsp });
+      return "첫 번째 fact(4) 프레임으로 진입합니다.";
+    }]);
 
-        ["subq $16,%rsp — outgoing args 공간", m => {
-          reserve(m, 16, "인자 전달 공간");
-
-          return "7·8번째 인자를 위해 호출자가 16바이트 공간을 마련합니다. call 직전 %rsp는 16바이트 정렬됩니다.";
-        }],
-
-        ["movq $7,0(%rsp); movq $8,8(%rsp)", m => {
-          m.slots.set(m.rsp, {
-            value: 7n,
-            label: "foo arg7"
-          });
-
-          m.slots.set(m.rsp + 8n, {
-            value: 8n,
-            label: "foo arg8"
-          });
-
-          return "foo의 arg7은 호출 전 0(%rsp), arg8은 8(%rsp)에 위치합니다.";
-        }],
-
-        ["call foo", m => {
-          push(
-            m,
-            0x401020n,
-            "main → 복귀 주소(return address)"
-          );
-
-          m.frames.push({
-            name: "foo",
-            rbp: null,
-            entry: m.rsp
-          });
-
-          return "call이 다음 명령 주소를 8바이트 push합니다. foo 진입 시 %rsp mod 16 = 8.";
-        }],
-
-        ["foo: pushq %rbp", m => {
-          push(m, m.rbp, "saved %rbp (foo)");
-          return "기존 frame pointer를 저장합니다. push 후 %rsp mod 16 = 0.";
-        }],
-
-        ["movq %rsp,%rbp", m => {
-          m.rbp = m.rsp;
-          m.frames[m.frames.length - 1].rbp = m.rbp;
-
-          return "%rbp가 foo의 현재 프레임 기준점이 됩니다. arg7은 16(%rbp), arg8은 24(%rbp).";
-        }],
-
-        ["subq $16,%rsp", m => {
-          reserve(m, 16, "foo local");
-
-          return "foo의 로컬 변수 공간 16바이트를 확보합니다. %rsp mod 16 = 0이 유지됩니다.";
-        }],
-
-        ["movq %rbx,0(%rsp) — callee-saved 저장", m => {
-          m.slots.set(m.rsp, {
-            value: m.rbx,
-            label: "saved %rbx (foo local slot)"
-          });
-
-          return "%rbx는 callee-saved입니다. 기존에 확보한 로컬 슬롯에 저장하므로 %rsp는 변경되지 않습니다.";
-        }],
-
-        ["movq $99,%rbx — foo 본문", m => {
-          m.rbx = 99n;
-          return "foo에서 %rbx를 변경했습니다. 반환 전 복원해야 합니다.";
-        }],
-
-        // foo's RSP is already 16-byte aligned.
-        // CALL alone pushes 8 bytes, so bar enters with RSP mod 16 = 8.
-        ["call bar", m => {
-          if (m.rsp % 16n !== 0n) {
-            throw new Error("bar 호출 직전 %rsp가 16바이트 정렬되지 않았습니다.");
-          }
-
-          push(m, 0x401080n, "foo → 복귀 주소");
-
-          m.frames.push({
-            name: "bar",
-            rbp: null,
-            entry: m.rsp
-          });
-
-          return "추가 패딩은 필요하지 않습니다. call 직전 %rsp mod 16 = 0, bar 진입 직후 %rsp mod 16 = 8입니다.";
-        }],
-
-        ["bar: pushq %rbp", m => {
-          push(m, m.rbp, "saved %rbp (bar)");
-          return "bar의 frame pointer를 저장합니다. %rsp mod 16 = 0.";
-        }],
-
-        ["bar: movq %rsp,%rbp", m => {
-          m.rbp = m.rsp;
-          m.frames[m.frames.length - 1].rbp = m.rbp;
-          return "bar 프레임을 설정했습니다.";
-        }],
-
-        ["bar: movq $42,%rax", m => {
-          m.rax = 42n;
-          return "반환값(return value)은 %rax에 저장합니다.";
-        }],
-
-        ["bar: leave", m => {
-          m.rsp = m.rbp;
-          m.rbp = pop(m);
-
-          return "leave = movq %rbp,%rsp; popq %rbp. bar의 saved %rbp를 복원합니다.";
-        }],
-
-        ["bar: ret", m => {
-          const address = pop(m);
-          m.frames.pop();
-
-          return "ret은 복귀 주소 " +
-            hex(address) +
-            "를 pop한 뒤 그 주소로 점프합니다. foo의 %rsp는 호출 직전 값으로 복구됩니다.";
-        }],
-
-        // No addq $8,%rsp: no padding was reserved for bar.
-        ["foo: %rbx 복원", m => {
-          const slot = m.slots.get(m.rsp);
-
-          if (!slot || slot.label !== "saved %rbx (foo local slot)") {
-            throw new Error("saved %rbx 슬롯이 없습니다.");
-          }
-
-          m.rbx = slot.value;
-
-          return "foo의 로컬 슬롯에서 callee-saved %rbx를 복원합니다. %rsp는 변경되지 않습니다.";
-        }],
-
-        ["foo: movq $56,%rax", m => {
-          m.rax = 56n;
-          return "foo의 반환값을 %rax에 기록합니다.";
-        }],
-
-        ["foo: leave", m => {
-          m.rsp = m.rbp;
-          m.rbp = pop(m);
-
-          return "foo의 로컬 공간을 해제하고 saved %rbp를 복구합니다.";
-        }],
-
-        ["foo: ret", m => {
-          const address = pop(m);
-          m.frames.pop();
-
-          return "main으로 복귀합니다. 반환 주소 " + hex(address);
-        }],
-
-        ["main: addq $16,%rsp", m => {
-          drop(m, 16);
-
-          return "caller인 main이 arg7·arg8의 16바이트 공간을 정리합니다.";
-        }]
-      ];
-    }
-
-    // The recursive preset preserves its existing stack allocation
-    // and alignment behavior.
-    function buildRecursive() {
-      const ops = [];
-      const n0 = 4;
-
-      ops.push(["main: movq $4,%rdi", m => {
-        m.registers.rdi = 4n;
-        return "팩토리얼 factorial(4)을 호출합니다.";
+    for (let n = n0; n >= 1; n--) {
+      ops.push(["fact(" + n + "): pushq %rbp", m => {
+        push(m, m.rbp, "fact(" + n + ") saved rbp", "fact(" + n + ")");
+        return "fact(" + n + ")의 이전 프레임 포인터를 저장합니다.";
       }]);
 
-      ops.push(["main: call fact", m => {
-        push(m, 0x402000n, "main 복귀 주소");
-
-        m.frames.push({
-          name: "fact(4)",
-          rbp: null,
-          entry: m.rsp
-        });
-
-        return "첫 번째 fact(4) 프레임으로 진입합니다.";
+      ops.push(["fact(" + n + "): movq %rsp,%rbp", m => {
+        m.rbp = m.rsp;
+        m.frames[m.frames.length - 1].rbp = m.rbp;
+        return "현재 fact 프레임의 기준점을 설정합니다.";
       }]);
 
-      for (let n = n0; n >= 1; n--) {
-        ops.push(["fact(" + n + "): pushq %rbp", m => {
-          push(m, m.rbp, "fact(" + n + ") saved rbp");
-
-          return "fact(" + n + ")의 frame pointer를 저장합니다.";
-        }]);
-
-        ops.push(["fact(" + n + "): movq %rsp,%rbp", m => {
-          m.rbp = m.rsp;
-          m.frames[m.frames.length - 1].rbp = m.rbp;
-
-          return "새 프레임 기준점을 설정합니다.";
-        }]);
-
-        ops.push(["fact(" + n + "): subq $16,%rsp", m => {
-          reserve(m, 16, "fact(" + n + ") local");
-
-          m.slots.set(m.rbp - 8n, {
-            value: BigInt(n),
-            label: "fact(" + n + ") saved n"
-          });
-
-          return "재귀 호출 뒤 곱할 n=" +
-            n + "을 로컬 슬롯에 저장합니다.";
-        }]);
-
-        if (n > 1) {
-          ops.push([
-            "fact(" + n + "): call fact(" + (n - 1) + ")",
-            m => {
-              push(
-                m,
-                BigInt(0x402100 + n * 16),
-                "fact(" + n + ") 복귀 주소"
-              );
-
-              m.frames.push({
-                name: "fact(" + (n - 1) + ")",
-                rbp: null,
-                entry: m.rsp
-              });
-
-              return "재귀 호출로 프레임 깊이가 증가합니다. 현재 %rsp mod 16 = 8 (callee 진입).";
-            }
-          ]);
-        } else {
-          ops.push(["fact(1): movq $1,%rax", m => {
-            m.rax = 1n;
-            return "기저 사례(base case): factorial(1)=1.";
-          }]);
-        }
-      }
-
-      for (let n = 1; n <= n0; n++) {
-        if (n > 1) {
-          ops.push(["fact(" + n + "): imulq n,%rax", m => {
-            const slot = m.slots.get(m.rbp - 8n);
-
-            if (!slot) {
-              throw new Error("로컬 n이 없습니다.");
-            }
-
-            m.rax = u64(m.rax * slot.value);
-
-            return "factorial(" + n + ") = " +
-              n + " × factorial(" + (n - 1) + ") = " + m.rax;
-          }]);
-        }
-
-        ops.push(["fact(" + n + "): leave", m => {
-          m.rsp = m.rbp;
-          m.rbp = pop(m);
-
-          return "fact(" + n + ")의 로컬 공간을 반환합니다.";
-        }]);
-
-        ops.push(["fact(" + n + "): ret", m => {
-          const address = pop(m);
-          m.frames.pop();
-
-          return "복귀 주소 " + hex(address) + "로 돌아갑니다.";
-        }]);
-      }
-
-      return ops;
-    }
-
-    const controls = C(root);
-
-    const selector = document.createElement("select");
-
-    [
-      ["normal", "main → foo(8인자) → bar"],
-      ["recursive", "재귀(recursion): factorial(4)"]
-    ].forEach(([value, text]) => {
-      const option = E("option", selector, text);
-      option.value = value;
-    });
-
-    selector.value = state.mode;
-    L(controls, "프로그램(Preset)", selector);
-
-    const stepButton = B(controls, "한 단계", step);
-    const undoButton = B(controls, "뒤로", undo);
-    const autoButton = B(controls, "자동 재생", auto);
-    B(controls, "리셋", reset);
-
-    const info = S(root);
-    const traceHost = E("section", root);
-    const registerHost = E("section", root);
-    const stackHost = E("section", root);
-    const note = S(root);
-
-    selector.addEventListener("change", () => {
-      state.mode = selector.value;
-      reset();
-    });
-
-    function stop() {
-      if (state.timer !== null) {
-        clearInterval(state.timer);
-        state.timer = null;
-      }
-
-      autoButton.textContent = "자동 재생";
-      selectState(autoButton, false);
-    }
-
-    function reset() {
-      stop();
-
-      state.machine = fresh();
-      state.instructions =
-        state.mode === "normal"
-          ? buildNormal()
-          : buildRecursive();
-
-      state.index = 0;
-      state.snapshots = [];
-      state.changed = null;
-      state.error = "";
-      state.explanation =
-        "첫 명령을 실행해 호출 규약을 관찰합니다.";
-
-      render();
-    }
-
-    function execute() {
-      if (state.index >= state.instructions.length) return false;
-
-      const previous = clone(state.machine);
-      const beforeIndex = state.index;
-
-      try {
-        const [, action] = state.instructions[state.index];
-        const description = action(state.machine);
-
-        state.snapshots.push({
-          machine: previous,
-          index: beforeIndex
+      ops.push(["fact(" + n + "): subq $16,%rsp", m => {
+        reserve(m, 16, "fact(" + n + ") local");
+        m.slots.set(m.rbp - 8n, {
+          value: BigInt(n),
+          label: "fact(" + n + ")의 n 저장 슬롯",
+          owner: "fact(" + n + ")",
+          released: false
         });
+        return "재귀 호출이 끝난 뒤 곱할 n=" + n + "을 프레임의 로컬 슬롯에 저장합니다. 이 슬롯은 현재 호출의 n을 보존합니다.";
+      }]);
 
-        state.index++;
-        state.explanation = description;
-        state.error = "";
-
-        const current = state.machine;
-
-        state.changed = {
-          rsp: previous.rsp !== current.rsp,
-          rbp: previous.rbp !== current.rbp,
-          rax: previous.rax !== current.rax,
-          rbx: previous.rbx !== current.rbx,
-          slots: new Set(
-            [...new Set([
-              ...previous.slots.keys(),
-              ...current.slots.keys()
-            ])].filter(address => {
-              const a = previous.slots.get(address);
-              const b = current.slots.get(address);
-
-              return !a || !b ||
-                a.value !== b.value ||
-                a.label !== b.label;
-            })
-          )
-        };
-
-        return true;
-      } catch (e) {
-        state.machine = previous;
-        state.changed = null;
-        state.error = e.message;
-        state.explanation = "실행 오류: " + e.message;
-        stop();
-        return false;
-      }
-    }
-
-    function step() {
-      stop();
-      execute();
-      render();
-    }
-
-    function undo() {
-      stop();
-
-      const entry = state.snapshots.pop();
-
-      if (entry) {
-        state.machine = entry.machine;
-        state.index = entry.index;
-        state.changed = null;
-        state.error = "";
-        state.explanation = "이전 단계로 되돌렸습니다.";
+      if (n > 1) {
+        ops.push(["fact(" + n + "): call fact(" + (n - 1) + ")", m => {
+          push(m, BigInt(0x402100 + n * 16), "fact(" + n + ") 복귀 주소", "fact(" + (n - 1) + ")");
+          m.frames.push({ name: "fact(" + (n - 1) + ")", rbp: null, entry: m.rsp });
+          return "재귀 호출로 새 프레임이 생깁니다. 각 호출은 자신만의 n 저장 슬롯을 가집니다.";
+        }]);
       } else {
-        state.explanation = "되돌릴 기록이 없습니다.";
+        ops.push(["fact(1): movq $1,%rax", m => {
+          m.rax = 1n;
+          return "기저 사례: factorial(1)=1을 %rax에 기록합니다.";
+        }]);
+      }
+    }
+
+    for (let n = 1; n <= n0; n++) {
+      if (n > 1) {
+        ops.push(["fact(" + n + "): imulq n,%rax", m => {
+          const slot = m.slots.get(m.rbp - 8n);
+          if (!slot || slot.released) throw new Error("활성 fact(" + n + ")의 n 저장 슬롯이 없습니다.");
+          m.rax = u64(m.rax * slot.value);
+          return "fact(" + n + ")의 n 저장 슬롯 값 " + n + "과 하위 호출의 반환값을 곱합니다. 현재 %rax = " + m.rax + ".";
+        }]);
       }
 
-      render();
+      ops.push(["fact(" + n + "): leave", m => {
+        releaseFrame(m, "fact(" + n + ")");
+        m.rsp = m.rbp;
+        m.rbp = pop(m);
+        return "leave로 fact(" + n + ")의 로컬 영역을 정리하고 이전 %rbp를 복구합니다. n 슬롯은 해제된 프레임의 잔존 값으로 표시됩니다.";
+      }]);
+
+      ops.push(["fact(" + n + "): ret", m => {
+        const address = pop(m);
+        releaseFrame(m, "fact(" + n + ")");
+        m.frames.pop();
+        return "복귀 주소 " + hex(address) + "로 돌아갑니다. 반환된 fact(" + n + ")는 더 이상 활성 프레임이 아닙니다.";
+      }]);
     }
 
-    function auto() {
-      if (state.timer !== null) {
-        stop();
-        render();
-        return;
-      }
+    return ops;
+  }
 
-      if (state.index >= state.instructions.length) return;
+  const controls = C(root);
+  const selector = document.createElement("select");
 
-      autoButton.textContent = "자동 재생 중지";
-      selectState(autoButton, true);
+  [
+    ["normal", "main → foo(8인자) → bar"],
+    ["recursive", "재귀: factorial(4)"]
+  ].forEach(([value, label]) => {
+    const option = E("option", selector, label);
+    option.value = value;
+  });
 
-      state.timer = setInterval(() => {
-        const ok = execute();
+  selector.value = state.mode;
+  L(controls, "프로그램(Preset)", selector);
 
-        if (!ok || state.index >= state.instructions.length) {
-          stop();
-        }
+  const stepButton = B(controls, "한 단계", step);
+  const undoButton = B(controls, "뒤로", undo);
+  const autoButton = B(controls, "자동 재생", auto);
+  B(controls, "리셋", reset);
 
-        render();
-      }, 550);
-    }
+  // Responsive, consistent control bar.
+  Object.assign(controls.style, {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "8px",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    padding: "10px",
+    background: WHITE,
+    color: INK
+  });
 
-    function registerRows() {
-      clear(registerHost);
-      H(registerHost, "레지스터와 스택 정렬");
+  const info = S(root);
+  const traceHost = E("section", root);
+  const registerHost = E("section", root);
+  const stackHost = E("section", root);
+  const note = S(root);
 
-      const m = state.machine;
-      const rt = table(registerHost, [
-        "레지스터",
-        "현재 값",
-        "역할"
-      ]);
+  [info, traceHost, registerHost, stackHost, note].forEach(node => {
+    Object.assign(node.style, {
+      boxSizing: "border-box",
+      width: "100%",
+      maxWidth: "100%",
+      minWidth: "0",
+      color: INK,
+      overflowWrap: "anywhere"
+    });
+  });
 
-      rt.row(
-        ["%rsp", hex(m.rsp), "스택 최상단(top)"],
-        state.changed && state.changed.rsp ? [0, 1] : []
-      );
-
-      rt.row(
-        ["%rbp", hex(m.rbp), "프레임 기준점"],
-        state.changed && state.changed.rbp ? [0, 1] : []
-      );
-
-      rt.row(
-        ["%rax", hex(m.rax), "반환값(return value)"],
-        state.changed && state.changed.rax ? [0, 1] : []
-      );
-
-      rt.row(
-        ["%rbx", hex(m.rbx), "callee-saved"],
-        state.changed && state.changed.rbx ? [0, 1] : []
-      );
-
-      argRegs.forEach((reg, index) => {
-        rt.row([
-          "%" + reg,
-          hex(m.registers[reg]),
-          "인자 " + (index + 1)
-        ]);
-      });
-
-      const alignment = E(
-        "div",
-        registerHost,
-        "%rsp mod 16 = " + (m.rsp % 16n),
-        "v6-state"
-      );
-
-      alignment.style.marginTop = "8px";
-    }
-
-    function renderTrace() {
-      clear(traceHost);
-      H(traceHost, "실행 순서 — Assembly Trace");
-
-      const scroll = E("div", traceHost, "", "v6-code-list");
-
-      Object.assign(scroll.style, {
-        width: "100%",
-        maxWidth: "100%",
-        maxHeight: "360px",
-        overflowX: "auto",
-        overflowY: "auto"
-      });
-
-      const list = E("div", scroll);
-      list.style.minWidth = "500px";
-
-      state.instructions.forEach(([name], index) => {
-        const row = E(
-          "div",
-          list,
-          String(index).padStart(2, "0") + "   " + name
-        );
-
-        Object.assign(row.style, {
-          minHeight: "34px",
-          padding: "7px 12px",
-          fontFamily: MONO,
-          fontSize: "13px",
-          whiteSpace: "nowrap",
-          lineHeight: "1.6",
-          borderLeft: "3px solid transparent"
-        });
-
-        if (index === state.index) {
-          row.classList.add("is-current");
-          row.style.borderLeftColor = RED;
-          row.style.background = GRID;
-        }
-      });
-    }
-
-    function renderStack() {
-      clear(stackHost);
-      H(stackHost, "스택 지도 — 높은 주소에서 낮은 주소로 성장 ↓");
-
-      const m = state.machine;
-      const slots = [...m.slots.entries()]
-        .sort((a, b) => a[0] < b[0] ? 1 : -1);
-
-      if (!slots.length) {
-        box(stackHost, "현재 사용 중인 스택 슬롯이 없습니다.");
-        return;
-      }
-
-      const scroll = E("div", stackHost, "", "v6-table-scroll");
-      const grid = E("div", scroll);
-
-      Object.assign(grid.style, {
-        display: "grid",
-        gridTemplateColumns: "170px minmax(240px,1fr) 165px 92px",
-        gap: "3px",
-        minWidth: "670px"
-      });
-
-      [
-        "주소(Address)",
-        "슬롯 역할",
-        "저장 값",
-        "포인터"
-      ].forEach(text => noteHeader(grid, text));
-
-      slots.forEach(([address, slot]) => {
-        const changed =
-          state.changed &&
-          state.changed.slots.has(address);
-
-        box(grid, hex(address), changed);
-        box(grid, slot.label, changed);
-        box(grid, hex(slot.value), changed);
-
-        const pointer =
-          address === m.rsp && address === m.rbp
-            ? "%rsp / %rbp"
-            : address === m.rsp
-              ? "← %rsp"
-              : address === m.rbp
-                ? "← %rbp"
-                : "";
-
-        const cell = box(grid, pointer);
-        if (address === m.rsp) {
-          cell.style.fontWeight = "700";
-        }
-      });
-    }
-
-    function render() {
-      const m = state.machine;
-
-      stepButton.disabled =
-        state.index >= state.instructions.length;
-
-      undoButton.disabled =
-        state.snapshots.length === 0;
-
-      info.textContent =
-        "진행 " + state.index + "/" +
-        state.instructions.length +
-        " · 호출 깊이 " + m.frames.length +
-        "\n현재 프레임: " +
-        m.frames.map(f => f.name).join(" → ") +
-        "\n\n" + state.explanation;
-
-      if (state.error) {
-        clear(traceHost);
-        clear(registerHost);
-        clear(stackHost);
-        notice(note, state.error);
-        return;
-      }
-
-      renderTrace();
-      registerRows();
-      renderStack();
-
-      note.textContent =
-        "System V AMD64 호출 규약\n" +
-        "정수·포인터 인자 1~6: rdi, rsi, rdx, rcx, r8, r9.\n" +
-        "7번째부터는 호출자가 스택에 배치합니다.\n" +
-        "Caller-saved: rax, rcx, rdx, rsi, rdi, r8–r11.\n" +
-        "Callee-saved: rbx, rbp, r12–r15; rsp도 복구합니다.\n" +
-        "call 직전 %rsp는 16바이트 정렬, 함수 진입 직후 %rsp mod 16=8.\n" +
-        "고정 단계별 교육용 추적이며 실제 명령어 인터프리터는 아닙니다.";
-    }
-
+  selector.addEventListener("change", () => {
+    state.mode = selector.value;
     reset();
   });
+
+  function stop() {
+    if (state.timer !== null) {
+      clearInterval(state.timer);
+      state.timer = null;
+    }
+    autoButton.textContent = "자동 재생";
+    selectState(autoButton, false);
+  }
+
+  function reset() {
+    stop();
+    state.machine = fresh();
+    state.instructions = state.mode === "normal" ? buildNormal() : buildRecursive();
+    state.index = 0;
+    state.snapshots = [];
+    state.changed = null;
+    state.error = "";
+    state.explanation = "한 단계씩 실행해 호출 규약과 프레임의 생명주기를 관찰합니다.";
+    render();
+  }
+
+  function execute() {
+    if (state.index >= state.instructions.length) return false;
+
+    const previous = clone(state.machine);
+    const beforeIndex = state.index;
+
+    try {
+      const [, action] = state.instructions[state.index];
+      const description = action(state.machine);
+
+      state.snapshots.push({ machine: previous, index: beforeIndex });
+      state.index++;
+      state.explanation = description;
+      state.error = "";
+
+      const current = state.machine;
+      const addresses = new Set([...previous.slots.keys(), ...current.slots.keys()]);
+
+      state.changed = {
+        rsp: previous.rsp !== current.rsp,
+        rbp: previous.rbp !== current.rbp,
+        rax: previous.rax !== current.rax,
+        rbx: previous.rbx !== current.rbx,
+        slots: new Set([...addresses].filter(address => {
+          const a = previous.slots.get(address);
+          const b = current.slots.get(address);
+          return !a || !b ||
+            a.value !== b.value ||
+            a.label !== b.label ||
+            a.released !== b.released ||
+            a.owner !== b.owner;
+        }))
+      };
+      return true;
+    } catch (e) {
+      state.machine = previous;
+      state.changed = null;
+      state.error = e.message;
+      state.explanation = "실행 오류: " + e.message;
+      stop();
+      return false;
+    }
+  }
+
+  function step() {
+    stop();
+    execute();
+    render();
+  }
+
+  function undo() {
+    stop();
+    const entry = state.snapshots.pop();
+    if (entry) {
+      state.machine = entry.machine;
+      state.index = entry.index;
+      state.changed = null;
+      state.error = "";
+      state.explanation = "이전 단계로 되돌렸습니다.";
+    } else {
+      state.explanation = "되돌릴 기록이 없습니다.";
+    }
+    render();
+  }
+
+  function auto() {
+    if (state.timer !== null) {
+      stop();
+      render();
+      return;
+    }
+    if (state.index >= state.instructions.length) return;
+
+    autoButton.textContent = "자동 재생 중지";
+    selectState(autoButton, true);
+
+    state.timer = setInterval(() => {
+      const ok = execute();
+      if (!ok || state.index >= state.instructions.length) stop();
+      render();
+    }, 550);
+  }
+
+  function registerRows() {
+    clear(registerHost);
+    H(registerHost, "레지스터와 스택 정렬");
+
+    const m = state.machine;
+    const rt = table(registerHost, ["레지스터", "현재 값", "역할"]);
+
+    rt.row(["%rsp", hex(m.rsp), "현재 스택 포인터(top)"],
+      state.changed && state.changed.rsp ? [0, 1] : []);
+    rt.row(["%rbp", hex(m.rbp), "현재 프레임 기준점"],
+      state.changed && state.changed.rbp ? [0, 1] : []);
+    rt.row(["%rax", hex(m.rax), "반환값"],
+      state.changed && state.changed.rax ? [0, 1] : []);
+    rt.row(["%rbx", hex(m.rbx), "callee-saved"],
+      state.changed && state.changed.rbx ? [0, 1] : []);
+
+    argRegs.forEach((reg, i) => {
+      rt.row(["%" + reg, hex(m.registers[reg]), "인자 " + (i + 1)]);
+    });
+
+    const alignment = E("div", registerHost,
+      "%rsp mod 16 = " + (m.rsp % 16n), "v6-state");
+    Object.assign(alignment.style, {
+      marginTop: "8px",
+      fontSize: "13px",
+      lineHeight: "1.5",
+      overflowWrap: "anywhere"
+    });
+  }
+
+  function renderTrace() {
+    clear(traceHost);
+    H(traceHost, "실행 순서 — Assembly Trace");
+
+    const list = E("div", traceHost);
+    Object.assign(list.style, {
+      display: "flex",
+      flexDirection: "column",
+      gap: "3px",
+      width: "100%",
+      maxWidth: "100%",
+      minWidth: "0"
+    });
+
+    state.instructions.forEach(([name], index) => {
+      const row = E("div", list, "", "v6-code-list");
+      const number = E("span", row, String(index).padStart(2, "0") + "  ");
+      const code = E("span", row, name);
+
+      Object.assign(row.style, {
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "baseline",
+        gap: "5px",
+        width: "100%",
+        minWidth: "0",
+        boxSizing: "border-box",
+        padding: "7px 10px",
+        borderLeft: "3px solid transparent",
+        color: INK,
+        fontSize: "13px",
+        lineHeight: "1.55",
+        overflowWrap: "anywhere"
+      });
+
+      Object.assign(number.style, {
+        fontFamily: MONO,
+        fontSize: "12px",
+        flex: "0 0 auto"
+      });
+      Object.assign(code.style, {
+        fontFamily: MONO,
+        fontSize: "13px",
+        minWidth: "0",
+        whiteSpace: "normal",
+        overflowWrap: "anywhere"
+      });
+
+      if (index === state.index) {
+        row.style.borderLeftColor = RED;
+        row.style.background = GRID;
+        row.style.fontWeight = "600";
+      }
+    });
+  }
+
+  function renderStack() {
+    clear(stackHost);
+    H(stackHost, "스택 지도 — 높은 주소에서 낮은 주소로 성장 ↓");
+
+    const m = state.machine;
+    const slots = [...m.slots.entries()].sort((a, b) => a[0] < b[0] ? 1 : -1);
+
+    const legend = E("div", stackHost);
+    Object.assign(legend.style, {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: "8px 14px",
+      alignItems: "center",
+      padding: "8px 0 10px",
+      fontSize: "12px",
+      lineHeight: "1.5"
+    });
+
+    function legendItem(label, released) {
+      const item = E("div", legend);
+      Object.assign(item.style, {
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        minWidth: "0"
+      });
+      const swatch = E("span", item);
+      Object.assign(swatch.style, {
+        display: "inline-block",
+        width: "20px",
+        height: "12px",
+        flex: "0 0 auto",
+        boxSizing: "border-box",
+        border: released ? "1px dashed " + INK : "1px solid " + INK,
+        background: WHITE,
+        opacity: released ? "0.55" : "1"
+      });
+      E("span", item, label);
+    }
+
+    legendItem("활성 슬롯: 현재 호출에서 사용하는 값", false);
+    legendItem("해제됨: 함수 반환 후 값이 남아 있을 수 있음", true);
+
+    if (!slots.length) {
+      box(stackHost, "현재 표시할 스택 슬롯이 없습니다.");
+      return;
+    }
+
+    const grid = E("div", stackHost);
+    Object.assign(grid.style, {
+      display: "grid",
+      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+      gap: "3px",
+      width: "100%",
+      maxWidth: "100%",
+      minWidth: "0"
+    });
+
+    const headers = ["주소", "슬롯 역할", "저장 값", "포인터"];
+    headers.forEach(text => {
+      const header = noteHeader(grid, text);
+      Object.assign(header.style, {
+        minWidth: "0",
+        boxSizing: "border-box",
+        overflowWrap: "anywhere",
+        fontSize: "12px",
+        lineHeight: "1.4"
+      });
+    });
+
+    slots.forEach(([address, slot]) => {
+      const changed = state.changed && state.changed.slots.has(address);
+      const pointer =
+        address === m.rsp && address === m.rbp ? "%rsp / %rbp" :
+        address === m.rsp ? "← %rsp" :
+        address === m.rbp ? "← %rbp" : "";
+
+      [hex(address), slot.label, hex(slot.value), pointer].forEach((value, i) => {
+        const cell = box(grid, value, changed);
+        Object.assign(cell.style, {
+          minWidth: "0",
+          width: "auto",
+          boxSizing: "border-box",
+          padding: "7px 6px",
+          fontSize: "12px",
+          lineHeight: "1.5",
+          overflowWrap: "anywhere",
+          wordBreak: "break-word",
+          whiteSpace: "normal",
+          color: INK,
+          background: WHITE
+        });
+
+        if (slot.released) {
+          cell.style.border = "1px dashed " + INK;
+          cell.style.opacity = "0.58";
+          cell.style.background = WHITE;
+          cell.style.textDecoration = "none";
+
+          if (i === 1) {
+            cell.textContent = slot.label + " · 해제됨";
+          }
+        } else if (changed) {
+          cell.style.border = "1px solid " + RED;
+        }
+
+        if (i === 3 && pointer) {
+          cell.style.fontWeight = "700";
+          cell.style.color = INK;
+        }
+      });
+    });
+  }
+
+  function render() {
+    const m = state.machine;
+
+    stepButton.disabled = state.index >= state.instructions.length;
+    undoButton.disabled = state.snapshots.length === 0;
+
+    info.textContent =
+      "진행 " + state.index + "/" + state.instructions.length +
+      " · 활성 프레임 깊이 " + m.frames.length +
+      "\n현재 활성 호출: " + m.frames.map(f => f.name).join(" → ") +
+      "\n\n" + state.explanation;
+
+    Object.assign(info.style, {
+      whiteSpace: "pre-wrap",
+      fontSize: "13px",
+      lineHeight: "1.65",
+      padding: "10px 12px",
+      margin: "8px 0",
+      border: "1px solid " + GRID,
+      background: WHITE,
+      color: INK,
+      overflowWrap: "anywhere"
+    });
+
+    if (state.error) {
+      clear(traceHost);
+      clear(registerHost);
+      clear(stackHost);
+      notice(note, state.error);
+      return;
+    }
+
+    renderTrace();
+    registerRows();
+    renderStack();
+
+    note.textContent =
+      "System V AMD64 호출 규약\n" +
+      "정수·포인터 인자 1~6: rdi, rsi, rdx, rcx, r8, r9. 7번째부터는 호출자가 스택에 배치합니다.\n" +
+      "Caller-saved: rax, rcx, rdx, rsi, rdi, r8–r11. Callee-saved: rbx, rbp, r12–r15. 함수는 보존 의무가 있는 레지스터를 복구해야 합니다.\n" +
+      "call 직전 %rsp는 16바이트 정렬, 일반적인 함수 진입 직후 %rsp mod 16 = 8입니다.\n" +
+      "재귀 예제의 fact(n) 저장 슬롯은 각 호출의 n을 보존해 하위 호출 반환 후 곱셈에 사용합니다.\n" +
+      "회색 점선 슬롯은 반환된 프레임의 잔존 메모리를 나타내며, 활성 슬롯이 아닙니다. 실제 프로그램에서는 이후 호출이 해당 주소를 덮어쓸 수 있습니다.\n" +
+      "교육용 고정 단계 추적이며 실제 명령어 인터프리터는 아닙니다.";
+
+    Object.assign(note.style, {
+      display: "block",
+      whiteSpace: "pre-wrap",
+      fontSize: "12px",
+      lineHeight: "1.65",
+      padding: "12px",
+      marginTop: "12px",
+      border: "1px solid " + GRID,
+      background: WHITE,
+      color: INK,
+      overflowWrap: "anywhere",
+      boxSizing: "border-box"
+    });
+
+    // Keep the palette constrained to ink, red, grid, and white.
+    root.style.color = INK;
+    root.style.background = WHITE;
+    root.style.width = "100%";
+    root.style.maxWidth = "100%";
+    root.style.minWidth = "0";
+    root.style.boxSizing = "border-box";
+    root.style.padding = "12px";
+
+    [stepButton, undoButton, autoButton].forEach(button => {
+      if (!button) return;
+      button.style.minHeight = "34px";
+      button.style.fontSize = "12px";
+    });
+
+    selector.style.maxWidth = "100%";
+    selector.style.minWidth = "0";
+    selector.style.fontSize = "12px";
+  }
+
+  reset();
+});
 
   // ============================================================
   // 2. Struct Layout
