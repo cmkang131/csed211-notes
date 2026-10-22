@@ -8052,6 +8052,12 @@ if (document.fonts && document.fonts.ready){
 V6.register("buf-overflow", function (root, cfg) {
   cfg = cfg && typeof cfg === "object" ? cfg : {};
 
+  // Give the widget breathing room inside its container.
+  root.style.boxSizing = "border-box";
+  root.style.padding = "12px";
+  root.style.minWidth = "0";
+  root.style.overflowWrap = "anywhere";
+
   T(root, "스택 버퍼 오버플로 — Stack Smashing");
 
   let N = goodInteger(cfg.n, 8, 4, 16);
@@ -8078,6 +8084,7 @@ V6.register("buf-overflow", function (root, cfg) {
 
   text.style.width = "230px";
   text.style.maxWidth = "100%";
+  text.style.boxSizing = "border-box";
 
   const lengthControl = range(
     controls,
@@ -8100,9 +8107,6 @@ V6.register("buf-overflow", function (root, cfg) {
 
   function syncLengthSlider() {
     const count = characterCount(input);
-
-    // Keep some room for extension, but shrink the maximum
-    // when a long directly-entered string becomes shorter.
     const max = Math.max(10, count + 10);
 
     lengthControl.input.max = String(max);
@@ -8173,8 +8177,8 @@ V6.register("buf-overflow", function (root, cfg) {
         (
           nx
             ? "NX가 활성화된 시스템에서는 스택을 실행 불가능하게 설정할 수 있습니다. " +
-              "따라서 스택에 입력된 바이트를 코드로 실행하는 것은 차단될 수 있지만, " +
-              "NX가 변조된 반환 주소 자체를 복구하거나 모든 제어 흐름 공격을 차단하는 것은 아닙니다."
+              "스택에 입력된 바이트를 코드로 실행하는 것은 차단될 수 있지만, " +
+              "NX가 반환 주소 자체를 복구하거나 모든 제어 흐름 공격을 차단하지는 않습니다."
             : "NX가 비활성화된 경우에도 실제 코드 실행 성공이 보장되지는 않습니다."
         ) +
         "\nASLR은 주소 배치를 무작위화하지만, 이 모델은 실제 주소 무작위화나 공격 성공 여부를 계산하지 않습니다.";
@@ -8185,8 +8189,7 @@ V6.register("buf-overflow", function (root, cfg) {
         "교육용 단순화 모델이며 실제 함수 복귀 과정을 완전히 시뮬레이트하지 않습니다.";
     } else {
       retResult =
-        "saved %rbp와 반환 주소가 보존되었습니다. " +
-        "이 모델에서는 정상 복귀로 취급합니다.\n" +
+        "saved %rbp와 반환 주소가 보존되었습니다. 이 모델에서는 정상 복귀로 취급합니다.\n" +
         "실제 실행 결과를 보장하는 시뮬레이션은 아닙니다.";
     }
 
@@ -8230,15 +8233,44 @@ V6.register("buf-overflow", function (root, cfg) {
     return "return address";
   }
 
+  function regionBaseName(name) {
+    return name
+      .replace(/^.*buf\[\d+\].*$/, "buf")
+      .replace(/^.*Stack Canary.*$/, "canary")
+      .replace(/^.*Saved %rbp.*$/, "saved %rbp")
+      .replace(/^.*Return Address.*$/, "return address");
+  }
+
   function renderRegion(parent, name, offsets, m, base) {
     const group = E("div", parent);
     group.style.marginBottom = "16px";
+    group.style.minWidth = "0";
+    group.style.width = "100%";
 
-    noteHeader(group, name);
+    const firstOffset = offsets.length ? offsets[0] : 0;
+    const regionBase = base + BigInt(firstOffset);
+
+    // Show the full base address once per region, not in every cell.
+    const heading = E("div", group);
+    heading.textContent =
+      name + " · 기준 주소 " + hex(regionBase);
+
+    Object.assign(heading.style, {
+      fontSize: "13px",
+      fontWeight: "600",
+      lineHeight: "1.5",
+      overflowWrap: "anywhere",
+      marginBottom: "6px"
+    });
 
     const scroll = E("div", group, "", "v6-table-scroll");
-    scroll.style.width = "100%";
-    scroll.style.maxWidth = "100%";
+
+    Object.assign(scroll.style, {
+      width: "100%",
+      maxWidth: "100%",
+      minWidth: "0",
+      overflowX: "hidden"
+    });
 
     const grid = E("div", scroll);
 
@@ -8247,42 +8279,52 @@ V6.register("buf-overflow", function (root, cfg) {
       gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
       gap: "4px",
       width: "100%",
-      marginTop: "8px"
+      minWidth: "0",
+      marginTop: "4px"
     });
 
     offsets.forEach(offset => {
       const overwritten = offset < m.writeLength;
       const corrupted = overwritten && offset >= N;
 
-      let value = "기존 값";
+      let value = "—";
 
       if (offset < m.bytes.length) {
         value =
           "0x" + m.bytes[offset].toString(16).padStart(2, "0");
       } else if (offset === m.bytes.length) {
-        value = "0x00 NUL";
+        value = "0x00";
       }
+
+      // Two compact lines only:
+      // relative byte offset, then the byte value.
+      const relativeOffset = "+" +
+        offset.toString(16).toUpperCase().padStart(2, "0");
 
       const cell = box(
         grid,
-        hex(base + BigInt(offset)) +
-          "\n" +
-          (overwritten ? value : "—"),
+        relativeOffset + "\n" + (overwritten ? value : "—"),
         corrupted
       );
 
       Object.assign(cell.style, {
-        whiteSpace: "pre-wrap",
-        overflowWrap: "anywhere",
-        wordBreak: "break-word",
+        boxSizing: "border-box",
         minWidth: "0",
+        padding: "8px 2px",
+        whiteSpace: "pre",
+        overflow: "hidden",
+        textOverflow: "clip",
         textAlign: "center",
+        fontFamily: MONO,
         fontSize: "12px",
-        lineHeight: "1.35"
+        lineHeight: "1.5",
+        overflowWrap: "normal",
+        wordBreak: "normal"
       });
 
       cell.title =
-        regionName(offset, m) +
+        "주소 " + hex(base + BigInt(offset)) +
+        " · " + regionName(offset, m) +
         (corrupted ? " · 버퍼 경계 밖 쓰기" : "");
     });
   }
@@ -8298,7 +8340,6 @@ V6.register("buf-overflow", function (root, cfg) {
 
       const base = 0x7fffffffe000n;
       const total = m.retStart + 8;
-
       const offsets = Array.from({ length: total }, (_, i) => i);
 
       renderRegion(
@@ -8384,6 +8425,12 @@ V6.register("buf-overflow", function (root, cfg) {
 V6.register("byte-order", function (root, cfg) {
   cfg = cfg && typeof cfg === "object" ? cfg : {};
 
+  root.style.boxSizing = "border-box";
+  root.style.padding = "12px";
+  root.style.minWidth = "0";
+  root.style.textAlign = "left";
+  root.style.overflowWrap = "anywhere";
+
   T(root, "바이트 순서 — Little / Big Endian");
 
   let value = 0x01234567n;
@@ -8416,6 +8463,7 @@ V6.register("byte-order", function (root, cfg) {
   );
 
   text.style.maxWidth = "100%";
+  text.style.boxSizing = "border-box";
 
   const intButton = B(controls, "32비트(int)", () => {
     width = 4;
@@ -8440,9 +8488,22 @@ V6.register("byte-order", function (root, cfg) {
   const diagram = E("section", root);
   const info = S(root);
 
-  info.style.fontSize = "14px";
-  info.style.lineHeight = "1.5";
-  info.style.overflowWrap = "anywhere";
+  Object.assign(diagram.style, {
+    minWidth: "0",
+    width: "100%",
+    textAlign: "left"
+  });
+
+  Object.assign(info.style, {
+    boxSizing: "border-box",
+    padding: "8px 0 0",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    textAlign: "left",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    wordBreak: "normal"
+  });
 
   function update() {
     try {
@@ -8460,6 +8521,8 @@ V6.register("byte-order", function (root, cfg) {
       errorText = e.message;
       clear(diagram);
       notice(info, errorText);
+      info.style.textAlign = "left";
+      info.style.padding = "8px 0 0";
     }
   }
 
@@ -8473,11 +8536,14 @@ V6.register("byte-order", function (root, cfg) {
     );
 
     Object.assign(direction.style, {
+      boxSizing: "border-box",
+      padding: "2px 0 6px",
       fontSize: "14px",
       lineHeight: "1.5",
       fontWeight: "600",
-      margin: "4px 0 9px",
+      margin: "0",
       color: INK,
+      textAlign: "left",
       overflowWrap: "anywhere"
     });
 
@@ -8489,7 +8555,10 @@ V6.register("byte-order", function (root, cfg) {
         "repeat(" + bytes.length + ", minmax(0, 1fr))",
       gap: "6px",
       width: "100%",
-      maxWidth: "720px"
+      maxWidth: "720px",
+      minWidth: "0",
+      marginBottom: "12px",
+      textAlign: "left"
     });
 
     bytes.forEach((byte, index) => {
@@ -8501,13 +8570,14 @@ V6.register("byte-order", function (root, cfg) {
       );
 
       Object.assign(cell.style, {
+        boxSizing: "border-box",
+        minWidth: "0",
         whiteSpace: "pre-wrap",
         overflowWrap: "anywhere",
-        minWidth: "0",
-        textAlign: "center",
+        textAlign: "left",
         fontSize: "14px",
         lineHeight: "1.5",
-        padding: "13px 6px"
+        padding: "12px 8px"
       });
 
       cell.title = "원래 정수의 byte " + indices[index];
@@ -8523,6 +8593,7 @@ V6.register("byte-order", function (root, cfg) {
 
     if (errorText) {
       notice(info, errorText);
+      info.style.textAlign = "left";
       return;
     }
 
@@ -8544,9 +8615,9 @@ V6.register("byte-order", function (root, cfg) {
       info.textContent =
         '문자열 "0123" + NUL의 바이트\n' +
         "0x30 0x31 0x32 0x33 0x00\n\n" +
-        "문자열은 바이트 배열이므로 endian에 따라 문자 순서가 자동으로 재배열되지 않습니다.\n" +
-        "같은 바이트열을 다바이트 정수로 해석하면 endian에 따라 숫자 값이 달라질 수 있습니다.";
+        "문자열은 바이트 배열이므로 endian에 따라 문자 순서가 자동으로 재배열되지 않습니다. 같은 바이트열을 다바이트 정수로 해석하면 endian에 따라 숫자 값이 달라질 수 있습니다.";
 
+      info.style.textAlign = "left";
       return;
     }
 
@@ -8601,6 +8672,7 @@ V6.register("byte-order", function (root, cfg) {
       "Big-endian은 최상위 바이트(MSB)를 낮은 주소에 저장합니다.\n" +
       "바이트 저장 순서는 달라도 같은 폭과 해석 규칙을 사용하면 원래 정수 값을 복원할 수 있습니다.";
 
+    info.style.textAlign = "left";
   }
 
   render();
@@ -8612,9 +8684,14 @@ V6.register("byte-order", function (root, cfg) {
 V6.register("mem-layout", function (root, cfg) {
   cfg = cfg && typeof cfg === "object" ? cfg : {};
 
+  root.style.boxSizing = "border-box";
+  root.style.padding = "12px";
+  root.style.minWidth = "0";
+  root.style.textAlign = "left";
+  root.style.overflowWrap = "anywhere";
+
   T(root, "프로세스 가상주소 공간 — Virtual Memory Layout");
 
-  // Last canonical address in the lower 47-bit user half.
   const USER_TOP = 0x00007fffffffffffn;
   const FIRST_NONCANONICAL = 0x0000800000000000n;
   const KERNEL_START = 0xffff800000000000n;
@@ -8651,8 +8728,6 @@ V6.register("mem-layout", function (root, cfg) {
           throw new Error("64비트 주소 범위를 초과했습니다.");
         }
 
-        // Commit only valid input. Invalid input must not replace
-        // the last valid selected address or clear the map.
         selected = parsed;
         errorText = "";
         messageText = "";
@@ -8666,6 +8741,7 @@ V6.register("mem-layout", function (root, cfg) {
 
   addressInput.style.width = "230px";
   addressInput.style.maxWidth = "100%";
+  addressInput.style.boxSizing = "border-box";
 
   B(controls, "malloc(+4KiB)", () => {
     if (heapSize + 0x1000n > 0x100000n) {
@@ -8676,8 +8752,7 @@ V6.register("mem-layout", function (root, cfg) {
 
     heapSize += 0x1000n;
     errorText = "";
-    messageText =
-      "malloc 시뮬레이션: heap이 높은 주소 방향으로 4KiB 증가.";
+    messageText = "malloc 시뮬레이션: heap이 높은 주소 방향으로 4KiB 증가.";
     render();
   });
 
@@ -8690,8 +8765,7 @@ V6.register("mem-layout", function (root, cfg) {
 
     stackUsed += 256n;
     errorText = "";
-    messageText =
-      "함수 호출 시뮬레이션: %rsp가 낮은 주소로 256B 이동.";
+    messageText = "함수 호출 시뮬레이션: %rsp가 낮은 주소로 256B 이동.";
     render();
   });
 
@@ -8718,12 +8792,15 @@ V6.register("mem-layout", function (root, cfg) {
   const diagram = E("section", root);
   const info = S(root);
 
+  info.style.textAlign = "left";
+  info.style.fontSize = "14px";
+  info.style.lineHeight = "1.5";
+  info.style.overflowWrap = "anywhere";
+  info.style.whiteSpace = "pre-wrap";
+
   function classify(addr) {
     if (addr < 0n || addr > MASK64) {
-      return {
-        key: "invalid",
-        text: "잘못된 주소"
-      };
+      return { key: "invalid", text: "잘못된 주소" };
     }
 
     if (addr >= KERNEL_START) {
@@ -8740,54 +8817,24 @@ V6.register("mem-layout", function (root, cfg) {
       };
     }
 
-    if (
-      addr >= BASES.stack - stackUsed &&
-      addr < BASES.stack
-    ) {
-      return {
-        key: "stack",
-        text: "스택(stack) — 아래로 성장"
-      };
+    if (addr >= BASES.stack - stackUsed && addr < BASES.stack) {
+      return { key: "stack", text: "스택(stack) — 아래로 성장" };
     }
 
-    if (
-      addr >= BASES.mmap &&
-      addr < BASES.mmap + 0x100000n
-    ) {
-      return {
-        key: "mmap",
-        text: "mmap/공유 라이브러리 영역(예시)"
-      };
+    if (addr >= BASES.mmap && addr < BASES.mmap + 0x100000n) {
+      return { key: "mmap", text: "mmap/공유 라이브러리 영역(예시)" };
     }
 
-    if (
-      addr >= BASES.heap &&
-      addr < BASES.heap + heapSize
-    ) {
-      return {
-        key: "heap",
-        text: "힙(heap) — 위로 성장"
-      };
+    if (addr >= BASES.heap && addr < BASES.heap + heapSize) {
+      return { key: "heap", text: "힙(heap) — 위로 성장" };
     }
 
-    if (
-      addr >= BASES.data &&
-      addr < BASES.data + 0x10000n
-    ) {
-      return {
-        key: "data",
-        text: "data/bss 영역(예시)"
-      };
+    if (addr >= BASES.data && addr < BASES.data + 0x10000n) {
+      return { key: "data", text: "data/bss 영역(예시)" };
     }
 
-    if (
-      addr >= BASES.text &&
-      addr < BASES.text + 0x10000n
-    ) {
-      return {
-        key: "text",
-        text: "text 코드 영역(예시, 읽기+실행)"
-      };
+    if (addr >= BASES.text && addr < BASES.text + 0x10000n) {
+      return { key: "text", text: "text 코드 영역(예시, 읽기+실행)" };
     }
 
     return {
@@ -8797,8 +8844,6 @@ V6.register("mem-layout", function (root, cfg) {
   }
 
   function render() {
-    // Always render from the last valid state, even when the
-    // current address text contains invalid input.
     clear(diagram);
 
     const current = classify(selected);
@@ -8810,20 +8855,25 @@ V6.register("mem-layout", function (root, cfg) {
       "v6-state"
     );
 
-    exampleNotice.style.fontWeight = "600";
+    Object.assign(exampleNotice.style, {
+      fontSize: "13px",
+      lineHeight: "1.4",
+      textAlign: "left",
+      marginBottom: "4px"
+    });
 
     const scaleLegend = E(
       "div",
       diagram,
-      "범례: 카드 높이와 간격은 시각적 구분용이며, 실제 주소 범위의 크기 비율을 나타내지 않습니다. 주소 예시와 성장 방향을 기준으로 읽으세요.",
+      "범례: 카드 높이는 주소 크기 비율이 아닙니다. 주소 예시와 성장 방향을 기준으로 읽으세요.",
       "v6-state"
     );
 
     Object.assign(scaleLegend.style, {
-      fontSize: "14px",
-      lineHeight: "1.5",
-      marginTop: "6px",
-      marginBottom: "10px",
+      fontSize: "13px",
+      lineHeight: "1.4",
+      textAlign: "left",
+      marginBottom: "8px",
       overflowWrap: "anywhere"
     });
 
@@ -8832,15 +8882,15 @@ V6.register("mem-layout", function (root, cfg) {
     const regions = [
       {
         key: "kernel",
-        name: "커널 영역(kernel)",
+        name: "커널 영역",
         address: "0xFFFF800000000000 ~",
-        desc: "사용자 접근 불가"
+        desc: "사용자 모드 접근 불가"
       },
       {
         key: "gap",
         name: "비정규 주소 간격",
         address: "canonical hole",
-        desc: "비정규 주소는 일반적인 canonical 주소가 아님"
+        desc: "비정규 주소"
       },
       {
         key: "stack",
@@ -8890,9 +8940,11 @@ V6.register("mem-layout", function (root, cfg) {
 
     Object.assign(layout.style, {
       display: "grid",
-      gap: "5px",
+      gap: "4px",
       width: "100%",
-      maxWidth: "720px"
+      maxWidth: "720px",
+      minWidth: "0",
+      textAlign: "left"
     });
 
     regions.forEach(region => {
@@ -8910,11 +8962,10 @@ V6.register("mem-layout", function (root, cfg) {
         boxSizing: "border-box",
         minWidth: "0",
         border: `1px solid ${active ? RED : INK}`,
-        borderLeft: active
-          ? `4px solid ${RED}`
-          : `1px solid ${INK}`,
-        padding: "12px 14px",
-        background: active ? "white" : "white",
+        borderLeft: active ? `4px solid ${RED}` : `1px solid ${INK}`,
+        padding: "6px 10px",
+        background: "white",
+        textAlign: "left",
         overflowWrap: "anywhere"
       });
 
@@ -8922,9 +8973,10 @@ V6.register("mem-layout", function (root, cfg) {
 
       Object.assign(name.style, {
         fontWeight: "700",
-        fontSize: "14px",
-        lineHeight: "1.5",
-        color: active ? RED : INK
+        fontSize: "13px",
+        lineHeight: "1.35",
+        color: active ? RED : INK,
+        margin: "0"
       });
 
       const address = E("div", card, region.address);
@@ -8932,7 +8984,8 @@ V6.register("mem-layout", function (root, cfg) {
       Object.assign(address.style, {
         fontFamily: MONO,
         fontSize: "12px",
-        lineHeight: "1.5",
+        lineHeight: "1.35",
+        margin: "0",
         overflowWrap: "anywhere",
         wordBreak: "break-word"
       });
@@ -8942,23 +8995,21 @@ V6.register("mem-layout", function (root, cfg) {
 
         Object.assign(desc.style, {
           fontSize: "12px",
-          lineHeight: "1.5",
+          lineHeight: "1.35",
+          margin: "0",
           overflowWrap: "anywhere"
         });
       }
 
       if (active) {
-        const chosen = E(
-          "div",
-          card,
-          "← 선택 주소가 속하는 영역"
-        );
+        const chosen = E("div", card, "← 선택 주소");
 
         Object.assign(chosen.style, {
           color: RED,
           fontWeight: "600",
           fontSize: "12px",
-          marginTop: "5px"
+          lineHeight: "1.35",
+          margin: "0"
         });
       }
 
@@ -8966,9 +9017,9 @@ V6.register("mem-layout", function (root, cfg) {
         const track = E("div", card);
 
         Object.assign(track.style, {
-          height: "7px",
+          height: "5px",
           border: `1px solid ${GRID}`,
-          marginTop: "10px",
+          marginTop: "4px",
           overflow: "hidden"
         });
 
@@ -8981,8 +9032,7 @@ V6.register("mem-layout", function (root, cfg) {
         Object.assign(fill.style, {
           width: Math.max(2, Math.min(100, fraction * 100)) + "%",
           height: "100%",
-          background: RED,
-          transition: "width 250ms ease"
+          background: RED
         });
       }
     });
@@ -8990,20 +9040,13 @@ V6.register("mem-layout", function (root, cfg) {
     info.textContent =
       (messageText ? messageText + "\n\n" : "") +
       "선택 주소: " + hex(selected) + "\n" +
-      "영역 판정: " + current.text + "\n\n" +
-      "현재 heap 시뮬레이션 크기: " + heapSize + " B\n" +
-      "현재 stack 시뮬레이션 사용량: " + stackUsed + " B\n\n" +
-      "사용자 영역의 마지막 canonical 주소: " + hex(USER_TOP) + "\n" +
-      "첫 비정규 주소: " + hex(FIRST_NONCANONICAL) + "\n" +
-      "커널 canonical 영역 시작: " + hex(KERNEL_START) + "\n\n" +
-      "Linux x86-64의 전형적인 4단계 페이지 테이블과 48비트 canonical 주소를 설명하기 위한 개념도입니다.\n" +
-      "실제 주소와 권한은 운영체제, ASLR, PIE 및 프로세스 구성에 따라 달라집니다.\n" +
-      "스택은 일반적으로 높은 주소에서 낮은 주소로 성장하고, 전형적인 brk 기반 힙은 낮은 주소에서 높은 주소로 확장됩니다.\n" +
-      "스택·힙의 막대는 시뮬레이션 내부의 사용량을 보여주며, 카드의 위치나 높이는 주소 간 거리의 축척이 아닙니다.\n" +
-      "Buffer Overflow 위젯에서는 return address 손상의 의미를 확인할 수 있습니다.";
+      "영역 판정: " + current.text + "\n" +
+      "Heap: " + heapSize + " B · Stack 사용량: " + stackUsed + " B\n" +
+      "사용자 영역 끝: " + hex(USER_TOP) +
+      " · 첫 비정규 주소: " + hex(FIRST_NONCANONICAL) +
+      " · 커널 시작: " + hex(KERNEL_START) + "\n\n" +
+      "Linux x86-64 주소 공간의 교육용 모델입니다. 카드 높이는 실제 주소 범위와 비례하지 않으며, 실제 매핑·권한·ASLR 배치는 운영체제와 프로세스에 따라 달라집니다.";
 
-    // Keep the map and last valid classification visible.
-    // Display input errors separately as a single concise line.
     if (errorText) {
       const errorLine = E("div", info, errorText);
 
@@ -9011,6 +9054,7 @@ V6.register("mem-layout", function (root, cfg) {
         color: RED,
         fontSize: "14px",
         lineHeight: "1.5",
+        textAlign: "left",
         marginTop: "8px",
         overflowWrap: "anywhere"
       });
