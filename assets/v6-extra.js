@@ -509,17 +509,17 @@ reg("bit-ops",function(el,cfg){
         "비교: A || B (논리 OR)는 "+((ua||C.b2u(B,w))?1:0)+".";break;
       case "xor": h="A ^ B: 같은 자리 비트가 다르면 1. x ^ x = 0, x ^ 0 = x, (A ^ B) ^ B = A.";break;
       case "shl": var lost=C.b2u(A,w)*P>=Math.pow(2,w);
-        h="A << "+k+": 왼쪽으로 "+k+"칸, 오른쪽 빈자리는 0으로 채움. 값 = A·2^k mod 2^w: "+ua+"·"+P+" mod "+Math.pow(2,w)+" = "+(res.ub?"? (UB)":ur)+(res.ub?"":" (unsigned)");
-        if(!res.ub&&lost)h+="\n"+R+"1인 비트가 위로 밀려나 버려짐 → unsigned 오버플로(값이 2^w로 나눈 나머지가 됨)"+E;
+        h="A << "+k+": 왼쪽으로 "+k+"칸, 오른쪽 빈자리는 0으로 채움. 값 = A·2"+sup(k)+" mod 2"+sup(w)+": "+ua+"·"+P+" mod "+Math.pow(2,w)+" = "+(res.ub?"? (UB)":ur)+(res.ub?"":" (unsigned)");
+        if(!res.ub&&lost)h+="\n"+R+"1인 비트가 위로 밀려나 버려짐 → unsigned 오버플로(값이 2"+sup(w)+"로 나눈 나머지가 됨)"+E;
         if(!res.ub&&ta*P!==tr)h+="\n"+R+"signed로 보면 "+mns(ta)+"·"+P+" = "+mns(ta*P)+" 이지만 결과 비트열은 "+mns(tr)+" → signed 오버플로 (C에서 signed 오버플로·음수의 << 는 UB; 하드웨어는 보통 이 비트열을 낸다)"+E;
         break;
-      case "lshr": h="A >> "+k+" (logical, 논리): 왼쪽 빈자리를 0으로 채움 → unsigned 나눗셈 ⌊U/2^k⌋ = ⌊"+ua+"/"+P+"⌋ = "+(res.ub?"? (UB)":ur)+".\nC에서 unsigned 의 >> 는 항상 논리 시프트.";
+      case "lshr": h="A >> "+k+" (logical, 논리): 왼쪽 빈자리를 0으로 채움 → unsigned 나눗셈 ⌊U/2"+sup(k)+"⌋ = ⌊"+ua+"/"+P+"⌋ = "+(res.ub?"? (UB)":ur)+".\nC에서 unsigned 의 >> 는 항상 논리 시프트.";
         if(!res.ub&&(A>>(w-1))&1)h+="\n"+R+"A의 부호 비트가 1 → 산술 시프트였다면 "+C.hex(C.bitop("ashr",A,0,k,w).r,w)+" (왼쪽이 1로 채워짐)"+E;
         break;
       case "ashr": var sb=(A>>(w-1))&1,fl=Math.floor(ta/P),tz=Math.trunc(ta/P);
-        h="A >> "+k+" (arithmetic, 산술): 왼쪽 빈자리를 부호 비트 a"+(w-1)+" = "+sb+" 로 채움 → signed 나눗셈 ⌊T/2^k⌋ = ⌊"+mns(ta)+"/"+P+"⌋ = "+(res.ub?"? (UB)":mns(tr))+".";
+        h="A >> "+k+" (arithmetic, 산술): 왼쪽 빈자리를 부호 비트 a"+sub(w-1)+" = "+sb+" 로 채움 → signed 나눗셈 ⌊T/2"+sup(k)+"⌋ = ⌊"+mns(ta)+"/"+P+"⌋ = "+(res.ub?"? (UB)":mns(tr))+".";
         if(sb===0)h+="\n부호 비트가 0이면 산술 시프트 = 논리 시프트.";
-        else if(!res.ub&&fl!==tz)h+="\n"+R+"C의 정수 나눗셈 "+mns(ta)+"/"+P+" 은 0 쪽으로 자르므로 "+mns(tz)+" ≠ "+mns(fl)+E+" → 같게 하려면 (A + 2^k − 1) >> k (bias 더하기).";
+        else if(!res.ub&&fl!==tz)h+="\n"+R+"C의 정수 나눗셈 "+mns(ta)+"/"+P+" 은 0 쪽으로 자르므로 "+mns(tz)+" ≠ "+mns(fl)+E+" → 같게 하려면 (A + 2"+sup(k)+" − 1) >> k (bias 더하기).";
         h+="\nC에서 signed 의 >> 는 구현 정의(implementation-defined)지만 거의 모든 컴파일러가 산술 시프트를 쓴다.";
         break;
     }
