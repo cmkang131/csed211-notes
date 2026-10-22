@@ -39,7 +39,9 @@ if (document.fonts && document.fonts.ready){
   function el(tag, parent, text, cls) {
     const x = document.createElement(tag);
     if (cls) x.className = cls;
-    if (text !== undefined && text !== null) x.textContent = String(text);
+    if (text !== undefined && text !== null) {
+      x.textContent = String(text);
+    }
     if (parent) parent.appendChild(x);
     return x;
   }
@@ -104,6 +106,7 @@ if (document.fonts && document.fonts.ready){
 
     input.value = String(initial);
     label(root, text, input);
+
     return input;
   }
 
@@ -163,8 +166,10 @@ if (document.fonts && document.fonts.ready){
   function intConfig(value, fallback, min, max) {
     if (value === undefined || value === null) return fallback;
     const n = Number(value);
+
     return Number.isSafeInteger(n) && n >= min && n <= max
-      ? n : fallback;
+      ? n
+      : fallback;
   }
 
   function hex(value, digits) {
@@ -184,23 +189,22 @@ if (document.fonts && document.fonts.ready){
     );
   }
 
-  function superscript(base, exponent) {
-    const span = document.createElement("span");
-    span.appendChild(document.createTextNode(String(base)));
-    el("sup", span, exponent);
-    return span;
-  }
-
   function appendPower(root, base, exponent) {
-    root.appendChild(superscript(base, exponent));
+    el("span", root, base);
+    el("sup", root, exponent);
   }
 
   function formula(root, build) {
     const x = el("div", root);
-    x.style.fontFamily = MONO;
-    x.style.fontSize = "13px";
-    x.style.lineHeight = "1.9";
-    x.style.overflowWrap = "anywhere";
+
+    Object.assign(x.style, {
+      fontFamily: MONO,
+      fontSize: "14px",
+      lineHeight: "2",
+      overflowWrap: "anywhere",
+      margin: "7px 0"
+    });
+
     build(x);
     return x;
   }
@@ -220,9 +224,8 @@ if (document.fonts && document.fonts.ready){
 
     for (let p = 0; p < width; p++) {
       const bit = width - 1 - p;
-      const x = el(editable ? "button" : "div", row);
+      const x = el(editable ? "button" : "div", row, "0");
 
-      x.textContent = "0";
       x.dataset.bit = String(bit);
 
       Object.assign(x.style, {
@@ -266,6 +269,191 @@ if (document.fonts && document.fonts.ready){
   }
 
   // ============================================================
+  // Shared number-line layout
+  //
+  // Labels are clamped to the visible track and distributed
+  // across multiple rows when their horizontal spans overlap.
+  // ============================================================
+
+  function numberLine(root, options) {
+    const {
+      min,
+      max,
+      ticks,
+      markers = [],
+      distance = null,
+      height = 112
+    } = options;
+
+    if (!(max > min)) {
+      throw new Error("숫자선 범위가 올바르지 않습니다.");
+    }
+
+    const wrap = el("div", root);
+
+    Object.assign(wrap.style, {
+      margin: "12px 0 18px",
+      overflow: "visible"
+    });
+
+    const track = el("div", wrap);
+
+    Object.assign(track.style, {
+      position: "relative",
+      height: height + "px",
+      margin: "18px 12px 8px",
+      minWidth: "0"
+    });
+
+    const axis = el("div", track);
+
+    Object.assign(axis.style, {
+      position: "absolute",
+      left: "0",
+      right: "0",
+      top: "37px",
+      borderTop: `1px solid ${INK}`
+    });
+
+    function clamp(x, a, b) {
+      return Math.min(b, Math.max(a, x));
+    }
+
+    function percent(value) {
+      return clamp(
+        100 * (value - min) / (max - min),
+        0,
+        100
+      );
+    }
+
+    // Estimate label width using the final displayed text.
+    // Relative placement is used so this works without DOM measurements.
+    const sorted = ticks
+      .map(t => ({
+        ...t,
+        pos: percent(t.value),
+        estimatedWidth: Math.max(
+          28,
+          String(t.label).length * 7
+        )
+      }))
+      .sort((a, b) => a.pos - b.pos);
+
+    const lanes = [[], [], []];
+
+    sorted.forEach(t => {
+      const interval = {
+        left: t.pos,
+        width: t.estimatedWidth
+      };
+
+      let lane = 0;
+
+      for (; lane < lanes.length; lane++) {
+        const overlaps = lanes[lane].some(other => {
+          const delta = Math.abs(
+            other.left - interval.left
+          );
+
+          // Conservative threshold in track percentage.
+          const threshold = Math.max(
+            8,
+            (other.width + interval.width) * 0.38
+          );
+
+          return delta < threshold;
+        });
+
+        if (!overlaps) break;
+      }
+
+      if (lane >= lanes.length) {
+        lane = lanes.length - 1;
+      }
+
+      t.lane = lane;
+      lanes[lane].push(interval);
+    });
+
+    sorted.forEach(t => {
+      const tick = el("div", track);
+
+      Object.assign(tick.style, {
+        position: "absolute",
+        left: t.pos + "%",
+        top: "31px",
+        height: "13px",
+        borderLeft: `1px solid ${INK}`
+      });
+
+      const caption = el("span", tick, t.label);
+
+      Object.assign(caption.style, {
+        position: "absolute",
+        top: 19 + t.lane * 21 + "px",
+        left: "0",
+        fontFamily: MONO,
+        fontSize: "11px",
+        lineHeight: "1.4",
+        whiteSpace: "nowrap",
+        maxWidth: "100%",
+        color: INK
+      });
+
+      // Endpoint labels anchor inward instead of extending
+      // past the track boundary.
+      if (t.pos <= 10) {
+        caption.style.transform = "translateX(0)";
+      } else if (t.pos >= 90) {
+        caption.style.transform = "translateX(-100%)";
+      } else {
+        caption.style.transform = "translateX(-50%)";
+      }
+    });
+
+    if (distance !== null && distance.from !== distance.to) {
+      const a = percent(distance.from);
+      const b = percent(distance.to);
+
+      const segment = el("div", track);
+
+      Object.assign(segment.style, {
+        position: "absolute",
+        left: Math.min(a, b) + "%",
+        width: Math.abs(a - b) + "%",
+        top: "35px",
+        borderTop: `4px dashed ${RED}`,
+        pointerEvents: "none"
+      });
+    }
+
+    markers.forEach(marker => {
+      const pos = percent(marker.value);
+      const mark = el("div", track, marker.symbol || "●");
+
+      Object.assign(mark.style, {
+        position: "absolute",
+        left: pos + "%",
+        top: marker.top !== undefined
+          ? marker.top + "px"
+          : "7px",
+        transform: "translateX(-50%)",
+        color: marker.color || RED,
+        fontFamily: MONO,
+        fontSize: marker.size || "20px",
+        fontWeight: "700",
+        lineHeight: "1",
+        pointerEvents: "none"
+      });
+
+      mark.title = marker.label || String(marker.value);
+    });
+
+    return wrap;
+  }
+
+  // ============================================================
   // 1. bit-ops
   // ============================================================
 
@@ -282,8 +470,12 @@ if (document.fonts && document.fonts.ready){
       op: "and"
     };
 
-    model.a = intConfig(cfg.a, 0xA5, 0, 255) & ((1 << model.w) - 1);
-    model.b = intConfig(cfg.b, 0x3C, 0, 255) & ((1 << model.w) - 1);
+    model.a =
+      intConfig(cfg.a, 0xA5, 0, 255) & ((1 << model.w) - 1);
+
+    model.b =
+      intConfig(cfg.b, 0x3C, 0, 255) & ((1 << model.w) - 1);
+
     model.k = intConfig(cfg.k, 1, 0, model.w);
 
     const top = bar(root);
@@ -296,7 +488,11 @@ if (document.fonts && document.fonts.ready){
     );
 
     const shift = range(
-      top, "이동 거리(k)", 0, model.w, model.k,
+      top,
+      "이동 거리(k)",
+      0,
+      model.w,
+      model.k,
       v => {
         model.k = v;
         renderResult();
@@ -304,6 +500,7 @@ if (document.fonts && document.fonts.ready){
     );
 
     const operations = bar(root);
+
     const definitions = [
       ["not", "~A"],
       ["logical", "!A"],
@@ -318,10 +515,13 @@ if (document.fonts && document.fonts.ready){
     const operationButtons = new Map();
 
     definitions.forEach(([key, text]) => {
-      operationButtons.set(key, button(operations, text, () => {
-        model.op = key;
-        renderResult();
-      }));
+      operationButtons.set(
+        key,
+        button(operations, text, () => {
+          model.op = key;
+          renderResult();
+        })
+      );
     });
 
     const inputHost = el("section", root);
@@ -330,8 +530,12 @@ if (document.fonts && document.fonts.ready){
     const explanation = state(root);
     const cRules = state(root);
 
-    let aRow, bRow, resultRow;
-    let aMeta, bMeta, resultMeta;
+    let aRow;
+    let bRow;
+    let resultRow;
+    let aMeta;
+    let bMeta;
+    let resultMeta;
 
     function mask() {
       return (1 << model.w) - 1;
@@ -350,18 +554,37 @@ if (document.fonts && document.fonts.ready){
       const m = mask();
 
       switch (op) {
-        case "not": return (~a) & m;
-        case "logical": return a === 0 ? 1 : 0;
-        case "and": return a & b;
-        case "or": return a | b;
-        case "xor": return a ^ b;
-        case "shl": return (a << k) & m;
-        case "shr": return k >= w ? 0 : a >>> k;
+        case "not":
+          return (~a) & m;
+
+        case "logical":
+          return a === 0 ? 1 : 0;
+
+        case "and":
+          return a & b;
+
+        case "or":
+          return a | b;
+
+        case "xor":
+          return a ^ b;
+
+        case "shl":
+          return (a << k) & m;
+
+        case "shr":
+          return k >= w ? 0 : a >>> k;
+
         case "sar": {
           const sign = twos(a, w) < 0;
-          if (k >= w) return sign ? m : 0;
+
+          if (k >= w) {
+            return sign ? m : 0;
+          }
+
           return (twos(a, w) >> k) & m;
         }
+
         default:
           throw new Error("지원하지 않는 연산입니다.");
       }
@@ -413,20 +636,32 @@ if (document.fonts && document.fonts.ready){
       const aSection = el("div", inputHost);
       el("div", aSection, "A · 비트를 클릭하여 변경");
 
-      aRow = makeBits(aSection, model.w, true, bit => {
-        model.a ^= 1 << bit;
-        renderResult();
-      }, "A");
+      aRow = makeBits(
+        aSection,
+        model.w,
+        true,
+        bit => {
+          model.a ^= 1 << bit;
+          renderResult();
+        },
+        "A"
+      );
 
       aMeta = el("div", aSection, "", "v6-val");
 
       const bSection = el("div", inputHost);
       el("div", bSection, "B · 비트를 클릭하여 변경");
 
-      bRow = makeBits(bSection, model.w, true, bit => {
-        model.b ^= 1 << bit;
-        renderResult();
-      }, "B");
+      bRow = makeBits(
+        bSection,
+        model.w,
+        true,
+        bit => {
+          model.b ^= 1 << bit;
+          renderResult();
+        },
+        "B"
+      );
 
       bMeta = el("div", bSection, "", "v6-val");
 
@@ -434,7 +669,11 @@ if (document.fonts && document.fonts.ready){
       section(resultHost, "결과 비트 — Result");
 
       resultRow = makeBits(
-        resultHost, model.w, false, null, "결과"
+        resultHost,
+        model.w,
+        false,
+        null,
+        "결과"
       );
 
       resultMeta = el("div", resultHost, "", "v6-val");
@@ -500,44 +739,54 @@ if (document.fonts && document.fonts.ready){
           sar: "산술적 오른쪽 시프트: 부호 비트를 복제합니다."
         };
 
-        const explanationLines = [
-          "① 가상 비트 모델",
+        const lines = [
+          "① 가상 비트 모델 — Virtual w-bit Model",
           descriptions[model.op],
-          "이 위젯은 " + model.w +
-          "비트 패턴에 대한 고정 폭 연산을 정의합니다."
+          "폭 " + model.w + "비트의 패턴에 위젯 자체 규칙을 적용합니다."
         ];
 
         if (model.op === "sar") {
-          explanationLines.push(
-            "일반적인 산술 오른쪽 시프트 결과 = floor(T / " +
-            divisor + ") = " + Math.floor(signed / divisor) + ".",
-            "반면 C의 signed 정수 나눗셈 T / " +
-            divisor + "는 0 방향으로 절삭하므로 " +
-            Math.trunc(signed / divisor) + "입니다."
+          lines.push(
+            "통상적인 산술 오른쪽 시프트 결과:",
+            "floor(" + signed + " / " + divisor + ") = " +
+              Math.floor(signed / divisor),
+            "C의 signed 정수 나눗셈은 0 방향 절삭:",
+            "trunc(" + signed + " / " + divisor + ") = " +
+              Math.trunc(signed / divisor)
           );
         }
 
-        if (model.k === model.w &&
-            ["shl", "shr", "sar"].includes(model.op)) {
-          explanationLines.push(
-            "k=w의 결과는 이 위젯에서만 정의한 가상 모델 규칙입니다."
+        if (
+          model.k === model.w &&
+          ["shl", "shr", "sar"].includes(model.op)
+        ) {
+          lines.push(
+            "현재 k=w의 결과는 위젯이 정의한 가상 폭 규칙입니다. C 표현식의 결과가 아닙니다."
           );
         }
 
-        explanation.textContent = explanationLines.join("\n");
+        explanation.textContent = lines.join("\n");
 
         cRules.textContent =
-          "② C 표준 규칙\n" +
-          "이 화면의 w=4/8은 C의 실제 int 폭이 아닙니다.\n" +
-          "char, int8_t 등의 작은 정수형은 일반적인 32비트 int 환경에서 정수 승격(integer promotion)을 거칩니다.\n" +
-          "실제 32비트 int 시프트에서 음수 횟수 또는 k≥32는 undefined behavior입니다.\n" +
-          "음수 signed 값을 왼쪽으로 시프트하는 연산은 C 언어 버전과 표현 가능성에 따라 주의가 필요합니다.\n\n" +
-          "③ 일반적 하드웨어 동작\n" +
-          "x86 산술 오른쪽 시프트(SAR)는 높은 자리에 부호 비트를 복제합니다.\n" +
-          "이는 음수에서 음의 무한대 방향 내림에 해당하며, C 정수 나눗셈의 0 방향 절삭과 다를 수 있습니다.\n" +
-          "C 표준 차원의 signed 오른쪽 시프트 의미는 사용하는 표준 버전에 따라 확인해야 합니다.";
+          "② C 언어 표준 — Integer Promotion / Undefined Behavior\n" +
+          "가상 w=4/8은 실제 C의 int 비트 폭이 아닙니다.\n" +
+          "일반적인 32비트 int 환경에서 char/int8_t는 시프트 전에 int로 승격됩니다.\n" +
+          "예: uint8_t a=0x80; a << 1의 계산 결과는 int 256입니다. " +
+          "가상 8비트 왼쪽 시프트 결과 0x00과 다릅니다.\n" +
+          "단, 결과를 다시 uint8_t에 저장하면 0x00으로 변환됩니다.\n" +
+          "음수 시프트 횟수는 undefined behavior(UB)입니다.\n" +
+          "32비트 int의 경우 k≥32도 UB입니다. " +
+          "char/int8_t 식이라고 해서 k≥8부터 UB가 되는 것은 아닙니다.\n" +
+          "음수 signed 값을 왼쪽 시프트하는 경우에도 언어 버전과 값의 표현 가능성에 주의해야 합니다.\n\n" +
+          "③ 일반적 x86 하드웨어 — Shift Instructions\n" +
+          "x86의 32비트 시프트 명령은 횟수의 하위 5비트를 사용합니다(k & 31).\n" +
+          "예: 기계어에서 32비트 값을 32번 시프트하면 실효 횟수는 0입니다.\n" +
+          "그러나 C 식에서 k=32인 시프트는 UB이므로, 하드웨어의 마스킹 규칙을 C 결과로 가정하면 안 됩니다.\n" +
+          "SAR는 부호 비트를 복제해 음의 무한대 방향으로 내림합니다. " +
+          "이는 C 정수 나눗셈의 0 방향 절삭과 구별됩니다.";
       } catch (e) {
         message(explanation, e.message);
+        cRules.textContent = "";
       }
     }
 
@@ -575,13 +824,20 @@ if (document.fonts && document.fonts.ready){
     };
 
     model.u = intConfig(
-      cfg.value, 7, 0, (1 << model.w) - 1
+      cfg.value,
+      7,
+      0,
+      (1 << model.w) - 1
     );
 
     const top = bar(root);
 
-    const width = range(
-      top, "비트 폭(w)", 3, 8, model.w,
+    range(
+      top,
+      "비트 폭(w)",
+      3,
+      8,
+      model.w,
       newWidth => {
         const oldW = model.w;
         const oldU = model.u;
@@ -594,10 +850,10 @@ if (document.fonts && document.fonts.ready){
         model.note =
           "폭 변경 " + oldW + " → " + newWidth + "비트\n" +
           "기존 비트 패턴의 하위 " + newWidth +
-          "비트만 유지합니다. (부호 확장 아님)\n" +
+          "비트를 유지합니다. 부호 확장을 자동으로 수행하지 않습니다.\n" +
           "unsigned: " + oldU + " → " + model.u + "\n" +
           "signed: " + oldT + " → " +
-          twos(model.u, newWidth) + ".";
+            twos(model.u, newWidth);
 
         render();
       }
@@ -643,6 +899,7 @@ if (document.fonts && document.fonts.ready){
         "원래 signed 값 " + twos(model.u, w) +
         " = 확장 후 signed 값 " +
         twos(extended, w + 4) + ".";
+
       render();
     });
 
@@ -677,67 +934,6 @@ if (document.fonts && document.fonts.ready){
     const extraHost = el("section", root);
     const explanation = state(root);
 
-    let inputRow;
-
-    function drawNumberLine(parent, name, min, max, current, marks) {
-      const wrapper = el("div", parent);
-      wrapper.style.margin = "18px 0 26px";
-
-      el(
-        "div",
-        wrapper,
-        name + " · 현재 값 " + current,
-        "v6-val"
-      );
-
-      const track = el("div", wrapper);
-      Object.assign(track.style, {
-        position: "relative",
-        height: "50px",
-        margin: "28px 42px 24px",
-        borderTop: `1px solid ${INK}`
-      });
-
-      function position(v) {
-        return 100 * (v - min) / (max - min);
-      }
-
-      marks.forEach(({ value, name: label, level }) => {
-        const marker = el("div", track);
-
-        Object.assign(marker.style, {
-          position: "absolute",
-          left: position(value) + "%",
-          top: "-5px",
-          width: "1px",
-          height: "10px",
-          background: INK
-        });
-
-        const caption = el("span", marker, label);
-
-        Object.assign(caption.style, {
-          position: "absolute",
-          left: "0",
-          top: level === 1 ? "32px" : "13px",
-          transform: "translateX(-50%)",
-          whiteSpace: "nowrap",
-          fontSize: "11px",
-          fontFamily: MONO
-        });
-      });
-
-      const dot = el("div", track, "●");
-      Object.assign(dot.style, {
-        position: "absolute",
-        left: position(current) + "%",
-        top: "-27px",
-        transform: "translateX(-50%)",
-        color: RED,
-        fontSize: "20px"
-      });
-    }
-
     function render() {
       const w = model.w;
       const u = model.u;
@@ -748,7 +944,7 @@ if (document.fonts && document.fonts.ready){
       clear(bitsHost);
       section(bitsHost, "비트 벡터 — MSB → LSB");
 
-      inputRow = makeBits(
+      const inputRow = makeBits(
         bitsHost,
         w,
         true,
@@ -776,20 +972,11 @@ if (document.fonts && document.fonts.ready){
         el("strong", f, "Unsigned (부호 없음): ");
         el("span", f, "B2U = ");
 
-        const terms = [];
-
         for (let i = w - 1; i >= 0; i--) {
-          terms.push({
-            bit: (u >>> i) & 1,
-            power: i
-          });
+          if (i !== w - 1) el("span", f, " + ");
+          el("span", f, ((u >>> i) & 1) + "×");
+          appendPower(f, "2", i);
         }
-
-        terms.forEach((term, i) => {
-          if (i) el("span", f, " + ");
-          el("span", f, term.bit + "×");
-          appendPower(f, "2", term.power);
-        });
 
         el("span", f, " = " + u);
       });
@@ -797,8 +984,7 @@ if (document.fonts && document.fonts.ready){
       formula(formulaHost, f => {
         el("strong", f, "Two's complement (2의 보수): ");
         el("span", f, "B2T = −");
-
-        el("span", f, String((u >>> (w - 1)) & 1) + "×");
+        el("span", f, ((u >>> (w - 1)) & 1) + "×");
         appendPower(f, "2", w - 1);
 
         for (let i = w - 2; i >= 0; i--) {
@@ -812,36 +998,63 @@ if (document.fonts && document.fonts.ready){
       clear(linesHost);
       section(linesHost, "숫자선 — Number Lines");
 
-      drawNumberLine(
+      el(
+        "div",
         linesHost,
-        "Unsigned",
-        0,
-        max,
-        u,
-        [
-          { value: 0, name: "0", level: 0 },
-          { value: max, name: "UMax " + max, level: 0 }
-        ]
+        "Unsigned · 현재 값 " + u,
+        "v6-val"
       );
 
-      drawNumberLine(
+      numberLine(linesHost, {
+        min: 0,
+        max,
+        ticks: [
+          { value: 0, label: "0" },
+          { value: max, label: "UMax " + max }
+        ],
+        markers: [
+          {
+            value: u,
+            symbol: "●",
+            label: "unsigned " + u,
+            top: 7
+          }
+        ],
+        height: 102
+      });
+
+      el(
+        "div",
         linesHost,
-        "Two's complement",
-        -high,
-        high - 1,
-        signed,
-        [
-          { value: -high, name: "TMin " + (-high), level: 0 },
-          { value: -1, name: "−1", level: 1 },
-          { value: 0, name: "0", level: 0 },
-          { value: high - 1, name: "TMax " + (high - 1), level: 1 }
-        ]
+        "Two's complement · 현재 값 " + signed,
+        "v6-val"
       );
+
+      numberLine(linesHost, {
+        min: -high,
+        max: high - 1,
+        ticks: [
+          { value: -high, label: "TMin " + (-high) },
+          { value: -1, label: "−1" },
+          { value: 0, label: "0" },
+          { value: high - 1, label: "TMax " + (high - 1) }
+        ],
+        markers: [
+          {
+            value: signed,
+            symbol: "●",
+            label: "signed " + signed,
+            top: 7
+          }
+        ],
+        height: 118
+      });
 
       clear(extraHost);
 
       if (model.extra) {
         const e = model.extra;
+
         section(
           extraHost,
           e.kind === "extend"
@@ -850,32 +1063,39 @@ if (document.fonts && document.fonts.ready){
         );
 
         const row = el("div", extraHost);
-        row.style.display = "flex";
-        row.style.flexWrap = "wrap";
-        row.style.gap = "4px";
+
+        Object.assign(row.style, {
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "4px"
+        });
 
         if (e.kind === "truncate" && e.oldWidth > 4) {
           for (let bit = e.oldWidth - 1; bit >= 4; bit--) {
             const c = el("span", row, (u >>> bit) & 1);
-            c.style.color = RED;
-            c.style.textDecoration = "line-through";
-            c.style.fontFamily = MONO;
-            c.style.padding = "8px";
-            c.style.border = `1px solid ${INK}`;
+
+            Object.assign(c.style, {
+              color: RED,
+              textDecoration: "line-through",
+              fontFamily: MONO,
+              padding: "8px",
+              border: `1px solid ${INK}`
+            });
           }
         }
 
         unsignedBits(e.value, e.width).forEach((bit, p) => {
           const c = el("span", row, bit);
-          c.style.padding = "8px";
-          c.style.minWidth = "32px";
-          c.style.textAlign = "center";
-          c.style.fontFamily = MONO;
-          c.style.border = `1px solid ${INK}`;
 
-          if (e.kind === "extend" && p < 4) {
-            c.style.color = RED;
-          }
+          Object.assign(c.style, {
+            padding: "8px",
+            minWidth: "32px",
+            textAlign: "center",
+            fontFamily: MONO,
+            border: `1px solid ${INK}`,
+            color:
+              e.kind === "extend" && p < 4 ? RED : INK
+          });
         });
       }
 
@@ -884,8 +1104,8 @@ if (document.fonts && document.fonts.ready){
         "TMin = " + (-high) +
         " · TMax = " + (high - 1) +
         " · UMax = " + max + "\n" +
-        "각 비트 패턴은 동일하지만 unsigned와 signed 해석에 따라 값이 달라집니다.\n" +
-        "숫자선의 빨간 점은 현재 값입니다. 특수 눈금 이름과 현재 값 마커는 서로 다른 높이에 표시합니다.";
+        "같은 비트 패턴도 unsigned / signed 해석에 따라 값이 다릅니다.\n" +
+        "숫자선의 빨간 점은 현재 값이며, 경계 라벨은 트랙 안쪽에 표시됩니다.";
     }
 
     render();
@@ -904,9 +1124,9 @@ if (document.fonts && document.fonts.ready){
     b = absBig(b);
 
     while (b !== ZERO) {
-      const r = a % b;
+      const remainder = a % b;
       a = b;
-      b = r;
+      b = remainder;
     }
 
     return a || ONE;
@@ -930,8 +1150,12 @@ if (document.fonts && document.fonts.ready){
 
   function compare(a, b) {
     const difference = a.n * b.d - b.n * a.d;
-    return difference < ZERO ? -1 :
-      difference > ZERO ? 1 : 0;
+
+    return difference < ZERO
+      ? -1
+      : difference > ZERO
+        ? 1
+        : 0;
   }
 
   function subtract(a, b) {
@@ -1007,7 +1231,9 @@ if (document.fonts && document.fonts.ready){
     }
 
     const fraction =
-      match[3] === undefined ? (match[4] || "") : match[3];
+      match[3] === undefined
+        ? (match[4] || "")
+        : match[3];
 
     const digits = (match[2] || "") + fraction;
 
@@ -1052,9 +1278,28 @@ if (document.fonts && document.fonts.ready){
         exponent,
         fraction,
         finite: false,
+        zero: false,
         classification: fraction
           ? "NaN"
           : sign ? "−∞" : "+∞"
+      };
+    }
+
+    // IEEE 754 distinguishes signed zero from subnormal values.
+    if (exponent === 0 && fraction === 0) {
+      return {
+        raw: x,
+        sign,
+        exponent,
+        fraction,
+        finite: true,
+        zero: true,
+        normalized: false,
+        E: null,
+        value: rat(ZERO, ONE),
+        classification: sign
+          ? "−0 (zero)"
+          : "+0 (zero)"
       };
     }
 
@@ -1079,19 +1324,18 @@ if (document.fonts && document.fonts.ready){
       exponent,
       fraction,
       finite: true,
+      zero: false,
       value,
       E: normalized ? exponent - 127 : -126,
       normalized,
-      classification:
-        exponent === 0 && fraction === 0
-          ? sign ? "−0" : "+0"
-          : normalized
-            ? "정규(normalized)"
-            : "비정규(subnormal)"
+      classification: normalized
+        ? "정규(normalized)"
+        : "비정규(subnormal)"
     };
   }
 
-  // Binary32 round-to-nearest, ties-to-even, using exact fractions.
+  // IEEE 754 binary32, round-to-nearest, ties-to-even.
+  // All comparison and midpoint decisions use exact BigInt fractions.
   function encodeNearest(value, negativeZero = false) {
     if (value.n === ZERO) {
       return negativeZero ? 0x80000000 : 0;
@@ -1100,9 +1344,8 @@ if (document.fonts && document.fonts.ready){
     const negative = value.n < ZERO;
     const magnitude = rat(absBig(value.n), value.d);
 
-    // IEEE 754 binary32, round-to-nearest-even:
-    // max finite = (2^24 - 1) * 2^104
-    // overflow midpoint = (2^25 - 1) * 2^103.
+    // Maximum finite = (2^24 - 1) * 2^104.
+    // Overflow midpoint = (2^25 - 1) * 2^103.
     const overflowBoundary = rat(
       ((ONE << 25n) - ONE) << 103n,
       ONE
@@ -1115,7 +1358,6 @@ if (document.fonts && document.fonts.ready){
     let lo = 0;
     let hi = 0x7f7fffff;
 
-    // Positive non-NaN finite bit patterns are monotonically ordered.
     while (lo < hi) {
       const mid = Math.floor((lo + hi + 1) / 2);
 
@@ -1137,7 +1379,10 @@ if (document.fonts && document.fonts.ready){
 
       const cmp = compare(lowerDistance, upperDistance);
 
-      if (cmp > 0 || (cmp === 0 && (lo & 1) !== 0)) {
+      if (
+        cmp > 0 ||
+        (cmp === 0 && (lo & 1) !== 0)
+      ) {
         choice = lo + 1;
       }
     }
@@ -1149,10 +1394,7 @@ if (document.fonts && document.fonts.ready){
     const parsed = parseDecimal(text);
 
     if (parsed.kind === "nan") {
-      return {
-        bits: 0x7fc00000,
-        parsed
-      };
+      return { bits: 0x7fc00000, parsed };
     }
 
     if (parsed.kind === "infinity") {
@@ -1171,6 +1413,7 @@ if (document.fonts && document.fonts.ready){
   function numberBits32(value) {
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
+
     view.setFloat32(0, value, false);
     return view.getUint32(0, false);
   }
@@ -1178,6 +1421,7 @@ if (document.fonts && document.fonts.ready){
   function floatApprox(raw) {
     const buffer = new ArrayBuffer(4);
     const view = new DataView(buffer);
+
     view.setUint32(0, raw >>> 0, false);
     return view.getFloat32(0, false);
   }
@@ -1242,8 +1486,12 @@ if (document.fonts && document.fonts.ready){
     presetData.forEach(group => {
       const row = bar(presetHost);
       const name = el("span", row, group.title);
-      name.style.fontSize = "12px";
-      name.style.minWidth = "110px";
+
+      Object.assign(name.style, {
+        fontSize: "12px",
+        minWidth: "110px",
+        fontWeight: "600"
+      });
 
       group.items.forEach(([text, value]) => {
         const b = button(row, text, () => {
@@ -1272,7 +1520,10 @@ if (document.fonts && document.fonts.ready){
     decimalInput.style.width = "220px";
 
     const inputCurrent = el(
-      "span", controls, "0.1", "v6-val"
+      "span",
+      controls,
+      "0.1",
+      "v6-val"
     );
 
     decimalInput.addEventListener("input", () => {
@@ -1283,11 +1534,13 @@ if (document.fonts && document.fonts.ready){
     button(controls, "최근접 짝수 반올림 후 인코드", () => {
       try {
         const encoded = encodeDecimal(decimalInput.value);
+
         model.raw = encoded.bits;
         model.source = encoded.parsed;
         model.inputText = decimalInput.value.trim();
         model.lastBit = null;
         model.error = "";
+
         render();
       } catch (e) {
         model.error = e.message;
@@ -1306,28 +1559,22 @@ if (document.fonts && document.fonts.ready){
       section(bitsHost, "32비트 필드 — Sign / Exponent / Fraction");
 
       const fields = [
-        {
-          name: "부호(sign)",
-          start: 0,
-          length: 1
-        },
-        {
-          name: "지수(exponent)",
-          start: 1,
-          length: 8
-        },
-        {
-          name: "가수(fraction)",
-          start: 9,
-          length: 23
-        }
+        { name: "부호(Sign)", start: 0, length: 1 },
+        { name: "지수(Exponent)", start: 1, length: 8 },
+        { name: "가수(Fraction)", start: 9, length: 23 }
       ];
 
       const all = [];
 
-      for (const field of fields) {
+      fields.forEach(field => {
         const wrapper = el("div", bitsHost);
-        wrapper.style.margin = "10px 0 14px";
+
+        Object.assign(wrapper.style, {
+          margin: "12px 0 17px",
+          border: `1px solid ${INK}`,
+          padding: "10px 11px",
+          background: "white"
+        });
 
         const caption = el(
           "div",
@@ -1335,15 +1582,34 @@ if (document.fonts && document.fonts.ready){
           field.name + " · " + field.length + "bit"
         );
 
-        caption.style.fontSize = "12px";
-        caption.style.fontWeight = "600";
+        Object.assign(caption.style, {
+          fontSize: "13px",
+          fontWeight: "700",
+          marginBottom: "8px"
+        });
 
-        const grid = el("div", wrapper);
-        grid.style.display = "grid";
-        grid.style.gridTemplateColumns =
-          `repeat(${Math.min(field.length, 12)}, minmax(0,1fr))`;
-        grid.style.gap = "3px";
-        grid.style.maxWidth = "720px";
+        // The 23-bit fraction is one uninterrupted sequence.
+        // Narrow screens scroll horizontally instead of splitting
+        // the field into unrelated rows.
+        const scroll = el("div", wrapper);
+
+        Object.assign(scroll.style, {
+          overflowX: "auto",
+          overflowY: "hidden",
+          maxWidth: "100%",
+          paddingBottom: "4px"
+        });
+
+        const grid = el("div", scroll);
+
+        Object.assign(grid.style, {
+          display: "grid",
+          gridTemplateColumns:
+            `repeat(${field.length}, minmax(35px,1fr))`,
+          gap: "3px",
+          minWidth: field.length * 39 + "px",
+          width: "100%"
+        });
 
         for (let local = 0; local < field.length; local++) {
           const index = field.start + local;
@@ -1358,13 +1624,17 @@ if (document.fonts && document.fonts.ready){
             model.inputText = "";
             model.lastBit = index;
             model.error = "";
+
             render();
           });
 
-          cell.style.fontFamily = MONO;
-          cell.style.padding = "7px 0";
-          cell.style.minWidth = "0";
-          cell.style.fontSize = "14px";
+          Object.assign(cell.style, {
+            fontFamily: MONO,
+            padding: "7px 0",
+            minWidth: "35px",
+            fontSize: "15px",
+            textAlign: "center"
+          });
 
           cell.setAttribute(
             "aria-label",
@@ -1373,17 +1643,35 @@ if (document.fonts && document.fonts.ready){
 
           all.push(cell);
         }
-      }
+
+        const rangeLabel = el(
+          "div",
+          wrapper,
+          "비트 " + (31 - field.start) +
+          " → " + (32 - field.start - field.length) +
+          " · 하나의 연속된 " + field.length + "비트 필드"
+        );
+
+        Object.assign(rangeLabel.style, {
+          fontSize: "11px",
+          fontFamily: MONO,
+          marginTop: "6px"
+        });
+      });
 
       return all;
     }
 
     function render() {
       if (model.error) {
-        summary.textContent = "안내: " + model.error;
+        clear(bitsHost);
         clear(formulaHost);
-        explanation.textContent = "입력값을 수정한 뒤 다시 인코딩하세요.";
         clear(detailsHost);
+
+        summary.textContent = "안내: " + model.error;
+        explanation.textContent =
+          "입력값을 수정한 뒤 다시 인코딩하세요.";
+
         return;
       }
 
@@ -1393,6 +1681,7 @@ if (document.fonts && document.fonts.ready){
       cells.forEach((cell, index) => {
         cell.textContent =
           String((model.raw >>> (31 - index)) & 1);
+
         cell.style.color =
           model.lastBit === index ? RED : INK;
       });
@@ -1422,7 +1711,24 @@ if (document.fonts && document.fonts.ready){
         );
       });
 
-      if (decoded.finite) {
+      if (decoded.zero) {
+        formula(formulaHost, f => {
+          el("strong", f, "Zero (부호 있는 0): ");
+          el(
+            "span",
+            f,
+            decoded.sign === 1 ? "−0" : "+0"
+          );
+        });
+
+        formula(formulaHost, f => {
+          el(
+            "span",
+            f,
+            "지수 필드=0, 가수 필드=0 → ±0의 특수 표현"
+          );
+        });
+      } else if (decoded.finite) {
         formula(formulaHost, f => {
           el("span", f, "E = ");
 
@@ -1477,6 +1783,16 @@ if (document.fonts && document.fonts.ready){
 
       const lines = [];
 
+      if (decoded.zero) {
+        lines.push(
+          "Zero (부호 있는 0)는 비정규수와 구별되는 IEEE 754 특수 표현입니다.",
+          "+0과 −0은 수치 비교에서 같지만 부호 비트가 다릅니다.",
+          "IEEE 754 기본 나눗셈에서 1/(+0)=+∞, 1/(−0)=−∞입니다.",
+          "JavaScript에서도 Object.is(+0, -0)은 false입니다.",
+          "일반적인 정규/비정규 가수 공식은 ±0에 적용하지 않습니다."
+        );
+      }
+
       if (model.source) {
         lines.push("입력: " + model.inputText);
 
@@ -1513,16 +1829,16 @@ if (document.fonts && document.fonts.ready){
 
           if (viaFround === model.raw) {
             lines.push(
-              "Math.fround 경로와 BigInt 정확 반올림 경로가 일치합니다."
+              "이 입력에서 Math.fround 경로와 BigInt 정확 반올림 경로의 결과 비트가 일치합니다."
             );
           } else {
             lines.push(
-              "이중 반올림 경로 차이:\n" +
-              "BigInt 정확 반올림 = " +
+              "이 입력에서 두 경로의 결과 비트가 다릅니다.\n" +
+              "BigInt 정확 반올림: " +
               hex(model.raw, 8) +
-              "\nNumber → Math.fround = " +
+              "\nNumber → Math.fround: " +
               hex(viaFround, 8) +
-              "\n10진수를 먼저 binary64로 반올림할 때 발생한 차이입니다."
+              "\n입력을 먼저 binary64로 반올림한 뒤 binary32로 다시 반올림하면서 차이가 발생할 수 있습니다."
             );
           }
         }
@@ -1535,15 +1851,16 @@ if (document.fonts && document.fonts.ready){
         model.raw === 0xff800000
       ) {
         lines.push(
-          "오버플로 경계 설명은 IEEE 754 binary32, " +
-          "round-to-nearest-even 기준입니다."
+          "오버플로 경계 설명은 IEEE 754 binary32, round-to-nearest-even 기준입니다."
         );
       }
 
-      lines.push(
-        "정규수(normalized)는 숨은 선행 1을 사용합니다. " +
-        "비정규수(subnormal)는 숨은 선행 1이 없습니다."
-      );
+      if (!decoded.zero && decoded.finite) {
+        lines.push(
+          "정규수(normalized)는 숨은 선행 1을 사용합니다. " +
+          "비정규수(subnormal)는 숨은 선행 1이 없습니다."
+        );
+      }
 
       explanation.textContent = lines.join("\n\n");
 
@@ -1557,24 +1874,30 @@ if (document.fonts && document.fonts.ready){
         "정확한 유리수 / 10진수 전개 펼치기"
       );
 
-      caption.style.cursor = "pointer";
-      caption.style.padding = "9px 0";
-      caption.style.fontWeight = "600";
+      Object.assign(caption.style, {
+        cursor: "pointer",
+        padding: "9px 0",
+        fontWeight: "600"
+      });
 
       const exact = state(detail);
 
-      if (decoded.finite) {
+      if (decoded.zero) {
+        exact.textContent =
+          "분류: " + decoded.classification + "\n" +
+          "비트 패턴: " + hex(model.raw, 8) + "\n" +
+          "정확한 수치: 0\n" +
+          "부호 비트: " + decoded.sign + "\n" +
+          "가수 필드: 0\n" +
+          "지수 필드: 0";
+      } else if (decoded.finite) {
         const v = decoded.value;
 
         exact.textContent =
           "유리수(num/den)\n" +
           v.n + "/" + v.d +
           "\n\n정확한 10진수\n" +
-          (
-            decoded.sign === 1 && v.n === ZERO
-              ? "−0"
-              : decimalExact(v)
-          );
+          decimalExact(v);
       } else {
         exact.textContent =
           decoded.classification +
@@ -1595,6 +1918,7 @@ if (document.fonts && document.fonts.ready){
     title(root, "이진 반올림 — Rounding Modes");
 
     let k = intConfig(cfg.k, 2, 1, 4);
+
     let source = typeof cfg.binary === "string"
       ? cfg.binary
       : "1.101";
@@ -1604,7 +1928,9 @@ if (document.fonts && document.fonts.ready){
     const width = range(
       top,
       "남길 소수 비트(k)",
-      1, 4, k,
+      1,
+      4,
+      k,
       value => {
         k = value;
         render();
@@ -1652,7 +1978,9 @@ if (document.fonts && document.fonts.ready){
 
     function parseBinary(text) {
       const match =
-        /^([+-]?)([01]{1,16})(?:\.([01]{1,24}))?$/.exec(text.trim());
+        /^([+-]?)([01]{1,16})(?:\.([01]{1,24}))?$/.exec(
+          text.trim()
+        );
 
       if (!match) {
         throw new Error(
@@ -1687,80 +2015,68 @@ if (document.fonts && document.fonts.ready){
       );
     }
 
-    function drawLine(parent, origin, rounded, low, high) {
-      const wrapper = el("div", parent);
+    function drawRoundedLine(parent, origin, rounded, low, high) {
+      const step = high - low;
+      const min = low - step;
+      const max = high + step;
+      const exact = origin === rounded;
 
-      const track = el("div", wrapper);
-      Object.assign(track.style, {
-        position: "relative",
-        margin: "30px 48px 34px",
-        height: "30px",
-        borderTop: `1px solid ${INK}`
+      numberLine(parent, {
+        min,
+        max,
+        ticks: [
+          { value: low, label: String(low) },
+          { value: high, label: String(high) }
+        ],
+        markers: exact
+          ? [
+              {
+                value: origin,
+                symbol: "◆",
+                color: RED,
+                label: "입력값과 결과가 일치",
+                top: 5,
+                size: "20px"
+              }
+            ]
+          : [
+              {
+                value: origin,
+                symbol: "│",
+                color: INK,
+                label: "원래 입력값",
+                top: 8,
+                size: "19px"
+              },
+              {
+                value: rounded,
+                symbol: "●",
+                color: RED,
+                label: "반올림 결과",
+                top: 7,
+                size: "20px"
+              }
+            ],
+        distance: exact
+          ? null
+          : {
+              from: origin,
+              to: rounded
+            },
+        height: 105
       });
 
-      const min = low - (high - low);
-      const max = high + (high - low);
+      if (exact) {
+        const notice = el(
+          "div",
+          parent,
+          "◆ 입력값과 결과가 일치 — 이미 정확히 표현 가능",
+          "v6-val"
+        );
 
-      function pos(value) {
-        return 100 * (value - min) / (max - min);
+        notice.style.color = RED;
+        notice.style.fontWeight = "700";
       }
-
-      [low, high].forEach(value => {
-        const x = el("div", track);
-
-        Object.assign(x.style, {
-          position: "absolute",
-          left: pos(value) + "%",
-          top: "-6px",
-          width: "1px",
-          height: "12px",
-          background: INK
-        });
-
-        const caption = el("span", x, String(value));
-
-        Object.assign(caption.style, {
-          position: "absolute",
-          top: "14px",
-          left: "0",
-          transform: "translateX(-50%)",
-          fontFamily: MONO,
-          fontSize: "11px",
-          whiteSpace: "nowrap"
-        });
-      });
-
-      const start = Math.min(origin, rounded);
-      const end = Math.max(origin, rounded);
-
-      const distance = el("div", track);
-      Object.assign(distance.style, {
-        position: "absolute",
-        left: pos(start) + "%",
-        width: (pos(end) - pos(start)) + "%",
-        top: "-2px",
-        borderTop: `3px dashed ${RED}`
-      });
-
-      const originalMark = el("span", track, "│");
-      Object.assign(originalMark.style, {
-        position: "absolute",
-        left: pos(origin) + "%",
-        top: "-21px",
-        transform: "translateX(-50%)",
-        color: INK,
-        fontSize: "20px"
-      });
-
-      const roundedMark = el("span", track, "●");
-      Object.assign(roundedMark.style, {
-        position: "absolute",
-        left: pos(rounded) + "%",
-        top: "-24px",
-        transform: "translateX(-50%)",
-        color: RED,
-        fontSize: "20px"
-      });
     }
 
     function render() {
@@ -1807,10 +2123,12 @@ if (document.fonts && document.fonts.ready){
           }
         ];
 
-        const signedResult = magnitude => rat(
-          negative ? -magnitude : magnitude,
-          scale
-        );
+        function signedResult(magnitude) {
+          return rat(
+            negative ? -magnitude : magnitude,
+            scale
+          );
+        }
 
         clear(formulaHost);
         section(formulaHost, "입력값과 양자화 간격");
@@ -1827,14 +2145,22 @@ if (document.fonts && document.fonts.ready){
         formula(formulaHost, f => {
           el("span", f, "남길 간격 Δ = 1 / ");
           appendPower(f, "2", k);
-          el("span", f, " = " + decimalExact(rat(ONE, scale)));
+          el(
+            "span",
+            f,
+            " = " + decimalExact(rat(ONE, scale))
+          );
         });
 
         clear(plotHost);
         section(plotHost, "반올림 결과 — 4개 모드");
 
-        const originNumber = Number(x.n) / Number(x.d);
-        const base = Number(lowerMagnitude) / Number(scale);
+        const originNumber =
+          Number(x.n) / Number(x.d);
+
+        const base =
+          Number(lowerMagnitude) / Number(scale);
+
         const step = 1 / Number(scale);
 
         const low = negative
@@ -1845,14 +2171,23 @@ if (document.fonts && document.fonts.ready){
 
         modes.forEach(mode => {
           const result = signedResult(mode.magnitude);
-          const value = Number(result.n) / Number(result.d);
+          const value =
+            Number(result.n) / Number(result.d);
 
           const block = el("div", plotHost);
-          block.style.margin = "15px 0 23px";
+
+          Object.assign(block.style, {
+            margin: "15px 0 23px",
+            paddingBottom: "8px",
+            borderBottom: `1px solid ${GRID}`
+          });
 
           const heading = el("div", block, mode.name);
-          heading.style.fontWeight = "600";
-          heading.style.marginBottom = "5px";
+
+          Object.assign(heading.style, {
+            fontWeight: "600",
+            marginBottom: "5px"
+          });
 
           el(
             "div",
@@ -1862,7 +2197,7 @@ if (document.fonts && document.fonts.ready){
             "v6-val"
           );
 
-          drawLine(
+          drawRoundedLine(
             block,
             originNumber,
             value,
@@ -1875,18 +2210,27 @@ if (document.fonts && document.fonts.ready){
           remainder !== ZERO &&
           halfwayComparison === ZERO;
 
-        const nearest = signedResult(modes[0].magnitude);
+        const exact =
+          remainder === ZERO;
+
+        const nearest = signedResult(
+          modes[0].magnitude
+        );
 
         explanation.textContent =
-          "숫자선은 각 구간 안의 상대 위치를 나타냅니다. " +
-          "│는 원래 입력, 빨간 ●는 반올림 결과, 빨간 점선은 두 값 사이 거리입니다.\n\n" +
+          "숫자선은 각 표시 구간 안에서의 상대 위치를 나타냅니다.\n" +
+          "│는 원래 입력, 빨간 ●는 반올림 결과, 빨간 점선은 두 값 사이의 거리입니다.\n" +
+          "◆는 입력과 결과가 완전히 일치하는 위치입니다.\n\n" +
           (
-            halfway
-              ? "정확한 halfway(중간값)입니다.\n" +
-                "최근접 짝수 반올림은 두 후보 중 반올림 후 남기는 " +
-                "마지막 비트가 0인 값(정수 배율에서 짝수)을 선택합니다.\n" +
-                "선택한 값: " + decimalExact(nearest) + ".\n\n"
-              : "halfway가 아닙니다. 최근접 반올림은 더 가까운 후보를 선택합니다.\n\n"
+            exact
+              ? "입력이 현재 양자화 격자에서 이미 정확히 표현 가능합니다. " +
+                "네 가지 반올림 모드 모두 입력값을 유지합니다.\n\n"
+              : halfway
+                ? "정확한 halfway(중간값)입니다.\n" +
+                  "최근접 짝수 반올림은 두 후보 중 반올림 후 남기는 " +
+                  "마지막 비트가 0인 값(정수 배율에서 짝수)을 선택합니다.\n" +
+                  "선택한 값: " + decimalExact(nearest) + ".\n\n"
+                : "halfway가 아닙니다. 최근접 반올림은 더 가까운 후보를 선택합니다.\n\n"
           ) +
           "0 방향 절삭은 부호와 무관하게 0에 가까운 쪽을 선택합니다.\n" +
           "음의 무한대 방향 내림은 항상 작거나 같은 격자점을 선택합니다.\n" +
@@ -1914,13 +2258,13 @@ if (document.fonts && document.fonts.ready){
   const INK = V6.INK || "#1a1a1a";
   const RED = V6.RED || "#9e2b25";
   const GRID = V6.GRID || "#e8e6e0";
+  const MONO = "monospace, 'Noto Sans KR', sans-serif";
 
-  const TWO64 = 1n << 64n;
-  const U64MAX = TWO64 - 1n;
+  const U64 = 1n << 64n;
+  const MASK64 = U64 - 1n;
   const I32MIN = -(1n << 31n);
   const I32MAX = (1n << 31n) - 1n;
-  const I64MIN = -(1n << 63n);
-  const I64MAX = (1n << 63n) - 1n;
+  const U32MAX = (1n << 32n) - 1n;
 
   const REGS = [
     "rax", "rcx", "rdx", "rbx",
@@ -1938,26 +2282,66 @@ if (document.fonts && document.fonts.ready){
   ];
 
   const REG64_INDEX = new Map(
-    REGS.map((r, i) => [r, i])
+    REGS.map((name, index) => [name, index])
   );
 
   const REG32_INDEX = new Map(
-    REG32.map((r, i) => [r, i])
+    REG32.map((name, index) => [name, index])
   );
 
   const REG8_INDEX = new Map(
-    REG8.map((r, i) => [r, i])
+    REG8.map((name, index) => [name, index])
   );
 
-  const U = (value, bits = 64) =>
-    BigInt.asUintN(bits, BigInt(value));
+  const CONDITIONS = Object.freeze({
+    e:  { flags: ["ZF"], test: f => f.ZF === 1 },
+    z:  { flags: ["ZF"], test: f => f.ZF === 1 },
+    ne: { flags: ["ZF"], test: f => f.ZF === 0 },
+    nz: { flags: ["ZF"], test: f => f.ZF === 0 },
+    s:  { flags: ["SF"], test: f => f.SF === 1 },
+    ns: { flags: ["SF"], test: f => f.SF === 0 },
+    b:  { flags: ["CF"], test: f => f.CF === 1 },
+    ae: { flags: ["CF"], test: f => f.CF === 0 },
+    a:  {
+      flags: ["CF", "ZF"],
+      test: f => f.CF === 0 && f.ZF === 0
+    },
+    be: {
+      flags: ["CF", "ZF"],
+      test: f => f.CF === 1 || f.ZF === 1
+    },
+    l: {
+      flags: ["SF", "OF"],
+      test: f => f.SF !== f.OF
+    },
+    ge: {
+      flags: ["SF", "OF"],
+      test: f => f.SF === f.OF
+    },
+    g: {
+      flags: ["ZF", "SF", "OF"],
+      test: f => f.ZF === 0 && f.SF === f.OF
+    },
+    le: {
+      flags: ["ZF", "SF", "OF"],
+      test: f => f.ZF === 1 || f.SF !== f.OF
+    }
+  });
 
-  const I = (value, bits = 64) =>
-    BigInt.asIntN(bits, BigInt(value));
+  function U(value, bits = 64) {
+    return BigInt.asUintN(bits, BigInt(value));
+  }
+
+  function I(value, bits = 64) {
+    return BigInt.asIntN(bits, BigInt(value));
+  }
 
   function hex(value, digits = 16) {
     return "0x" +
-      BigInt(value).toString(16).toUpperCase().padStart(digits, "0");
+      BigInt(value)
+        .toString(16)
+        .toUpperCase()
+        .padStart(digits, "0");
   }
 
   function hx64(value) {
@@ -1965,109 +2349,153 @@ if (document.fonts && document.fonts.ready){
   }
 
   function hx8(value) {
-    return Number(value).toString(16).toUpperCase().padStart(2, "0");
+    return Number(value)
+      .toString(16)
+      .toUpperCase()
+      .padStart(2, "0");
   }
 
   function parseNumber(value) {
-    const s = String(value).trim();
+    const text = String(value).trim();
 
-    if (/^[+-]?0x[0-9a-f]+$/i.test(s)) {
-      const negative = s.startsWith("-");
-      const body = s.replace(/^[+-]/, "");
-      const n = BigInt(body);
-      return negative ? -n : n;
+    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) {
+      const negative = text.startsWith("-");
+      const magnitude = BigInt(text.replace(/^[+-]/, ""));
+      return negative ? -magnitude : magnitude;
     }
 
-    if (/^[+-]?\d+$/.test(s)) return BigInt(s);
+    if (/^[+-]?\d+$/.test(text)) {
+      return BigInt(text);
+    }
 
-    throw new Error("10진 정수 또는 0x 형식의 16진 정수를 입력하세요.");
+    throw new Error(
+      "10진 정수 또는 0x 형식의 16진 정수를 입력하세요."
+    );
   }
 
   function requireRange(value, min, max, name) {
     if (value < min || value > max) {
       throw new Error(
-        name + " 범위: " + min.toString() +
-        "부터 " + max.toString() + "까지"
+        name + " 범위: " +
+        min.toString() + " ~ " + max.toString()
       );
     }
     return value;
   }
 
-  function parseSigned32(text, name = "변위") {
-    return requireRange(parseNumber(text), I32MIN, I32MAX, name);
-  }
-
-  function parseImm32(text) {
-    return parseSigned32(text, "signed imm32");
-  }
-
-  function parseImm64(text) {
+  function parseSigned32(value, name = "변위") {
     return requireRange(
-      parseNumber(text),
-      I64MIN,
-      U64MAX,
+      parseNumber(value),
+      I32MIN,
+      I32MAX,
+      name
+    );
+  }
+
+  function parseImm32(value) {
+    return parseSigned32(value, "signed imm32");
+  }
+
+  // Immediate encoding accepts a signed decimal value, or an
+  // explicitly written 32-bit hexadecimal bit pattern.
+  // Example: 0xFFFFFFFF represents encoded imm32 -1.
+  function parseEncodedImm32(value, name = "imm32") {
+    const text = String(value).trim();
+    const number = parseNumber(text);
+
+    if (/^0x[0-9a-f]+$/i.test(text)) {
+      requireRange(number, 0n, U32MAX, name);
+      return I(number, 32);
+    }
+
+    return requireRange(number, I32MIN, I32MAX, name);
+  }
+
+  function parseImm64(value) {
+    return requireRange(
+      parseNumber(value),
+      -(1n << 63n),
+      MASK64,
       "64비트 즉시값"
     );
   }
 
-  function parseReg64(name) {
-    const index = REG64_INDEX.get(name);
-    if (index === undefined) {
-      throw new Error("지원하지 않는 레지스터: %" + name);
-    }
-    return index;
-  }
-
   function parseScale(value) {
-    const scale = Number(value);
+    const n = Number(value);
 
-    if (![1, 2, 4, 8].includes(scale)) {
-      throw new Error("배율(scale)은 1, 2, 4, 8 중 하나여야 합니다.");
+    if (![1, 2, 4, 8].includes(n)) {
+      throw new Error(
+        "Scale은 1, 2, 4, 8 중 하나여야 합니다."
+      );
     }
 
-    return scale;
+    return n;
   }
 
-  function node(tag, parent, text, cls) {
+  function regCode(name) {
+    const code = REG64_INDEX.get(name);
+
+    if (code === undefined) {
+      throw new Error(
+        "지원하지 않는 레지스터: %" + name
+      );
+    }
+
+    return code;
+  }
+
+  function E(tag, parent, text, className) {
     const element = document.createElement(tag);
-    if (cls) element.className = cls;
+
+    if (className) element.className = className;
+
     if (text !== undefined && text !== null) {
       element.textContent = String(text);
     }
+
     if (parent) parent.appendChild(element);
+
     return element;
   }
 
-  function button(parent, text, handler) {
-    const b = node("button", parent, text, "v6-btn");
-    b.type = "button";
-    b.addEventListener("click", handler);
-    return b;
+  function clear(element) {
+    element.replaceChildren();
   }
 
-  function bar(parent) {
-    return node("div", parent, "", "v6-controls");
+  function B(parent, text, callback) {
+    const button = E("button", parent, text, "v6-btn");
+    button.type = "button";
+    button.addEventListener("click", callback);
+    return button;
   }
 
-  function stateBox(parent) {
-    const x = node("div", parent, "", "v6-state");
-    x.setAttribute("role", "status");
-    x.setAttribute("aria-live", "polite");
-    return x;
+  function C(parent) {
+    return E("div", parent, "", "v6-controls");
   }
 
-  function heading(parent, text) {
-    const h = node("h4", parent, text, "v6-section-title");
-    return h;
+  function S(parent) {
+    const element = E("div", parent, "", "v6-state");
+    element.setAttribute("role", "status");
+    element.setAttribute("aria-live", "polite");
+    return element;
   }
 
-  function title(parent, text) {
+  function T(parent, text) {
     V6.title(parent, text);
   }
 
-  function labeled(parent, text, input) {
-    const label = node("label", parent);
-    node("span", label, text);
+  function H(parent, text) {
+    return E(
+      "h4",
+      parent,
+      text,
+      "v6-section-title"
+    );
+  }
+
+  function L(parent, text, input) {
+    const label = E("label", parent);
+    E("span", label, text);
     label.appendChild(input);
     return label;
   }
@@ -2076,25 +2504,32 @@ if (document.fonts && document.fonts.ready){
     const input = document.createElement("input");
     input.type = "text";
     input.value = String(value);
-    labeled(parent, text, input);
+    L(parent, text, input);
     return input;
   }
 
   function selectInput(parent, text, options, initial) {
-    const select = document.createElement("select");
+    const input = document.createElement("select");
 
-    options.forEach(([value, label]) => {
-      const option = node("option", select, label);
+    options.forEach(([value, caption]) => {
+      const option = E("option", input, caption);
       option.value = String(value);
     });
 
-    select.value = String(initial);
-    labeled(parent, text, select);
+    input.value = String(initial);
+    L(parent, text, input);
 
-    return select;
+    return input;
   }
 
-  function rangeInput(parent, text, min, max, value, callback) {
+  function rangeInput(
+    parent,
+    text,
+    min,
+    max,
+    value,
+    callback
+  ) {
     const input = document.createElement("input");
     input.type = "range";
     input.min = String(min);
@@ -2102,8 +2537,13 @@ if (document.fonts && document.fonts.ready){
     input.step = "1";
     input.value = String(value);
 
-    const label = labeled(parent, text, input);
-    const current = node("span", label, hex(value, 3), "v6-val");
+    const label = L(parent, text, input);
+    const current = E(
+      "span",
+      label,
+      hex(value, 3),
+      "v6-val"
+    );
 
     input.addEventListener("input", () => {
       const n = Number(input.value);
@@ -2114,40 +2554,63 @@ if (document.fonts && document.fonts.ready){
     return { input, current };
   }
 
-  function selected(buttonElement, yes) {
-    buttonElement.setAttribute("aria-pressed", yes ? "true" : "false");
-    buttonElement.classList.toggle("is-selected", yes);
+  function selected(button, active) {
+    button.classList.toggle("is-selected", active);
+    button.setAttribute(
+      "aria-pressed",
+      active ? "true" : "false"
+    );
   }
 
-  function clear(element) {
-    element.replaceChildren();
+  function setVisible(input, visible) {
+    const label = input.closest("label");
+    if (label) label.hidden = !visible;
   }
 
-  function errorState(target, message) {
-    target.textContent = "안내: " + message;
+  function errorState(target, text) {
+    target.textContent = "안내: " + text;
   }
 
   function table(parent, headers) {
-    const scroll = node("div", parent, "", "v6-table-scroll");
-    const t = node("table", scroll, "", "v6-table");
-    const head = node("thead", t);
-    const row = node("tr", head);
+    const scroll = E(
+      "div",
+      parent,
+      "",
+      "v6-table-scroll"
+    );
+
+    const element = E(
+      "table",
+      scroll,
+      "",
+      "v6-table"
+    );
+
+    const headerRow = E(
+      "tr",
+      E("thead", element)
+    );
 
     headers.forEach(text => {
-      node("th", row, text);
+      E("th", headerRow, text);
     });
 
-    const body = node("tbody", t);
+    const body = E("tbody", element);
 
     return {
       body,
       add(values, changed = []) {
-        const tr = node("tr", body);
-        values.forEach((value, i) => {
-          const td = node("td", tr, value);
-          if (changed.includes(i)) td.classList.add("v6-changed");
+        const row = E("tr", body);
+
+        values.forEach((value, index) => {
+          const cell = E("td", row, value);
+
+          if (changed.includes(index)) {
+            cell.classList.add("v6-changed");
+          }
         });
-        return tr;
+
+        return row;
       }
     };
   }
@@ -2164,18 +2627,29 @@ if (document.fonts && document.fonts.ready){
     return bytes;
   }
 
-  function readLE(bytes, pos, size) {
-    if (pos < 0 || pos + size > bytes.length) {
-      throw new Error("명령어 바이트가 잘렸습니다.");
+  function readLE(bytes, offset, size) {
+    if (
+      offset < 0 ||
+      offset + size > bytes.length
+    ) {
+      throw new Error(
+        "명령어 바이트가 잘렸습니다."
+      );
     }
 
-    let result = 0n;
+    let value = 0n;
 
     for (let i = 0; i < size; i++) {
-      result |= BigInt(bytes[pos + i]) << BigInt(i * 8);
+      value |=
+        BigInt(bytes[offset + i]) <<
+        BigInt(i * 8);
     }
 
-    return result;
+    return value;
+  }
+
+  function formatBytes(bytes) {
+    return bytes.map(hx8).join(" ");
   }
 
   function signedHex(value) {
@@ -2183,7 +2657,12 @@ if (document.fonts && document.fonts.ready){
     return n < 0n ? "-" + hex(-n) : hex(n);
   }
 
-  function memoryText(base, index, scale, displacement) {
+  function memoryText(
+    base,
+    index,
+    scale,
+    displacement
+  ) {
     const disp = displacement === 0n
       ? ""
       : displacement.toString();
@@ -2192,16 +2671,22 @@ if (document.fonts && document.fonts.ready){
       return disp + "(%" + base + ")";
     }
 
-    return disp + "(%" + base + ",%" + index + "," + scale + ")";
+    return (
+      disp +
+      "(%" + base +
+      ",%" + index +
+      "," + scale + ")"
+    );
   }
 
   // ============================================================
-  // 1. Effective Address Calculator
+  // 1. addr-modes
   // ============================================================
 
   V6.register("addr-modes", function (root, cfg) {
     cfg = cfg && typeof cfg === "object" ? cfg : {};
-    title(root, "유효주소 계산기 — Addressing Modes");
+
+    T(root, "유효주소 계산기 — Addressing Modes");
 
     const state = {
       rbx: 0x40n,
@@ -2209,65 +2694,12 @@ if (document.fonts && document.fonts.ready){
       scale: 4,
       disp: 8n,
       mode: "lea",
+      form: "general",
       error: ""
     };
 
-    const inputBar = bar(root);
+    const NEXT_RIP = 0x401000n;
 
-    const rbxControl = rangeInput(
-      inputBar, "%rbx", 0, 0x200, 0x40,
-      value => {
-        state.rbx = BigInt(value);
-        render();
-      }
-    );
-
-    const rcxControl = rangeInput(
-      inputBar, "%rcx", 0, 0x200, 0x10,
-      value => {
-        state.rcx = BigInt(value);
-        render();
-      }
-    );
-
-    const scaleSelect = selectInput(
-      inputBar,
-      "Scale (배율)",
-      [1, 2, 4, 8].map(x => [x, String(x)]),
-      4
-    );
-
-    const dispInput = inputText(
-      inputBar,
-      "Displacement (변위)",
-      "8"
-    );
-
-    const dispCurrent = node(
-      "span",
-      inputBar,
-      "8",
-      "v6-val"
-    );
-
-    const modeBar = bar(root);
-
-    const leaButton = button(modeBar, "leaq — 주소 계산", () => {
-      state.mode = "lea";
-      render();
-    });
-
-    const movButton = button(modeBar, "movq — 메모리 읽기", () => {
-      state.mode = "mov";
-      render();
-    });
-
-    const calculation = stateBox(root);
-    const memoryHost = node("section", root);
-    const formHost = node("section", root);
-    const explanation = stateBox(root);
-
-    // Deterministic teaching memory, byte-addressed.
     const memory = new Map();
 
     function writeQ(address, value) {
@@ -2276,8 +2708,15 @@ if (document.fonts && document.fonts.ready){
       });
     }
 
-    for (let address = 0n; address <= 0x1200n; address += 8n) {
-      writeQ(address, 0x1122334455660000n + address);
+    for (
+      let address = 0n;
+      address <= 0x1200n;
+      address += 8n
+    ) {
+      writeQ(
+        address,
+        0x1122334455660000n + address
+      );
     }
 
     function readQ(address) {
@@ -2285,7 +2724,11 @@ if (document.fonts && document.fonts.ready){
 
       for (let i = 0n; i < 8n; i++) {
         const byte = memory.get(address + i);
-        if (byte === undefined) return null;
+
+        if (byte === undefined) {
+          return null;
+        }
+
         value |= BigInt(byte) << (8n * i);
       }
 
@@ -2293,7 +2736,7 @@ if (document.fonts && document.fonts.ready){
     }
 
     function validateConfig(input) {
-      const result = {
+      const values = {
         rbx: state.rbx,
         rcx: state.rcx,
         scale: state.scale,
@@ -2301,27 +2744,172 @@ if (document.fonts && document.fonts.ready){
       };
 
       if (input.rbx !== undefined) {
-        result.rbx = requireRange(
-          parseNumber(input.rbx), 0n, 0x200n, "%rbx"
+        values.rbx = requireRange(
+          parseNumber(input.rbx),
+          0n,
+          0x200n,
+          "%rbx"
         );
       }
 
       if (input.rcx !== undefined) {
-        result.rcx = requireRange(
-          parseNumber(input.rcx), 0n, 0x200n, "%rcx"
+        values.rcx = requireRange(
+          parseNumber(input.rcx),
+          0n,
+          0x200n,
+          "%rcx"
         );
       }
 
       if (input.scale !== undefined) {
-        result.scale = parseScale(input.scale);
+        values.scale = parseScale(input.scale);
       }
 
       if (input.disp !== undefined) {
-        result.disp = parseSigned32(input.disp);
+        values.disp = parseSigned32(
+          input.disp,
+          "displacement"
+        );
       }
 
-      return result;
+      return values;
     }
+
+    const controls = C(root);
+
+    const rbxControl = rangeInput(
+      controls,
+      "%rbx",
+      0,
+      0x200,
+      0x40,
+      value => {
+        state.rbx = BigInt(value);
+        render();
+      }
+    );
+
+    const rcxControl = rangeInput(
+      controls,
+      "%rcx",
+      0,
+      0x200,
+      0x10,
+      value => {
+        state.rcx = BigInt(value);
+        render();
+      }
+    );
+
+    const scaleSelect = selectInput(
+      controls,
+      "Scale",
+      [1, 2, 4, 8].map(n => [
+        n,
+        String(n)
+      ]),
+      4
+    );
+
+    const dispInput = inputText(
+      controls,
+      "Displacement",
+      "8"
+    );
+
+    const dispCurrent = E(
+      "span",
+      controls,
+      "",
+      "v6-val"
+    );
+
+    const modeBar = C(root);
+
+    const leaButton = B(
+      modeBar,
+      "leaq — 주소 계산",
+      () => {
+        state.mode = "lea";
+        render();
+      }
+    );
+
+    const movButton = B(
+      modeBar,
+      "movq — 메모리 읽기",
+      () => {
+        state.mode = "mov";
+        render();
+      }
+    );
+
+    const calculation = S(root);
+    const memoryHost = E("section", root);
+    const formsHost = E("section", root);
+    const explanation = S(root);
+
+    const FORMS = [
+      {
+        id: "base",
+        operand: "(%rbx)",
+        calculation: "R[%rbx]",
+        description: "Base register",
+        disp: 0n,
+        scale: 1
+      },
+      {
+        id: "base-index",
+        operand: "(%rbx,%rcx)",
+        calculation: "R[%rbx] + R[%rcx]",
+        description: "Base + index",
+        disp: 0n,
+        scale: 1
+      },
+      {
+        id: "base-disp",
+        operand: "16(%rbx)",
+        calculation: "16 + R[%rbx]",
+        description: "Base + displacement",
+        disp: 16n,
+        scale: 1
+      },
+      {
+        id: "general",
+        operand: "16(%rbx,%rcx,4)",
+        calculation:
+          "16 + R[%rbx] + 4×R[%rcx]",
+        description: "Base + scaled index",
+        disp: 16n,
+        scale: 4
+      },
+      {
+        id: "index-only",
+        operand: "16(,%rcx,4)",
+        calculation: "16 + 4×R[%rcx]",
+        description: "SIB, base 없음",
+        disp: 16n,
+        scale: 4
+      },
+      {
+        id: "absolute",
+        operand: "16",
+        calculation: "절대주소 16",
+        description:
+          "Displacement-only. 명령 형식에 따라 인코딩 제약이 있습니다.",
+        disp: 16n,
+        scale: 1
+      },
+      {
+        id: "rip",
+        operand: "16(%rip)",
+        calculation: "다음 RIP + 16",
+        description:
+          "RIP-relative. 절대주소와 다릅니다.",
+        disp: 16n,
+        scale: 1
+      }
+    ];
 
     function readControls() {
       return validateConfig({
@@ -2334,33 +2922,193 @@ if (document.fonts && document.fonts.ready){
 
     function syncControls() {
       rbxControl.input.value = String(state.rbx);
-      rbxControl.current.textContent = hex(state.rbx, 3);
+      rbxControl.current.textContent =
+        hex(state.rbx, 3);
 
       rcxControl.input.value = String(state.rcx);
-      rcxControl.current.textContent = hex(state.rcx, 3);
+      rcxControl.current.textContent =
+        hex(state.rcx, 3);
 
       scaleSelect.value = String(state.scale);
       dispInput.value = state.disp.toString();
     }
 
+    function setForm(form) {
+      state.form = form.id;
+      state.disp = form.disp;
+      state.scale = form.scale;
+      state.error = "";
+
+      syncControls();
+      render();
+    }
+
     function showError(message) {
-      calculation.textContent = "안내: " + message;
+      errorState(calculation, message);
       clear(memoryHost);
-      clear(formHost);
+      clear(formsHost);
+
       explanation.textContent =
         "유효한 입력을 입력하면 주소 계산과 메모리 표가 다시 표시됩니다.";
     }
 
-    scaleSelect.addEventListener("change", render);
-    dispInput.addEventListener("input", render);
+    function formAddress() {
+      const { rbx, rcx, scale, disp, form } = state;
+
+      let signedAddress;
+      let operand;
+      let expansion;
+      let formula;
+
+      switch (form) {
+        case "base":
+          signedAddress = rbx;
+          operand = "(%rbx)";
+          formula = "EA = R[%rbx]";
+          expansion = "   = " + rbx;
+          break;
+
+        case "base-index":
+          signedAddress = rbx + rcx;
+          operand = "(%rbx,%rcx)";
+          formula = "EA = R[%rbx] + R[%rcx]";
+          expansion =
+            "   = " + rbx + " + " + rcx;
+          break;
+
+        case "base-disp":
+          signedAddress = disp + rbx;
+          operand =
+            (disp === 0n ? "" : disp.toString()) +
+            "(%rbx)";
+          formula = "EA = Imm + R[%rbx]";
+          expansion =
+            "   = " + disp + " + " + rbx;
+          break;
+
+        case "index-only":
+          signedAddress =
+            disp + rcx * BigInt(scale);
+          operand =
+            disp.toString() +
+            "(,%rcx," + scale + ")";
+          formula =
+            "EA = Imm + R[%rcx] × S";
+          expansion =
+            "   = " + disp + " + " +
+            rcx + " × " + scale;
+          break;
+
+        case "absolute":
+          signedAddress = disp;
+          operand = disp.toString();
+          formula = "EA = Imm";
+          expansion = "   = " + disp;
+          break;
+
+        case "rip":
+          signedAddress = NEXT_RIP + disp;
+          operand =
+            disp.toString() + "(%rip)";
+          formula = "EA = Next RIP + Imm";
+          expansion =
+            "   = " + hex(NEXT_RIP) +
+            " + " + disp;
+          break;
+
+        default:
+          signedAddress =
+            disp + rbx + rcx * BigInt(scale);
+
+          operand = memoryText(
+            "rbx",
+            "rcx",
+            scale,
+            disp
+          );
+
+          formula =
+            "EA = Imm + R[%rbx] + R[%rcx] × S";
+
+          expansion =
+            "   = " + disp +
+            " + " + rbx +
+            " + " + rcx +
+            " × " + scale;
+      }
+
+      return {
+        operand,
+        formula,
+        expansion,
+        signedAddress,
+        ea: U(signedAddress)
+      };
+    }
+
+    function renderForms() {
+      clear(formsHost);
+
+      H(
+        formsHost,
+        "주소 지정 형태 — 행을 클릭하면 계산기에 적용"
+      );
+
+      const forms = table(formsHost, [
+        "피연산자",
+        "계산",
+        "특징"
+      ]);
+
+      FORMS.forEach(form => {
+        const active = state.form === form.id;
+
+        const row = forms.add([
+          form.operand,
+          form.calculation,
+          form.description
+        ], active ? [0] : []);
+
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        row.setAttribute(
+          "aria-label",
+          form.operand + " 주소 지정 형태 적용"
+        );
+        row.setAttribute(
+          "aria-pressed",
+          active ? "true" : "false"
+        );
+
+        row.style.cursor = "pointer";
+
+        if (active) {
+          row.style.background = GRID;
+          row.style.fontWeight = "700";
+        }
+
+        row.addEventListener("click", () => {
+          setForm(form);
+        });
+
+        row.addEventListener("keydown", event => {
+          if (
+            event.key === "Enter" ||
+            event.key === " "
+          ) {
+            event.preventDefault();
+            setForm(form);
+          }
+        });
+      });
+    }
 
     function render() {
       selected(leaButton, state.mode === "lea");
       selected(movButton, state.mode === "mov");
 
       try {
-        const values = readControls();
-        Object.assign(state, values);
+        Object.assign(state, readControls());
         state.error = "";
       } catch (e) {
         state.error = e.message;
@@ -2370,49 +3118,48 @@ if (document.fonts && document.fonts.ready){
       }
 
       dispCurrent.textContent =
-        state.disp.toString() + " (" + signedHex(state.disp) + ")";
+        state.disp.toString() +
+        " (" + signedHex(state.disp) + ")";
 
-      const indexTerm = state.rcx * BigInt(state.scale);
-      const signedAddress = state.disp + state.rbx + indexTerm;
-      const ea = U(signedAddress);
-
-      const operand = memoryText(
-        "rbx", "rcx", state.scale, state.disp
-      );
-
-      const value = readQ(ea);
+      const result = formAddress();
+      const value = readQ(result.ea);
 
       const lines = [
-        "피연산자(operand): " + operand,
+        "피연산자(operand): " + result.operand,
         "",
-        "EA = Imm + R[%rbx] + R[%rcx] × S",
-        "   = " + state.disp +
-          " + " + state.rbx +
-          " + " + state.rcx + " × " + state.scale,
-        "   = " + state.disp +
-          " + " + state.rbx + " + " + indexTerm,
-        "   = " + signedAddress,
-        "64비트 EA = " + hx64(ea),
-        ""
+        result.formula,
+        result.expansion,
+        "   = " + result.signedAddress,
+        "",
+        "64비트 EA = " + hx64(result.ea)
       ];
+
+      if (state.form === "rip") {
+        lines.push(
+          "예시 Next RIP = " + hx64(NEXT_RIP)
+        );
+      }
+
+      lines.push("");
 
       if (state.mode === "lea") {
         lines.push(
-          "leaq " + operand + ", %rax",
-          "%rax ← " + hx64(ea),
-          "메모리 접근 없음(no dereference)."
+          "leaq " + result.operand + ", %rax",
+          "%rax ← " + hx64(result.ea),
+          "메모리 참조 없음(no dereference)."
         );
       } else {
-        lines.push("movq " + operand + ", %rax");
+        lines.push(
+          "movq " + result.operand + ", %rax"
+        );
 
         if (value === null) {
           lines.push(
-            "예시 메모리에 매핑되지 않은 주소입니다.",
-            "실제 명령은 이 주소에서 8바이트 읽기를 시도합니다."
+            "교육용 예시 메모리에서 매핑되지 않은 주소입니다."
           );
         } else {
           lines.push(
-            "%rax ← M[" + hx64(ea) + "]",
+            "%rax ← M[" + hx64(result.ea) + "]",
             "      = " + hx64(value)
           );
         }
@@ -2421,115 +3168,102 @@ if (document.fonts && document.fonts.ready){
       calculation.textContent = lines.join("\n");
 
       clear(memoryHost);
-      heading(memoryHost, "메모리 — Little-endian (리틀 엔디안)");
+      H(memoryHost, "메모리 — Little-endian");
 
-      const mt = table(memoryHost, [
+      const memoryTable = table(memoryHost, [
         "시작 주소",
-        "8바이트 (주소 증가 순서)",
+        "8바이트 (낮은 주소 → 높은 주소)",
         "64비트 값"
       ]);
 
-      const aligned = ea & ~7n;
+      const aligned = result.ea & ~7n;
 
-      for (let delta = -16n; delta <= 16n; delta += 8n) {
+      for (
+        let delta = -16n;
+        delta <= 16n;
+        delta += 8n
+      ) {
         const start = aligned + delta;
+
         if (start < 0n) continue;
 
         const bytes = [];
+
         for (let i = 0n; i < 8n; i++) {
-          const b = memory.get(start + i);
-          bytes.push(b === undefined ? "??" : hx8(b));
+          const byte = memory.get(start + i);
+
+          bytes.push(
+            byte === undefined
+              ? "??"
+              : hx8(byte)
+          );
         }
 
         const word = readQ(start);
 
-        mt.add([
+        memoryTable.add([
           hx64(start),
           bytes.join(" "),
-          word === null ? "미매핑" : hx64(word)
-        ], start <= ea && ea < start + 8n ? [0, 1] : []);
+          word === null
+            ? "미매핑"
+            : hx64(word)
+        ], (
+          start <= result.ea &&
+          result.ea < start + 8n
+        ) ? [0, 1] : []);
       }
 
-      clear(formHost);
-      heading(formHost, "주소 지정 형태 — Addressing Forms");
-
-      const ft = table(formHost, [
-        "표기",
-        "계산",
-        "특징"
-      ]);
-
-      ft.add([
-        "(%rbx)", "R[%rbx]", "Base register"
-      ]);
-
-      ft.add([
-        "(%rbx,%rcx)",
-        "R[%rbx] + R[%rcx]",
-        "Base + index"
-      ]);
-
-      ft.add([
-        "16(%rbx)",
-        "16 + R[%rbx]",
-        "Base + displacement"
-      ]);
-
-      ft.add([
-        "16(%rbx,%rcx,4)",
-        "16 + R[%rbx] + 4×R[%rcx]",
-        "Base + scaled index"
-      ]);
-
-      ft.add([
-        "16(,%rcx,4)",
-        "16 + 4×R[%rcx]",
-        "SIB, base 없음"
-      ]);
-
-      ft.add([
-        "16",
-        "절대주소 16 (메모리 피연산자 문맥)",
-        "표기·인코딩 가능 여부는 명령 형식에 의존"
-      ]);
-
-      ft.add([
-        "16(%rip)",
-        "다음 RIP + 16",
-        "RIP-relative, 절대주소와 다름"
-      ]);
+      renderForms();
 
       explanation.textContent =
-        "leaq는 유효주소만 계산합니다. movq는 해당 주소를 역참조합니다.\n" +
-        "x86-64의 주소 계산은 64비트 모듈러 연산입니다.\n" +
-        "이 계산기는 %rbx/%rcx와 scale 1·2·4·8만 선택적으로 사용합니다.";
+        "leaq는 계산된 주소를 저장하고, movq는 그 주소에서 8바이트를 읽습니다.\n" +
+        "표의 행을 클릭하면 해당 addressing form이 적용됩니다.\n" +
+        "Absolute displacement-only와 RIP-relative는 서로 다릅니다.\n" +
+        "RIP-relative의 기준은 현재 명령의 시작 주소가 아닌 다음 RIP입니다.\n" +
+        "교육용 모델의 계산은 64비트 모듈러 주소 연산입니다.";
     }
+
+    scaleSelect.addEventListener(
+      "change",
+      render
+    );
+
+    dispInput.addEventListener(
+      "input",
+      render
+    );
 
     try {
-      Object.assign(state, validateConfig(cfg));
+      Object.assign(
+        state,
+        validateConfig(cfg)
+      );
+
       syncControls();
+      render();
     } catch (e) {
       state.error = e.message;
-      showError("data-config 오류: " + e.message);
       syncControls();
-      // Preserve the reported error until a user interaction.
-      return;
-    }
 
-    render();
+      showError(
+        "data-config 오류: " + e.message
+      );
+    }
   });
 
   // ============================================================
-  // 2. Mini x86-64 Simulator
+  // 2. asm-sim
   // ============================================================
 
   V6.register("asm-sim", function (root, cfg) {
     cfg = cfg && typeof cfg === "object" ? cfg : {};
-    title(root, "x86-64 명령어 실행기 — Machine-Level Execution");
+
+    T(root, "x86-64 명령어 실행기 — Machine-Level Execution");
 
     const STACK_BASE = 0x1000n;
     const STACK_SIZE = 256;
-    const STACK_END = STACK_BASE + BigInt(STACK_SIZE);
+    const STACK_END =
+      STACK_BASE + BigInt(STACK_SIZE);
 
     const PROGRAMS = [
       {
@@ -2640,6 +3374,7 @@ if (document.fonts && document.fonts.ready){
     let preset = initialPreset;
     let program = [];
     let labels = new Map();
+
     let machine;
     let history = [];
     let lastChanges = null;
@@ -2688,27 +3423,37 @@ if (document.fonts && document.fonts.ready){
       const labelMap = new Map();
 
       lines.forEach((line, sourceLine) => {
-        const clean = line.trim();
-        if (!clean) return;
+        const text = line.trim();
 
-        if (/^[A-Za-z_]\w*:$/.test(clean)) {
-          const name = clean.slice(0, -1);
+        if (!text) return;
+
+        if (/^[A-Za-z_]\w*:$/.test(text)) {
+          const name = text.slice(0, -1);
 
           if (labelMap.has(name)) {
-            throw new Error("중복 레이블: " + name);
+            throw new Error(
+              "중복 레이블: " + name
+            );
           }
 
-          labelMap.set(name, instructions.length);
+          labelMap.set(
+            name,
+            instructions.length
+          );
+
           return;
         }
 
         instructions.push({
-          text: clean,
+          text,
           sourceLine
         });
       });
 
-      return { instructions, labels: labelMap };
+      return {
+        instructions,
+        labels: labelMap
+      };
     }
 
     function splitOperands(source) {
@@ -2721,76 +3466,98 @@ if (document.fonts && document.fonts.ready){
         if (source[i] === ")") depth--;
 
         if (depth < 0) {
-          throw new Error("메모리 피연산자의 괄호가 잘못되었습니다.");
+          throw new Error(
+            "메모리 피연산자의 괄호가 잘못되었습니다."
+          );
         }
 
-        if (source[i] === "," && depth === 0) {
-          parts.push(source.slice(start, i).trim());
+        if (
+          source[i] === "," &&
+          depth === 0
+        ) {
+          parts.push(
+            source.slice(start, i).trim()
+          );
+
           start = i + 1;
         }
       }
 
       if (depth !== 0) {
-        throw new Error("메모리 피연산자의 괄호가 잘못되었습니다.");
+        throw new Error(
+          "메모리 피연산자의 괄호가 잘못되었습니다."
+        );
       }
 
       const rest = source.slice(start).trim();
+
       if (rest) parts.push(rest);
 
       return parts;
     }
 
     function parseOperand(source) {
-      const s = source.trim();
+      const text = source.trim();
 
-      if (s.startsWith("$")) {
+      if (text.startsWith("$")) {
         return {
           type: "imm",
-          value: parseNumber(s.slice(1))
+          value: parseNumber(text.slice(1)),
+          literal: text.slice(1).trim()
         };
       }
 
-      if (/^%[A-Za-z0-9]+$/.test(s)) {
+      if (/^%[A-Za-z0-9]+$/.test(text)) {
         return {
           type: "reg",
-          name: s.slice(1).toLowerCase()
+          name: text.slice(1).toLowerCase()
         };
       }
 
       const mem =
-        /^([^()]*)\((%[A-Za-z0-9]+)(?:,(%[A-Za-z0-9]+)(?:,([1248]))?)?\)$/.exec(s);
+        /^([^()]*)\((%[A-Za-z0-9]+)(?:,(%[A-Za-z0-9]+)(?:,([1248]))?)?\)$/.exec(text);
 
       if (mem) {
-        const base = mem[2].slice(1).toLowerCase();
+        const base =
+          mem[2].slice(1).toLowerCase();
+
         const index = mem[3]
           ? mem[3].slice(1).toLowerCase()
           : null;
 
-        parseReg64(base);
-        if (index !== null) parseReg64(index);
+        regCode(base);
+
+        if (index !== null) regCode(index);
 
         if (index === "rsp") {
-          throw new Error("%rsp는 x86-64 SIB index로 사용할 수 없습니다.");
+          throw new Error(
+            "%rsp는 SIB index로 사용할 수 없습니다."
+          );
         }
 
         return {
           type: "mem",
-          disp: mem[1] ? parseSigned32(mem[1]) : 0n,
+          disp: mem[1]
+            ? parseSigned32(mem[1])
+            : 0n,
           base,
           index,
-          scale: mem[4] ? parseScale(mem[4]) : 1
+          scale: mem[4]
+            ? parseScale(mem[4])
+            : 1
         };
       }
 
-      // Symbolic branch target; required for `jg loop`.
-      if (/^[A-Za-z_]\w*$/.test(s)) {
+      if (/^[A-Za-z_]\w*$/.test(text)) {
         return {
           type: "label",
-          name: s
+          name: text
         };
       }
 
-      throw new Error("지원하지 않는 피연산자: " + s);
+      throw new Error(
+        "지원하지 않는 피연산자: " + text
+      );
     }
 
     function registerInfo(name) {
@@ -2815,7 +3582,9 @@ if (document.fonts && document.fonts.ready){
         };
       }
 
-      throw new Error("지원하지 않는 레지스터: %" + name);
+      throw new Error(
+        "지원하지 않는 레지스터: %" + name
+      );
     }
 
     function regRead(name, bits) {
@@ -2823,54 +3592,70 @@ if (document.fonts && document.fonts.ready){
 
       if (info.bits !== bits) {
         throw new Error(
-          "%" + name + "는 " + bits + "비트 레지스터가 아닙니다."
+          "%" + name +
+          "는 " + bits +
+          "비트 레지스터가 아닙니다."
         );
       }
 
-      return U(machine.regs[info.full], bits);
+      return U(
+        machine.regs[info.full],
+        bits
+      );
     }
 
     function regWrite(name, value, bits) {
       const info = registerInfo(name);
 
       if (info.bits !== bits) {
-        throw new Error("레지스터 폭이 명령어와 일치하지 않습니다.");
+        throw new Error(
+          "레지스터 폭이 명령어와 일치하지 않습니다."
+        );
       }
 
       if (bits === 64) {
-        machine.regs[info.full] = U(value, 64);
+        machine.regs[info.full] = U(value);
       } else if (bits === 32) {
-        // x86-64 writes to r32 zero-extend to the full r64.
-        machine.regs[info.full] = U(value, 32);
+        machine.regs[info.full] =
+          U(value, 32);
       } else {
         const old = machine.regs[info.full];
-        machine.regs[info.full] =
-          U((old & ~255n) | U(value, 8));
+
+        machine.regs[info.full] = U(
+          (old & ~255n) | U(value, 8)
+        );
       }
     }
 
     function effectiveAddress(op) {
       if (op.type !== "mem") {
-        throw new Error("메모리 피연산자가 필요합니다.");
+        throw new Error(
+          "메모리 피연산자가 필요합니다."
+        );
       }
 
       return U(
         machine.regs[op.base] +
-        (op.index ? machine.regs[op.index] : 0n) *
-          BigInt(op.scale) +
+        (
+          op.index
+            ? machine.regs[op.index]
+            : 0n
+        ) * BigInt(op.scale) +
         op.disp
       );
     }
 
-    function memoryOffset(address, bytes) {
+    function memoryOffset(address, size) {
       const offset = address - STACK_BASE;
 
       if (
         offset < 0n ||
-        offset + BigInt(bytes) > BigInt(STACK_SIZE)
+        offset + BigInt(size) >
+          BigInt(STACK_SIZE)
       ) {
         throw new Error(
-          "스택 창 범위 밖 메모리 접근: " + hx64(address)
+          "스택 창 범위 밖 메모리 접근: " +
+          hx64(address)
         );
       }
 
@@ -2878,27 +3663,48 @@ if (document.fonts && document.fonts.ready){
     }
 
     function memRead(address, size) {
-      const start = memoryOffset(address, size);
-      return readLE(machine.memory, start, size);
+      const offset = memoryOffset(
+        address,
+        size
+      );
+
+      return readLE(
+        machine.memory,
+        offset,
+        size
+      );
     }
 
     function memWrite(address, value, size) {
-      const start = memoryOffset(address, size);
-      const bytes = little(value, size);
+      const offset = memoryOffset(
+        address,
+        size
+      );
 
-      bytes.forEach((b, i) => {
-        machine.memory[start + i] = b;
+      little(value, size).forEach((byte, i) => {
+        machine.memory[offset + i] = byte;
       });
     }
 
     function readOperand(op, bits) {
-      if (op.type === "imm") return U(op.value, bits);
-      if (op.type === "reg") return regRead(op.name, bits);
-      if (op.type === "mem") {
-        return memRead(effectiveAddress(op), bits / 8);
+      if (op.type === "imm") {
+        return U(op.value, bits);
       }
 
-      throw new Error("레이블은 데이터 피연산자가 아닙니다.");
+      if (op.type === "reg") {
+        return regRead(op.name, bits);
+      }
+
+      if (op.type === "mem") {
+        return memRead(
+          effectiveAddress(op),
+          bits / 8
+        );
+      }
+
+      throw new Error(
+        "레이블은 데이터 피연산자가 아닙니다."
+      );
     }
 
     function writeOperand(op, value, bits) {
@@ -2908,27 +3714,43 @@ if (document.fonts && document.fonts.ready){
       }
 
       if (op.type === "mem") {
-        memWrite(effectiveAddress(op), value, bits / 8);
+        memWrite(
+          effectiveAddress(op),
+          value,
+          bits / 8
+        );
         return;
       }
 
-      throw new Error("목적지는 레지스터 또는 메모리여야 합니다.");
+      throw new Error(
+        "목적지는 레지스터 또는 메모리여야 합니다."
+      );
     }
 
-    function assertOperands(opcode, args, spec) {
+    function assertOperands(
+      opcode,
+      args,
+      spec
+    ) {
       if (args.length !== spec.length) {
         throw new Error(
-          opcode + ": 피연산자 " + spec.length + "개가 필요합니다."
+          opcode +
+          ": 피연산자 " +
+          spec.length +
+          "개가 필요합니다."
         );
       }
 
-      args.forEach((arg, i) => {
-        const allowed = spec[i];
+      args.forEach((arg, index) => {
+        const allowed = spec[index];
 
         if (!allowed.includes(arg.type)) {
           throw new Error(
-            opcode + ": " + (i + 1) + "번째 피연산자는 " +
-            allowed.join("/") + "만 허용됩니다."
+            opcode +
+            ": " + (index + 1) +
+            "번째 피연산자는 " +
+            allowed.join("/") +
+            "만 허용됩니다."
           );
         }
       });
@@ -2939,48 +3761,68 @@ if (document.fonts && document.fonts.ready){
         args[1].type === "mem"
       ) {
         throw new Error(
-          opcode + ": 메모리→메모리 직접 연산은 허용되지 않습니다."
+          opcode +
+          ": 메모리→메모리 직접 연산은 허용되지 않습니다."
         );
       }
 
-      // For this subset, imm32 is sign-extended in 64-bit arithmetic.
-      // movabsq is the only instruction with a full imm64 source.
       if (
         args.length &&
-        args[0].type === "imm" &&
-        opcode !== "movabsq" &&
-        opcode !== "movq" &&
-        opcode !== "movl" &&
-        opcode !== "movzbl"
+        args[0].type === "imm"
       ) {
-        parseImm32(args[0].value.toString());
-      }
+        if (opcode === "movabsq") {
+          parseImm64(args[0].literal);
+        } else if (opcode === "movl") {
+          const n = args[0].value;
 
-      if (opcode === "movq" && args[0].type === "imm") {
-        parseImm32(args[0].value.toString());
-      }
-
-      if (opcode === "movl" && args[0].type === "imm") {
-        const n = args[0].value;
-        if (n < I32MIN || n > 0xffffffffn) {
-          throw new Error("movl immediate는 32비트 패턴이어야 합니다.");
+          if (n < I32MIN || n > U32MAX) {
+            throw new Error(
+              "movl immediate는 32비트 패턴이어야 합니다."
+            );
+          }
+        } else if (opcode === "pushq") {
+          // push imm32 sign-extends its encoded 32-bit pattern.
+          // Both $-1 and $0xFFFFFFFF represent -1.
+          args[0].value = parseEncodedImm32(
+            args[0].literal,
+            "pushq signed imm32"
+          );
+        } else if (
+          opcode !== "movzbl" &&
+          !["salq", "sarq", "shrq"].includes(opcode)
+        ) {
+          args[0].value =
+            parseEncodedImm32(
+              args[0].literal,
+              opcode + " signed imm32"
+            );
         }
       }
     }
 
-    function bitSign(v, bits = 64) {
-      return Number((U(v, bits) >> BigInt(bits - 1)) & 1n);
+    function bitSign(value, bits = 64) {
+      return Number(
+        (
+          U(value, bits) >>
+          BigInt(bits - 1)
+        ) & 1n
+      );
     }
 
     function updateZS(result, bits = 64) {
-      const r = U(result, bits);
-      machine.flags.ZF = r === 0n ? 1 : 0;
-      machine.flags.SF = bitSign(r, bits);
+      const value = U(result, bits);
+
+      machine.flags.ZF =
+        value === 0n ? 1 : 0;
+
+      machine.flags.SF =
+        bitSign(value, bits);
     }
 
     function addFlags(a, b, bits = 64) {
       const A = U(a, bits);
       const B = U(b, bits);
+
       const full = A + B;
       const result = U(full, bits);
 
@@ -2989,10 +3831,16 @@ if (document.fonts && document.fonts.ready){
       const sr = bitSign(result, bits);
 
       updateZS(result, bits);
+
       machine.flags.CF =
-        full >= (1n << BigInt(bits)) ? 1 : 0;
+        full >= (1n << BigInt(bits))
+          ? 1
+          : 0;
+
       machine.flags.OF =
-        sa === sb && sr !== sa ? 1 : 0;
+        sa === sb && sr !== sa
+          ? 1
+          : 0;
 
       return result;
     }
@@ -3000,6 +3848,7 @@ if (document.fonts && document.fonts.ready){
     function subFlags(a, b, bits = 64) {
       const A = U(a, bits);
       const B = U(b, bits);
+
       const result = U(A - B, bits);
 
       const sa = bitSign(A, bits);
@@ -3007,71 +3856,95 @@ if (document.fonts && document.fonts.ready){
       const sr = bitSign(result, bits);
 
       updateZS(result, bits);
-      machine.flags.CF = A < B ? 1 : 0;
+
+      machine.flags.CF =
+        A < B ? 1 : 0;
+
       machine.flags.OF =
-        sa !== sb && sr !== sa ? 1 : 0;
+        sa !== sb && sr !== sa
+          ? 1
+          : 0;
 
       return result;
     }
 
     function logicalFlags(result) {
       updateZS(result);
+
       machine.flags.CF = 0;
       machine.flags.OF = 0;
     }
 
-    // A conditional instruction checks only the flags it actually uses.
     function condition(suffix) {
-      const f = machine.flags;
+      const definition = CONDITIONS[suffix];
 
-      const needed = {
-        e: ["ZF"],
-        z: ["ZF"],
-        ne: ["ZF"],
-        nz: ["ZF"],
-        s: ["SF"],
-        ns: ["SF"],
-        b: ["CF"],
-        ae: ["CF"],
-        a: ["CF", "ZF"],
-        be: ["CF", "ZF"],
-        l: ["SF", "OF"],
-        ge: ["SF", "OF"],
-        g: ["ZF", "SF", "OF"],
-        le: ["ZF", "SF", "OF"]
-      }[suffix];
-
-      if (!needed) {
-        throw new Error("지원하지 않는 조건 코드: " + suffix);
+      if (!definition) {
+        throw new Error(
+          "지원하지 않는 조건 코드: " +
+          suffix
+        );
       }
 
-      for (const name of needed) {
-        if (f[name] === null) {
+      const flags = machine.flags;
+
+      for (const name of definition.flags) {
+        if (flags[name] === null) {
           throw new Error(
-            suffix + " 조건 평가에 필요한 " +
-            name + " 플래그가 미정의입니다."
+            suffix +
+            " 조건 평가에 필요한 " +
+            name +
+            " 플래그가 미정의입니다."
           );
         }
       }
 
-      const { ZF: Z, SF: S, CF: C, OF: O } = f;
+      return definition.test(flags);
+    }
 
-      switch (suffix) {
-        case "e":
-        case "z": return Z === 1;
-        case "ne":
-        case "nz": return Z === 0;
-        case "s": return S === 1;
-        case "ns": return S === 0;
-        case "b": return C === 1;
-        case "ae": return C === 0;
-        case "a": return C === 0 && Z === 0;
-        case "be": return C === 1 || Z === 1;
-        case "l": return S !== O;
-        case "ge": return S === O;
-        case "g": return Z === 0 && S === O;
-        case "le": return Z === 1 || S !== O;
+    function conditionOpcode(opcode) {
+      if (opcode === "jmp") {
+        return {
+          kind: "jump",
+          suffix: null
+        };
       }
+
+      if (opcode.startsWith("cmov")) {
+        const raw = opcode.slice(4);
+        const suffix = raw.endsWith("q")
+          ? raw.slice(0, -1)
+          : raw;
+
+        if (!CONDITIONS[suffix]) {
+          throw new Error(
+            "지원하지 않는 조건 코드: " +
+            suffix
+          );
+        }
+
+        return {
+          kind: "cmov",
+          suffix
+        };
+      }
+
+      if (opcode.startsWith("j")) {
+        const suffix = opcode.slice(1);
+
+        if (!CONDITIONS[suffix]) {
+          throw new Error(
+            "지원하지 않는 조건 코드: " +
+            suffix
+          );
+        }
+
+        return {
+          kind: "jump",
+          suffix
+        };
+      }
+
+      return null;
     }
 
     function executeInstruction() {
@@ -3083,23 +3956,39 @@ if (document.fonts && document.fonts.ready){
       }
 
       const text = program[machine.pc].text;
-      const match = /^([a-z][a-z0-9]*)\s*(.*)$/i.exec(text);
 
-      if (!match) throw new Error("명령어 구문 오류: " + text);
+      const match =
+        /^([a-z][a-z0-9]*)\s*(.*)$/i.exec(text);
+
+      if (!match) {
+        throw new Error(
+          "명령어 구문 오류: " + text
+        );
+      }
 
       const op = match[1].toLowerCase();
-      const args = splitOperands(match[2]).map(parseOperand);
+
+      const args = splitOperands(
+        match[2]
+      ).map(parseOperand);
 
       let nextPC = machine.pc + 1;
       let detail = "";
 
       if (op === "nop") {
         assertOperands(op, args, []);
-        detail = "nop: 상태를 변경하지 않습니다.";
+        detail =
+          "nop: 상태를 변경하지 않습니다.";
       }
 
-      else if (op === "movq" || op === "movl" || op === "movabsq") {
-        const bits = op === "movl" ? 32 : 64;
+      else if (
+        op === "movq" ||
+        op === "movl" ||
+        op === "movabsq"
+      ) {
+        const bits = op === "movl"
+          ? 32
+          : 64;
 
         assertOperands(op, args, [
           ["imm", "reg", "mem"],
@@ -3107,20 +3996,33 @@ if (document.fonts && document.fonts.ready){
         ]);
 
         if (op === "movabsq") {
-          if (args[0].type !== "imm" || args[1].type !== "reg") {
-            throw new Error("movabsq는 imm64→r64만 지원합니다.");
+          if (
+            args[0].type !== "imm" ||
+            args[1].type !== "reg"
+          ) {
+            throw new Error(
+              "movabsq는 imm64→r64만 지원합니다."
+            );
           }
-          parseImm64(args[0].value.toString());
         }
 
-        const value = readOperand(args[0], bits);
-        writeOperand(args[1], value, bits);
+        const value = readOperand(
+          args[0],
+          bits
+        );
 
-        detail = op === "movl"
-          ? "movl: r32 목적지에 쓸 때 상위 32비트가 0으로 클리어됩니다."
-          : op === "movabsq"
-            ? "movabsq: 전체 64비트 즉시값을 레지스터에 기록합니다."
-            : "movq: 64비트 값을 이동하며 플래그는 변경하지 않습니다.";
+        writeOperand(
+          args[1],
+          value,
+          bits
+        );
+
+        detail =
+          op === "movl"
+            ? "movl: r32 목적지에 쓸 때 상위 32비트가 0으로 클리어됩니다."
+            : op === "movabsq"
+              ? "movabsq: 전체 64비트 즉시값을 레지스터에 기록합니다."
+              : "movq: 64비트 값을 이동하며 플래그는 변경하지 않습니다.";
       }
 
       else if (op === "movzbl") {
@@ -3129,18 +4031,28 @@ if (document.fonts && document.fonts.ready){
           ["reg"]
         ]);
 
-        let byte;
+        let value;
 
         if (args[0].type === "mem") {
-          byte = memRead(effectiveAddress(args[0]), 1);
+          value = memRead(
+            effectiveAddress(args[0]),
+            1
+          );
         } else {
-          byte = regRead(args[0].name, 8);
+          value = regRead(
+            args[0].name,
+            8
+          );
         }
 
-        writeOperand(args[1], byte, 32);
+        writeOperand(
+          args[1],
+          value,
+          32
+        );
+
         detail =
-          "movzbl: 8비트를 zero-extend해 r32에 기록합니다. " +
-          "r64의 상위 32비트도 0이 됩니다.";
+          "movzbl: 8비트를 zero-extend하여 r32에 기록합니다. r64의 상위 32비트도 0이 됩니다.";
       }
 
       else if (op === "leaq") {
@@ -3149,70 +4061,130 @@ if (document.fonts && document.fonts.ready){
           ["reg"]
         ]);
 
-        const address = effectiveAddress(args[0]);
-        writeOperand(args[1], address, 64);
+        const address =
+          effectiveAddress(args[0]);
+
+        writeOperand(
+          args[1],
+          address,
+          64
+        );
 
         detail =
           "leaq: 메모리를 읽지 않고 주소 " +
-          hx64(address) + "를 계산했습니다.";
+          hx64(address) +
+          "를 계산했습니다.";
       }
 
       else if (
-        ["addq", "subq", "imulq", "xorq", "andq", "orq"]
-          .includes(op)
+        [
+          "addq",
+          "subq",
+          "imulq",
+          "xorq",
+          "andq",
+          "orq"
+        ].includes(op)
       ) {
         assertOperands(op, args, [
-          op === "imulq" ? ["reg", "mem"] : ["imm", "reg", "mem"],
+          op === "imulq"
+            ? ["reg", "mem"]
+            : ["imm", "reg", "mem"],
           ["reg", "mem"]
         ]);
 
-        if (op === "imulq" && args[1].type !== "reg") {
-          throw new Error("2피연산자 imulq의 목적지는 레지스터입니다.");
+        if (
+          op === "imulq" &&
+          args[1].type !== "reg"
+        ) {
+          throw new Error(
+            "2피연산자 imulq의 목적지는 레지스터입니다."
+          );
         }
 
-        const src = readOperand(args[0], 64);
-        const dst = readOperand(args[1], 64);
+        const source =
+          readOperand(args[0], 64);
+
+        const dest =
+          readOperand(args[1], 64);
+
         let result;
 
         if (op === "addq") {
-          result = addFlags(dst, src);
+          result = addFlags(
+            dest,
+            source
+          );
+
           detail =
-            "addq: OF=" + machine.flags.OF +
-            " (signed overflow), CF=" + machine.flags.CF +
+            "addq: OF=" +
+            machine.flags.OF +
+            " (signed overflow), CF=" +
+            machine.flags.CF +
             " (unsigned carry-out).";
-        } else if (op === "subq") {
-          result = subFlags(dst, src);
+        }
+
+        else if (op === "subq") {
+          result = subFlags(
+            dest,
+            source
+          );
+
           detail =
             "subq: destination−source. CF=" +
-            machine.flags.CF + " (unsigned borrow).";
-        } else if (op === "imulq") {
-          const full = I(dst) * I(src);
+            machine.flags.CF +
+            " (unsigned borrow).";
+        }
+
+        else if (op === "imulq") {
+          const full =
+            I(dest) * I(source);
+
           result = U(full);
 
-          const overflow = full !== I(result) ? 1 : 0;
+          const overflow =
+            full !== I(result)
+              ? 1
+              : 0;
+
           machine.flags.CF = overflow;
           machine.flags.OF = overflow;
+
           machine.flags.ZF = null;
           machine.flags.SF = null;
 
           detail =
             "imulq: 하위 64비트만 저장. CF=OF=" +
-            overflow + "; ZF/SF는 미정의입니다.";
-        } else {
-          result =
-            op === "xorq" ? dst ^ src :
-            op === "andq" ? dst & src :
-            dst | src;
-
-          logicalFlags(result);
-          detail =
-            op + ": CF=OF=0, ZF/SF는 결과에 따라 갱신됩니다.";
+            overflow +
+            "; ZF/SF는 미정의입니다.";
         }
 
-        writeOperand(args[1], result, 64);
+        else {
+          result =
+            op === "xorq"
+              ? dest ^ source
+              : op === "andq"
+                ? dest & source
+                : dest | source;
+
+          logicalFlags(result);
+
+          detail =
+            op +
+            ": CF=OF=0, ZF/SF는 결과에 따라 갱신됩니다.";
+        }
+
+        writeOperand(
+          args[1],
+          result,
+          64
+        );
       }
 
-      else if (["salq", "sarq", "shrq"].includes(op)) {
+      else if (
+        ["salq", "sarq", "shrq"]
+          .includes(op)
+      ) {
         assertOperands(op, args, [
           ["imm", "reg"],
           ["reg", "mem"]
@@ -3222,177 +4194,335 @@ if (document.fonts && document.fonts.ready){
           args[0].type === "reg" &&
           args[0].name !== "cl"
         ) {
-          throw new Error("시프트 횟수 레지스터는 %cl만 가능합니다.");
+          throw new Error(
+            "시프트 횟수 레지스터는 %cl만 가능합니다."
+          );
         }
-
-        const rawCount = readOperand(
-          args[0],
-          args[0].type === "reg" ? 8 : 64
-        );
 
         if (args[0].type === "imm") {
-          requireRange(args[0].value, 0n, 255n, "shift imm8");
+          requireRange(
+            args[0].value,
+            0n,
+            255n,
+            "shift imm8"
+          );
         }
 
-        const count = Number(rawCount & 63n);
-        const old = readOperand(args[1], 64);
+        const rawCount =
+          args[0].type === "reg"
+            ? readOperand(args[0], 8)
+            : readOperand(args[0], 64);
+
+        const count =
+          Number(rawCount & 63n);
+
+        const old =
+          readOperand(args[1], 64);
 
         if (count !== 0) {
           let result;
           let cf;
 
           if (op === "salq") {
-            cf = Number((old >> BigInt(64 - count)) & 1n);
-            result = U(old << BigInt(count));
-          } else if (op === "shrq") {
-            cf = Number((old >> BigInt(count - 1)) & 1n);
-            result = old >> BigInt(count);
-          } else {
-            cf = Number((old >> BigInt(count - 1)) & 1n);
-            result = U(I(old) >> BigInt(count));
+            cf = Number(
+              (
+                old >>
+                BigInt(64 - count)
+              ) & 1n
+            );
+
+            result = U(
+              old << BigInt(count)
+            );
           }
 
-          writeOperand(args[1], result, 64);
+          else if (op === "shrq") {
+            cf = Number(
+              (
+                old >>
+                BigInt(count - 1)
+              ) & 1n
+            );
+
+            result =
+              old >> BigInt(count);
+          }
+
+          else {
+            cf = Number(
+              (
+                old >>
+                BigInt(count - 1)
+              ) & 1n
+            );
+
+            result = U(
+              I(old) >> BigInt(count)
+            );
+          }
+
+          writeOperand(
+            args[1],
+            result,
+            64
+          );
+
           updateZS(result);
           machine.flags.CF = cf;
 
           if (count === 1) {
             machine.flags.OF =
-              op === "salq" ? bitSign(result) ^ cf :
-              op === "shrq" ? bitSign(old) :
-              0;
+              op === "salq"
+                ? bitSign(result) ^ cf
+                : op === "shrq"
+                  ? bitSign(old)
+                  : 0;
           } else {
             machine.flags.OF = null;
           }
 
           detail =
-            op + ": 실효 이동 횟수 " + count +
+            op +
+            ": 실효 이동 횟수 " +
+            count +
             ". CF는 마지막으로 밀려난 비트입니다." +
-            (count > 1 ? " OF는 미정의입니다." : "");
+            (
+              count > 1
+                ? " OF는 미정의입니다."
+                : ""
+            );
         } else {
           detail =
-            op + ": 실효 이동 횟수 0. 값과 플래그를 유지합니다.";
+            op +
+            ": 실효 이동 횟수 0. 값과 플래그를 유지합니다.";
         }
       }
 
-      else if (["incq", "decq", "negq", "notq"].includes(op)) {
-        assertOperands(op, args, [["reg", "mem"]]);
+      else if (
+        ["incq", "decq", "negq", "notq"]
+          .includes(op)
+      ) {
+        assertOperands(op, args, [
+          ["reg", "mem"]
+        ]);
 
-        const old = readOperand(args[0], 64);
+        const old =
+          readOperand(args[0], 64);
+
         let result;
 
         if (op === "notq") {
           result = U(~old);
-          detail = "notq: 모든 비트를 반전. 플래그는 변경하지 않습니다.";
-        } else if (op === "negq") {
-          result = subFlags(0n, old);
-          machine.flags.CF = old === 0n ? 0 : 1;
+
+          detail =
+            "notq: 모든 비트를 반전하며 플래그는 변경하지 않습니다.";
+        }
+
+        else if (op === "negq") {
+          result = subFlags(
+            0n,
+            old
+          );
+
+          machine.flags.CF =
+            old === 0n ? 0 : 1;
+
           detail =
             "negq: 0−operand. 0이 아닌 값은 CF=1, TMin은 OF=1.";
-        } else {
-          const oldCF = machine.flags.CF;
-          result = op === "incq"
-            ? addFlags(old, 1n)
-            : subFlags(old, 1n);
+        }
+
+        else {
+          const oldCF =
+            machine.flags.CF;
+
+          result =
+            op === "incq"
+              ? addFlags(old, 1n)
+              : subFlags(old, 1n);
+
           machine.flags.CF = oldCF;
 
           detail =
-            op + ": 값과 ZF/SF/OF를 갱신하지만 CF는 유지합니다.";
+            op +
+            ": ZF/SF/OF를 갱신하지만 CF는 유지합니다.";
         }
 
-        writeOperand(args[0], result, 64);
+        writeOperand(
+          args[0],
+          result,
+          64
+        );
       }
 
-      else if (op === "cmpq" || op === "testq") {
+      else if (
+        op === "cmpq" ||
+        op === "testq"
+      ) {
         assertOperands(op, args, [
           ["imm", "reg", "mem"],
           ["reg", "mem"]
         ]);
 
-        const src = readOperand(args[0], 64);
-        const dst = readOperand(args[1], 64);
+        const source =
+          readOperand(args[0], 64);
+
+        const dest =
+          readOperand(args[1], 64);
 
         if (op === "cmpq") {
-          subFlags(dst, src);
+          subFlags(dest, source);
+
           detail =
             "cmpq b,a: a−b의 플래그만 갱신합니다.";
         } else {
-          logicalFlags(src & dst);
+          logicalFlags(
+            source & dest
+          );
+
           detail =
             "testq: a&b의 플래그만 갱신합니다. CF=OF=0.";
         }
       }
 
       else if (op === "pushq") {
-        assertOperands(op, args, [["imm", "reg", "mem"]]);
+        assertOperands(op, args, [
+          ["imm", "reg", "mem"]
+        ]);
 
-        const value = readOperand(args[0], 64);
-        const newSP = U(machine.regs.rsp - 8n);
+        // An immediate was validated as an encoded signed
+        // imm32 pattern in assertOperands.
+        const value =
+          args[0].type === "imm"
+            ? U(args[0].value, 64)
+            : readOperand(args[0], 64);
 
-        memWrite(newSP, value, 8);
+        const newSP = U(
+          machine.regs.rsp - 8n
+        );
+
+        memWrite(
+          newSP,
+          value,
+          8
+        );
+
         machine.regs.rsp = newSP;
 
         detail =
-          "pushq: %rsp를 8 감소시킨 다음 8바이트를 기록합니다.";
+          "pushq: %rsp를 8 감소시킨 후 8바이트를 저장합니다." +
+          (
+            args[0].type === "imm"
+              ? " imm32를 signed 64비트로 부호 확장했습니다. 저장값=" +
+                hx64(value) + "."
+              : ""
+          );
       }
 
       else if (op === "popq") {
-        assertOperands(op, args, [["reg", "mem"]]);
+        assertOperands(op, args, [
+          ["reg", "mem"]
+        ]);
 
-        const oldSP = machine.regs.rsp;
-        const value = memRead(oldSP, 8);
-        machine.regs.rsp = U(oldSP + 8n);
-        writeOperand(args[0], value, 64);
+        const oldSP =
+          machine.regs.rsp;
+
+        const value =
+          memRead(oldSP, 8);
+
+        machine.regs.rsp = U(
+          oldSP + 8n
+        );
+
+        writeOperand(
+          args[0],
+          value,
+          64
+        );
 
         detail =
           "popq: 기존 %rsp에서 8바이트를 읽고 스택 포인터를 증가시킵니다.";
       }
 
-      else if (op === "jmp" || /^j(e|ne|s|ns|g|ge|l|le|a|b)$/.test(op)) {
-        assertOperands(op, args, [["label"]]);
+      else if (
+        op === "jmp" ||
+        op.startsWith("j") ||
+        op.startsWith("cmov")
+      ) {
+        const conditional = conditionOpcode(op);
 
-        const target = args[0].name;
+        if (conditional.kind === "jump") {
+          assertOperands(op, args, [
+            ["label"]
+          ]);
 
-        if (!labels.has(target)) {
-          throw new Error("정의되지 않은 레이블: " + target);
+          const target =
+            args[0].name;
+
+          if (!labels.has(target)) {
+            throw new Error(
+              "정의되지 않은 레이블: " +
+              target
+            );
+          }
+
+          const take =
+            conditional.suffix === null
+              ? true
+              : condition(conditional.suffix);
+
+          if (take) {
+            nextPC = labels.get(target);
+          }
+
+          detail =
+            op + " " + target +
+            ": " +
+            (
+              take
+                ? "분기함"
+                : "분기하지 않음"
+            ) +
+            ", 다음 PC=" + nextPC;
         }
 
-        const take = op === "jmp"
-          ? true
-          : condition(op.slice(1));
+        else if (conditional.kind === "cmov") {
+          assertOperands(op, args, [
+            ["reg", "mem"],
+            ["reg"]
+          ]);
 
-        if (take) nextPC = labels.get(target);
+          const take =
+            condition(conditional.suffix);
 
-        detail =
-          op + " " + target + ": " +
-          (take ? "분기함" : "분기하지 않음") +
-          ", 다음 PC=" + nextPC;
-      }
+          // CMOV reads the source even when the condition fails.
+          const value =
+            readOperand(args[0], 64);
 
-      else if (/^cmov(e|ne|s|ns|g|ge|l|le|a|b)q?$/.test(op)) {
-        assertOperands(op, args, [
-          ["reg", "mem"],
-          ["reg"]
-        ]);
+          if (take) {
+            writeOperand(
+              args[1],
+              value,
+              64
+            );
+          }
 
-        const suffix = op.slice(4).replace(/q$/, "");
-        const take = condition(suffix);
-
-        // CMOV reads the source even when the condition is false.
-        const value = readOperand(args[0], 64);
-
-        if (take) {
-          writeOperand(args[1], value, 64);
+          detail =
+            op +
+            ": 조건 " +
+            (
+              take
+                ? "참 — 목적지 갱신"
+                : "거짓 — 목적지 유지"
+            ) +
+            ". 분기 없는 조건부 이동입니다.";
         }
-
-        detail =
-          op + ": 조건 " +
-          (take ? "참 — 목적지 갱신" : "거짓 — 목적지 유지") +
-          ". 분기 없는 조건부 이동입니다.";
       }
 
       else {
-        throw new Error("지원하지 않는 명령어: " + op);
+        throw new Error(
+          "지원하지 않는 명령어: " +
+          op
+        );
       }
 
       machine.pc = nextPC;
@@ -3405,28 +4535,50 @@ if (document.fonts && document.fonts.ready){
       explanation = detail;
     }
 
-    const top = bar(root);
+    const controls = C(root);
 
     const selector = selectInput(
-      top,
+      controls,
       "예제 프로그램(Preset)",
-      PROGRAMS.map((p, i) => [i, p.name]),
+      PROGRAMS.map((entry, index) => [
+        index,
+        entry.name
+      ]),
       preset
     );
 
-    const actionBar = bar(root);
+    const actions = C(root);
 
-    const stepButton = button(actionBar, "한 단계", step);
-    const undoButton = button(actionBar, "되돌리기", undo);
-    const autoButton = button(actionBar, "자동 재생", auto);
-    button(actionBar, "리셋", reset);
+    const stepButton = B(
+      actions,
+      "한 단계",
+      step
+    );
 
-    const status = stateBox(root);
-    const codeHost = node("section", root);
-    const regHost = node("section", root);
-    const flagHost = node("section", root);
-    const stackHost = node("section", root);
-    const note = stateBox(root);
+    const undoButton = B(
+      actions,
+      "되돌리기",
+      undo
+    );
+
+    const autoButton = B(
+      actions,
+      "자동 재생",
+      auto
+    );
+
+    B(
+      actions,
+      "리셋",
+      reset
+    );
+
+    const status = S(root);
+    const codeHost = E("section", root);
+    const regHost = E("section", root);
+    const flagHost = E("section", root);
+    const stackHost = E("section", root);
+    const explanationHost = S(root);
 
     selector.addEventListener("change", () => {
       preset = Number(selector.value);
@@ -3439,19 +4591,25 @@ if (document.fonts && document.fonts.ready){
         timer = null;
       }
 
-      autoButton.textContent = "자동 재생";
+      autoButton.textContent =
+        "자동 재생";
+
       selected(autoButton, false);
     }
 
     function reset() {
       stopAuto();
 
-      const compiled = compile(PROGRAMS[preset].code);
+      const compiled = compile(
+        PROGRAMS[preset].code
+      );
+
       program = compiled.instructions;
       labels = compiled.labels;
 
       machine = initialMachine();
       history = [];
+
       lastChanges = null;
       executionError = null;
 
@@ -3466,16 +4624,33 @@ if (document.fonts && document.fonts.ready){
       const flags = new Set();
       const memory = new Set();
 
-      REGS.forEach(r => {
-        if (before.regs[r] !== after.regs[r]) regs.add(r);
+      REGS.forEach(reg => {
+        if (
+          before.regs[reg] !==
+          after.regs[reg]
+        ) {
+          regs.add(reg);
+        }
       });
 
-      ["ZF", "SF", "CF", "OF"].forEach(f => {
-        if (before.flags[f] !== after.flags[f]) flags.add(f);
+      ["ZF", "SF", "CF", "OF"].forEach(flag => {
+        if (
+          before.flags[flag] !==
+          after.flags[flag]
+        ) {
+          flags.add(flag);
+        }
       });
 
-      for (let i = 0; i < STACK_SIZE; i++) {
-        if (before.memory[i] !== after.memory[i]) {
+      for (
+        let i = 0;
+        i < STACK_SIZE;
+        i++
+      ) {
+        if (
+          before.memory[i] !==
+          after.memory[i]
+        ) {
           memory.add(i);
         }
       }
@@ -3486,19 +4661,30 @@ if (document.fonts && document.fonts.ready){
     function executeOne() {
       if (machine.halted) return false;
 
-      const before = cloneMachine(machine);
+      const before =
+        cloneMachine(machine);
 
       try {
         executeInstruction();
+
         history.push(before);
-        lastChanges = diff(before, machine);
+
+        lastChanges = diff(
+          before,
+          machine
+        );
+
         executionError = null;
+
         return true;
       } catch (e) {
         machine = before;
         lastChanges = null;
+
         executionError = e.message;
-        explanation = "실행 오류: " + e.message;
+        explanation =
+          "실행 오류: " + e.message;
+
         return false;
       }
     }
@@ -3514,11 +4700,15 @@ if (document.fonts && document.fonts.ready){
 
       if (history.length) {
         machine = history.pop();
-        explanation = "직전 실행을 되돌렸습니다.";
-        executionError = null;
+
         lastChanges = null;
+        executionError = null;
+
+        explanation =
+          "직전 실행을 되돌렸습니다.";
       } else {
-        explanation = "되돌릴 실행 기록이 없습니다.";
+        explanation =
+          "되돌릴 실행 기록이 없습니다.";
       }
 
       render();
@@ -3533,12 +4723,16 @@ if (document.fonts && document.fonts.ready){
 
       if (machine.halted) return;
 
-      autoButton.textContent = "자동 재생 중지";
+      autoButton.textContent =
+        "자동 재생 중지";
+
       selected(autoButton, true);
 
       timer = setInterval(() => {
         if (machine.steps >= 200) {
-          explanation = "자동 재생 안전 제한: 최대 200단계입니다.";
+          explanation =
+            "자동 재생 안전 제한: 최대 200단계입니다.";
+
           stopAuto();
           render();
           return;
@@ -3546,41 +4740,94 @@ if (document.fonts && document.fonts.ready){
 
         const ok = executeOne();
 
-        if (!ok || machine.halted) stopAuto();
+        if (!ok || machine.halted) {
+          stopAuto();
+        }
+
         render();
       }, 550);
     }
 
     function render() {
       stepButton.disabled = machine.halted;
-      undoButton.disabled = history.length === 0;
+      undoButton.disabled =
+        history.length === 0;
 
       status.textContent =
         "PC=" + machine.pc +
-        " · 실행 횟수=" + machine.steps +
-        " · " + (machine.halted ? "종료" : "실행 가능") +
-        (executionError ? "\n오류: " + executionError : "");
+        " · 실행 횟수=" +
+        machine.steps +
+        " · " +
+        (
+          machine.halted
+            ? "종료"
+            : "실행 가능"
+        ) +
+        (
+          executionError
+            ? "\n오류: " +
+              executionError
+            : ""
+        );
 
       clear(codeHost);
-      heading(codeHost, "명령어 흐름 — Instruction Trace");
+      H(
+        codeHost,
+        "명령어 흐름 — Instruction Trace"
+      );
 
-      const code = node("div", codeHost, "", "v6-code-list");
+      const code = E(
+        "div",
+        codeHost,
+        "",
+        "v6-code-list"
+      );
+
+      const codeRows = [];
 
       program.forEach((instruction, index) => {
-        const row = node(
+        const row = E(
           "div",
           code,
           String(index).padStart(2, "0") +
-            "  " + instruction.text
+          "  " + instruction.text
         );
 
-        if (index === machine.pc && !machine.halted) {
-          row.classList.add("is-current");
+        row.style.fontFamily = MONO;
+
+        if (
+          index === machine.pc &&
+          !machine.halted
+        ) {
+          row.classList.add(
+            "is-current"
+          );
         }
+
+        codeRows.push(row);
       });
 
+      if (lastChanges && !executionError) {
+        const executedPC =
+          history.length
+            ? history[
+                history.length - 1
+              ].pc
+            : null;
+
+        if (
+          executedPC !== null &&
+          codeRows[executedPC]
+        ) {
+          codeRows[executedPC].style.color = RED;
+        }
+      }
+
       clear(regHost);
-      heading(regHost, "레지스터 — 64-bit Registers");
+      H(
+        regHost,
+        "레지스터 — 64-bit Registers"
+      );
 
       const regs = table(regHost, [
         "레지스터",
@@ -3588,22 +4835,28 @@ if (document.fonts && document.fonts.ready){
         "Signed decimal"
       ]);
 
-      REGS.forEach(r => {
+      REGS.forEach(reg => {
         const changed =
-          lastChanges && lastChanges.regs.has(r);
+          lastChanges &&
+          lastChanges.regs.has(reg);
 
         regs.add([
-          "%" + r,
-          hx64(machine.regs[r]),
-          I(machine.regs[r]).toString()
+          "%" + reg,
+          hx64(machine.regs[reg]),
+          I(machine.regs[reg]).toString()
         ], changed ? [0, 1, 2] : []);
       });
 
       clear(flagHost);
-      heading(flagHost, "조건 코드 — Condition Codes");
+      H(
+        flagHost,
+        "조건 코드 — Condition Codes"
+      );
 
       const flags = table(flagHost, [
-        "플래그", "현재 값", "의미"
+        "플래그",
+        "현재 값",
+        "의미"
       ]);
 
       const meanings = {
@@ -3613,76 +4866,103 @@ if (document.fonts && document.fonts.ready){
         OF: "Overflow Flag"
       };
 
-      ["ZF", "SF", "CF", "OF"].forEach(f => {
-        const changed =
-          lastChanges && lastChanges.flags.has(f);
+      ["ZF", "SF", "CF", "OF"].forEach(flag => {
+        const value =
+          machine.flags[flag];
 
-        const value = machine.flags[f];
+        const changed =
+          lastChanges &&
+          lastChanges.flags.has(flag);
 
         flags.add([
-          f,
-          value === null ? "미정의" : String(value),
-          meanings[f]
+          flag,
+          value === null
+            ? "미정의"
+            : String(value),
+          meanings[flag]
         ], changed ? [0, 1] : []);
       });
 
       clear(stackHost);
-      heading(stackHost, "스택 메모리 — 256 Bytes");
+      H(
+        stackHost,
+        "스택 메모리 — 256 Bytes"
+      );
 
       const stack = table(stackHost, [
         "주소",
         "낮은 주소 → 높은 주소 (8바이트)"
       ]);
 
-      for (let offset = 0; offset < STACK_SIZE; offset += 8) {
-        const addr = STACK_BASE + BigInt(offset);
+      for (
+        let offset = 0;
+        offset < STACK_SIZE;
+        offset += 8
+      ) {
+        const address =
+          STACK_BASE + BigInt(offset);
 
         const row = stack.add([
-          hx64(addr) +
-            (addr === machine.regs.rsp ? " ← %rsp" : ""),
+          hx64(address) +
+          (
+            address === machine.regs.rsp
+              ? " ← %rsp"
+              : ""
+          ),
           ""
         ]);
 
         const cell = row.children[1];
-        cell.classList.add("v6-byte-sequence");
+
+        cell.classList.add(
+          "v6-byte-sequence"
+        );
 
         for (let j = 0; j < 8; j++) {
           const index = offset + j;
-          const span = node(
+
+          const span = E(
             "span",
             cell,
-            hx8(machine.memory[index]) + (j === 7 ? "" : " ")
+            hx8(machine.memory[index]) +
+            (j === 7 ? "" : " ")
           );
 
           if (
             lastChanges &&
             lastChanges.memory.has(index)
           ) {
-            span.classList.add("v6-changed");
+            span.classList.add(
+              "v6-changed"
+            );
           }
         }
       }
 
-      note.textContent =
+      explanationHost.textContent =
         explanation +
         "\n\n초기 ZF/SF/CF/OF=0은 교육용 초기값입니다.\n" +
-        "64비트 산술 immediate는 sign-extended imm32 범위만 지원합니다. " +
-        "전체 imm64 이동은 movabsq에서만 지원합니다.\n" +
-        "이 실행기는 교육용 부분집합이며 실제 프로세스 전체 메모리를 모사하지 않습니다.";
+        "64비트 산술 immediate는 부호 확장된 imm32를 사용합니다.\n" +
+        "pushq immediate도 signed imm32를 64비트로 부호 확장합니다.\n" +
+        "0xFFFFFFFF는 32비트 즉시값 비트 패턴으로 해석되어 -1을 나타냅니다.\n" +
+        "전체 imm64 이동은 movabsq에서 지원합니다.\n" +
+        "조건부 점프와 cmov는 동일한 조건 코드 테이블을 사용합니다.\n" +
+        "이 실행기는 교육용 x86-64 부분집합입니다.";
     }
 
     reset();
   });
 
   // ============================================================
-  // 3. x86-64 Encoding / Decoding
+  // 3. asm-encode
   // ============================================================
 
   V6.register("asm-encode", function (root, cfg) {
     cfg = cfg && typeof cfg === "object" ? cfg : {};
-    title(root, "x86-64 인코딩·디코딩 — Objdump Reading");
 
-    const coverage = stateBox(root);
+    T(root, "x86-64 인코딩·디코딩 — Objdump Reading");
+
+    const coverage = S(root);
 
     coverage.textContent =
       "지원 범위(Coverage)\n" +
@@ -3693,9 +4973,10 @@ if (document.fonts && document.fonts.ready){
       "• movq $signed-imm32,%r64 (C7 /0)\n" +
       "• movabsq $imm64,%r64 (B8+r)\n" +
       "• call rel32\n\n" +
-      "부분집합 제한: REX.W=0x48 고정, rax/rcx/rdx/rbx/" +
-      "rsp/rbp/rsi/rdi만 지원합니다. R8–R15, REX.R/X/B, " +
-      "주소 크기 override, segment prefix, 일반 x86-64 ISA는 지원하지 않습니다.";
+      "부분집합 제한: REX.W=0x48 고정. " +
+      "rax/rcx/rdx/rbx/rsp/rbp/rsi/rdi만 지원합니다.\n" +
+      "R8–R15, REX.R/X/B, 주소 크기 override, segment prefix, " +
+      "일반 x86-64 ISA 전체는 지원하지 않습니다.";
 
     const state = {
       mode: "encode",
@@ -3706,19 +4987,27 @@ if (document.fonts && document.fonts.ready){
       error: ""
     };
 
-    const modeBar = bar(root);
+    const modeBar = C(root);
 
-    const encodeButton = button(modeBar, "인코드(Encode)", () => {
-      state.mode = "encode";
-      render();
-    });
+    const encodeButton = B(
+      modeBar,
+      "인코드(Encode)",
+      () => {
+        state.mode = "encode";
+        render();
+      }
+    );
 
-    const decodeButton = button(modeBar, "디코드(Decode)", () => {
-      state.mode = "decode";
-      render();
-    });
+    const decodeButton = B(
+      modeBar,
+      "디코드(Decode)",
+      () => {
+        state.mode = "decode";
+        render();
+      }
+    );
 
-    const selectionBar = bar(root);
+    const selectionBar = C(root);
 
     const OPTIONS = [
       ["push", "pushq %rbp"],
@@ -3745,19 +5034,26 @@ if (document.fonts && document.fonts.ready){
         : "push"
     );
 
-    state.selected = instructionSelect.value;
+    state.selected =
+      instructionSelect.value;
 
     const regSelect = selectInput(
       selectionBar,
       "레지스터",
-      REGS.map(r => [r, "%" + r]),
+      REGS.map(reg => [
+        reg,
+        "%" + reg
+      ]),
       "rax"
     );
 
     const baseSelect = selectInput(
       selectionBar,
       "Base",
-      REGS.map(r => [r, "%" + r]),
+      REGS.map(reg => [
+        reg,
+        "%" + reg
+      ]),
       "rbx"
     );
 
@@ -3766,8 +5062,12 @@ if (document.fonts && document.fonts.ready){
       "Index",
       [
         ["none", "없음"],
-        ...REGS.filter(r => r !== "rsp")
-          .map(r => [r, "%" + r])
+        ...REGS
+          .filter(reg => reg !== "rsp")
+          .map(reg => [
+            reg,
+            "%" + reg
+          ])
       ],
       "rcx"
     );
@@ -3775,14 +5075,27 @@ if (document.fonts && document.fonts.ready){
     const scaleSelect = selectInput(
       selectionBar,
       "Scale",
-      [1, 2, 4, 8].map(n => [n, String(n)]),
+      [1, 2, 4, 8].map(n => [
+        n,
+        String(n)
+      ]),
       4
     );
 
-    const dispInput = inputText(selectionBar, "Disp", "16");
-    const immInput = inputText(selectionBar, "Immediate", "8");
+    const dispInput = inputText(
+      selectionBar,
+      "Disp",
+      "16"
+    );
 
-    const hexBar = bar(root);
+    const immInput = inputText(
+      selectionBar,
+      "Immediate",
+      "8"
+    );
+
+    const hexBar = C(root);
+
     const hexInput = inputText(
       hexBar,
       "Hex bytes",
@@ -3795,85 +5108,131 @@ if (document.fonts && document.fonts.ready){
       "0x401000"
     );
 
-    const runBar = bar(root);
-    button(runBar, "인코딩 / 디코딩 실행", render);
+    const runBar = C(root);
 
-    const resultHost = node("section", root);
-    const details = stateBox(root);
-    const roundTrip = stateBox(root);
-    const objdump = stateBox(root);
+    B(
+      runBar,
+      "인코딩 / 디코딩 실행",
+      render
+    );
 
-    function setVisible(input, show) {
-      const parent = input.closest("label");
-      if (parent) parent.hidden = !show;
-    }
+    const resultHost = E(
+      "section",
+      root
+    );
+
+    const details = S(root);
+    const roundTrip = S(root);
+    const objdump = S(root);
 
     function updateControls() {
-      const encoding = state.mode === "encode";
+      const encoding =
+        state.mode === "encode";
+
       const kind = state.selected;
 
-      selected(encodeButton, encoding);
-      selected(decodeButton, !encoding);
-
-      encodeButton.setAttribute(
-        "aria-pressed",
-        encoding ? "true" : "false"
+      selected(
+        encodeButton,
+        encoding
       );
 
-      decodeButton.setAttribute(
-        "aria-pressed",
-        encoding ? "false" : "true"
+      selected(
+        decodeButton,
+        !encoding
       );
 
-      setVisible(instructionSelect, encoding);
-      setVisible(hexInput, !encoding);
+      setVisible(
+        instructionSelect,
+        encoding
+      );
+
+      setVisible(
+        hexInput,
+        !encoding
+      );
 
       const memory =
-        kind === "mov-store" || kind === "mov-load";
+        kind === "mov-store" ||
+        kind === "mov-load";
 
-      setVisible(regSelect,
-        encoding && (memory ||
+      setVisible(
+        regSelect,
+        encoding && (
+          memory ||
           kind === "mov-imm32" ||
-          kind === "movabs")
+          kind === "movabs"
+        )
       );
 
-      setVisible(baseSelect, encoding && memory);
-      setVisible(indexSelect, encoding && memory);
-      setVisible(scaleSelect, encoding && memory);
-      setVisible(dispInput, encoding && memory);
-
-      setVisible(immInput,
-        encoding &&
-        ["sub-rsp", "mov-imm32", "movabs", "call"].includes(kind)
+      setVisible(
+        baseSelect,
+        encoding && memory
       );
 
-      setVisible(ripInput,
+      setVisible(
+        indexSelect,
+        encoding && memory
+      );
+
+      setVisible(
+        scaleSelect,
+        encoding && memory
+      );
+
+      setVisible(
+        dispInput,
+        encoding && memory
+      );
+
+      setVisible(
+        immInput,
+        encoding && [
+          "sub-rsp",
+          "mov-imm32",
+          "movabs",
+          "call"
+        ].includes(kind)
+      );
+
+      // Decode mode may contain call rel32 or RIP-relative
+      // addressing, so RIP is available there.
+      // In encode mode, only call requires the reference RIP.
+      setVisible(
+        ripInput,
         !encoding || kind === "call"
       );
     }
 
-    function regCode(name) {
-      return parseReg64(name);
-    }
-
     function modrm(mod, reg, rm) {
-      return (mod << 6) | (reg << 3) | rm;
+      return (
+        (mod << 6) |
+        (reg << 3) |
+        rm
+      );
     }
 
     function sib(scale, index, base) {
       const shift = Math.log2(scale);
-      return (shift << 6) | (index << 3) | base;
+
+      return (
+        (shift << 6) |
+        (index << 3) |
+        base
+      );
     }
 
     function encode() {
       const bytes = [];
       const fields = [];
       let asm = "";
+
       const kind = state.selected;
 
       function put(value, name, meaning) {
         const index = bytes.length;
+
         bytes.push(value & 255);
+
         fields.push({
           name,
           meaning,
@@ -3881,9 +5240,18 @@ if (document.fonts && document.fonts.ready){
         });
       }
 
-      function putLE(value, size, name, meaning) {
+      function putLE(
+        value,
+        size,
+        name,
+        meaning
+      ) {
         const start = bytes.length;
-        bytes.push(...little(value, size));
+
+        bytes.push(
+          ...little(value, size)
+        );
+
         fields.push({
           name,
           meaning,
@@ -3895,27 +5263,52 @@ if (document.fonts && document.fonts.ready){
       }
 
       if (kind === "push") {
-        put(0x55, "opcode 55", "pushq %rbp");
+        put(
+          0x55,
+          "opcode 55",
+          "pushq %rbp"
+        );
+
         asm = "pushq %rbp";
       }
 
       else if (kind === "pop") {
-        put(0x5d, "opcode 5D", "popq %rbp");
+        put(
+          0x5d,
+          "opcode 5D",
+          "popq %rbp"
+        );
+
         asm = "popq %rbp";
       }
 
       else if (kind === "ret") {
-        put(0xc3, "opcode C3", "retq");
+        put(
+          0xc3,
+          "opcode C3",
+          "retq"
+        );
+
         asm = "retq";
       }
 
       else if (kind === "nop") {
-        put(0x90, "opcode 90", "nop");
+        put(
+          0x90,
+          "opcode 90",
+          "nop"
+        );
+
         asm = "nop";
       }
 
       else if (kind === "leave") {
-        put(0xc9, "opcode C9", "leaveq");
+        put(
+          0xc9,
+          "opcode C9",
+          "leaveq"
+        );
+
         asm = "leaveq";
       }
 
@@ -3923,42 +5316,84 @@ if (document.fonts && document.fonts.ready){
         kind === "mov-rsp-rbp" ||
         kind === "mov-rbp-rsp"
       ) {
-        const m = kind === "mov-rsp-rbp" ? 0xe5 : 0xec;
+        const m =
+          kind === "mov-rsp-rbp"
+            ? 0xe5
+            : 0xec;
 
-        put(0x48, "REX.W", "W=1, R=X=B=0");
-        put(0x89, "opcode 89", "r64 → r/m64");
-        put(m, "ModRM", "mod=11, reg/rm은 레지스터");
+        put(
+          0x48,
+          "REX.W",
+          "W=1, R=X=B=0"
+        );
 
-        asm = kind === "mov-rsp-rbp"
-          ? "movq %rsp,%rbp"
-          : "movq %rbp,%rsp";
+        put(
+          0x89,
+          "opcode 89",
+          "r64 → r/m64"
+        );
+
+        put(
+          m,
+          "ModRM",
+          "mod=11, reg/rm은 레지스터"
+        );
+
+        asm =
+          kind === "mov-rsp-rbp"
+            ? "movq %rsp,%rbp"
+            : "movq %rbp,%rsp";
       }
 
-      else if (kind === "mov-store" || kind === "mov-load") {
-        const reg = regSelect.value;
-        const base = baseSelect.value;
+      else if (
+        kind === "mov-store" ||
+        kind === "mov-load"
+      ) {
+        const reg =
+          regSelect.value;
+
+        const base =
+          baseSelect.value;
+
         const index =
           indexSelect.value === "none"
             ? null
             : indexSelect.value;
 
-        const scale = parseScale(scaleSelect.value);
-        const disp = parseSigned32(dispInput.value);
+        const scale =
+          parseScale(scaleSelect.value);
 
-        if (index === null && scale !== 1) {
-          throw new Error("index가 없을 때 scale은 1이어야 합니다.");
+        const disp =
+          parseSigned32(dispInput.value);
+
+        if (
+          index === null &&
+          scale !== 1
+        ) {
+          throw new Error(
+            "Index가 없을 때 Scale은 1이어야 합니다."
+          );
         }
 
-        const regNum = regCode(reg);
-        const baseNum = regCode(base);
+        const regNum =
+          regCode(reg);
+
+        const baseNum =
+          regCode(base);
 
         let mod;
         let dispSize;
 
-        if (disp === 0n && baseNum !== 5) {
+        if (
+          disp === 0n &&
+          baseNum !== 5
+        ) {
           mod = 0;
           dispSize = 0;
-        } else if (disp >= -128n && disp <= 127n) {
+        } else if (
+          disp >= -128n &&
+          disp <= 127n
+        ) {
           mod = 1;
           dispSize = 1;
         } else {
@@ -3966,137 +5401,259 @@ if (document.fonts && document.fonts.ready){
           dispSize = 4;
         }
 
-        // rbp cannot use mod=00 as an ordinary base.
-        if (baseNum === 5 && mod === 0) {
+        if (
+          baseNum === 5 &&
+          mod === 0
+        ) {
           mod = 1;
           dispSize = 1;
         }
 
         const useSIB =
-          index !== null || baseNum === 4;
+          index !== null ||
+          baseNum === 4;
 
         const opcode =
-          kind === "mov-store" ? 0x89 : 0x8b;
+          kind === "mov-store"
+            ? 0x89
+            : 0x8b;
 
-        put(0x48, "REX.W", "64비트 피연산자");
-        put(opcode, "opcode", kind === "mov-store"
-          ? "레지스터 → 메모리"
-          : "메모리 → 레지스터"
+        put(
+          0x48,
+          "REX.W",
+          "64비트 피연산자"
         );
 
         put(
-          modrm(mod, regNum, useSIB ? 4 : baseNum),
+          opcode,
+          "opcode",
+          kind === "mov-store"
+            ? "레지스터 → 메모리"
+            : "메모리 → 레지스터"
+        );
+
+        put(
+          modrm(
+            mod,
+            regNum,
+            useSIB ? 4 : baseNum
+          ),
           "ModRM",
-          "mod=" + mod.toString(2).padStart(2, "0") +
-          ", reg=" + regNum +
-          ", r/m=" + (useSIB ? 4 : baseNum)
+          "mod=" +
+            mod.toString(2).padStart(2, "0") +
+            ", reg=" +
+            regNum.toString(2).padStart(3, "0") +
+            ", r/m=" +
+            (
+              useSIB
+                ? "100"
+                : baseNum.toString(2).padStart(3, "0")
+            )
         );
 
         if (useSIB) {
           const indexNum =
-            index === null ? 4 : regCode(index);
+            index === null
+              ? 4
+              : regCode(index);
 
-          if (indexNum === 4 && index !== null) {
-            throw new Error("%rsp는 index가 될 수 없습니다.");
+          if (
+            indexNum === 4 &&
+            index !== null
+          ) {
+            throw new Error(
+              "%rsp는 SIB index로 사용할 수 없습니다."
+            );
           }
 
           put(
-            sib(scale, indexNum, baseNum),
+            sib(
+              scale,
+              indexNum,
+              baseNum
+            ),
             "SIB",
             "scale=" + scale +
-            ", index=" + (index || "없음") +
+            ", index=" +
+            (index || "없음") +
             ", base=" + base
           );
         }
 
-        if (dispSize) {
+        if (dispSize !== 0) {
           putLE(
             disp,
             dispSize,
-            "disp" + dispSize * 8,
+            "disp" + (dispSize * 8),
             "signed displacement, little-endian"
           );
         }
 
-        const memory = index === null
-          ? (disp === 0n ? "" : disp.toString()) +
-            "(%" + base + ")"
-          : memoryText(base, index, scale, disp);
+        const memory =
+          index === null
+            ? (
+                disp === 0n
+                  ? ""
+                  : disp.toString()
+              ) +
+              "(%" + base + ")"
+            : memoryText(
+                base,
+                index,
+                scale,
+                disp
+              );
 
-        asm = kind === "mov-store"
-          ? "movq %" + reg + "," + memory
-          : "movq " + memory + ",%" + reg;
+        asm =
+          kind === "mov-store"
+            ? "movq %" + reg + "," + memory
+            : "movq " + memory + ",%" + reg;
       }
 
       else if (kind === "sub-rsp") {
         const imm = requireRange(
           parseNumber(immInput.value),
-          -128n, 127n,
+          -128n,
+          127n,
           "signed imm8"
         );
 
-        put(0x48, "REX.W", "64비트 피연산자");
-        put(0x83, "opcode 83", "Group 1, imm8 sign-extension");
-        put(0xec, "ModRM EC", "mod=11, /5=sub, rm=rsp");
-        putLE(imm, 1, "imm8", "signed immediate");
+        put(
+          0x48,
+          "REX.W",
+          "64비트 피연산자"
+        );
 
-        asm = "subq $" + imm + ",%rsp";
+        put(
+          0x83,
+          "opcode 83",
+          "Group 1, imm8 sign-extension"
+        );
+
+        put(
+          0xec,
+          "ModRM EC",
+          "mod=11, /5=sub, rm=rsp"
+        );
+
+        putLE(
+          imm,
+          1,
+          "imm8",
+          "signed immediate"
+        );
+
+        asm =
+          "subq $" + imm + ",%rsp";
       }
 
       else if (kind === "mov-imm32") {
-        const imm = parseImm32(immInput.value);
-        const reg = regSelect.value;
+        const imm =
+          parseImm32(immInput.value);
 
-        put(0x48, "REX.W", "64비트 destination");
-        put(0xc7, "opcode C7", "sign-extended imm32 → r/m64");
+        const reg =
+          regSelect.value;
+
         put(
-          modrm(3, 0, regCode(reg)),
+          0x48,
+          "REX.W",
+          "64비트 destination"
+        );
+
+        put(
+          0xc7,
+          "opcode C7",
+          "sign-extended imm32 → r/m64"
+        );
+
+        put(
+          modrm(
+            3,
+            0,
+            regCode(reg)
+          ),
           "ModRM",
           "mod=11, /0, r/m=" + reg
         );
 
         putLE(
-          imm, 4, "imm32",
+          imm,
+          4,
+          "imm32",
           "signed immediate, little-endian"
         );
 
-        asm = "movq $" + imm + ",%" + reg;
+        asm =
+          "movq $" + imm + ",%" + reg;
       }
 
       else if (kind === "movabs") {
-        const imm = parseImm64(immInput.value);
-        const reg = regSelect.value;
+        const imm =
+          parseImm64(immInput.value);
 
-        put(0x48, "REX.W", "64비트 피연산자");
-        put(0xb8 + regCode(reg), "B8+r", "opcode와 reg 번호");
+        const reg =
+          regSelect.value;
+
+        put(
+          0x48,
+          "REX.W",
+          "64비트 피연산자"
+        );
+
+        put(
+          0xb8 + regCode(reg),
+          "B8+r",
+          "opcode와 register 번호"
+        );
 
         putLE(
-          imm, 8, "imm64",
+          imm,
+          8,
+          "imm64",
           "64비트 immediate, little-endian"
         );
 
-        asm = "movabsq $" + hx64(imm) + ",%" + reg;
+        asm =
+          "movabsq $" +
+          hx64(imm) +
+          ",%" + reg;
       }
 
       else if (kind === "call") {
-        const rel = parseImm32(immInput.value);
+        const rel =
+          parseImm32(immInput.value);
 
-        put(0xe8, "opcode E8", "near relative call");
+        put(
+          0xe8,
+          "opcode E8",
+          "near relative call"
+        );
+
         putLE(
-          rel, 4, "rel32",
+          rel,
+          4,
+          "rel32",
           "다음 RIP 기준 signed 상대변위"
         );
 
         asm =
-          "call " + (rel >= 0n ? "+" : "") +
-          rel + " (rel32)";
+          "call " +
+          (rel >= 0n ? "+" : "") +
+          rel +
+          " (rel32)";
       }
 
       else {
-        throw new Error("지원하지 않는 인코딩 프리셋입니다.");
+        throw new Error(
+          "지원하지 않는 인코딩 프리셋입니다."
+        );
       }
 
-      return { bytes, fields, asm };
+      return {
+        bytes,
+        fields,
+        asm
+      };
     }
 
     function parseHexBytes(input) {
@@ -4104,45 +5661,96 @@ if (document.fonts && document.fonts.ready){
         .replace(/0x/gi, "")
         .replace(/[\s,:]/g, "");
 
-      if (!cleaned || !/^[0-9a-f]+$/i.test(cleaned)) {
-        throw new Error("hex 바이트열이 올바르지 않습니다.");
+      if (
+        !cleaned ||
+        !/^[0-9a-f]+$/i.test(cleaned)
+      ) {
+        throw new Error(
+          "Hex 바이트열이 올바르지 않습니다."
+        );
       }
 
-      if (cleaned.length % 2 !== 0) {
-        throw new Error("hex 자릿수는 짝수여야 합니다.");
+      if (
+        cleaned.length % 2 !== 0
+      ) {
+        throw new Error(
+          "Hex 자릿수는 짝수여야 합니다."
+        );
       }
 
-      if (cleaned.length > 30) {
-        throw new Error("x86-64 명령어 최대 길이는 15바이트입니다.");
+      if (
+        cleaned.length > 30
+      ) {
+        throw new Error(
+          "x86-64 명령어 최대 길이는 15바이트입니다."
+        );
       }
 
       const bytes = [];
-      for (let i = 0; i < cleaned.length; i += 2) {
-        bytes.push(parseInt(cleaned.slice(i, i + 2), 16));
+
+      for (
+        let i = 0;
+        i < cleaned.length;
+        i += 2
+      ) {
+        bytes.push(
+          parseInt(
+            cleaned.slice(i, i + 2),
+            16
+          )
+        );
       }
 
       return bytes;
     }
 
+    function parseReferenceRIP() {
+      return requireRange(
+        parseNumber(ripInput.value),
+        0n,
+        MASK64,
+        "기준 RIP"
+      );
+    }
+
     function decode(bytes) {
       let pos = 0;
+
       const fields = [];
       let asm = "";
       let semantic = null;
 
       function take(name, meaning) {
         if (pos >= bytes.length) {
-          throw new Error("명령어 바이트가 잘렸습니다.");
+          throw new Error(
+            "명령어 바이트가 잘렸습니다."
+          );
         }
 
-        const i = pos++;
-        fields.push({ name, meaning, indices: [i] });
-        return bytes[i];
+        const index = pos++;
+
+        fields.push({
+          name,
+          meaning,
+          indices: [index]
+        });
+
+        return bytes[index];
       }
 
-      function takeLE(size, name, meaning) {
+      function takeLE(
+        size,
+        name,
+        meaning
+      ) {
         const start = pos;
-        const value = readLE(bytes, pos, size);
+
+        const value = readLE(
+          bytes,
+          pos,
+          size
+        );
+
         pos += size;
 
         fields.push({
@@ -4167,28 +5775,55 @@ if (document.fonts && document.fonts.ready){
         0xc9: "leaveq"
       };
 
-      if (Object.prototype.hasOwnProperty.call(simple, first)) {
-        take("opcode", simple[first]);
+      if (
+        Object.prototype.hasOwnProperty.call(
+          simple,
+          first
+        )
+      ) {
+        take(
+          "opcode",
+          simple[first]
+        );
+
         asm = simple[first];
-        semantic = { kind: asm };
+
+        semantic = {
+          kind: asm
+        };
       }
 
       else if (first === 0xe8) {
-        take("opcode E8", "near relative call");
+        take(
+          "opcode E8",
+          "near relative call"
+        );
+
         const rel = I(
-          takeLE(4, "rel32", "signed little-endian relative offset"),
+          takeLE(
+            4,
+            "rel32",
+            "signed little-endian relative offset"
+          ),
           32
         );
 
-        const start = parseNumber(ripInput.value);
-        requireRange(start, 0n, U64MAX, "기준 RIP");
+        // A call target depends on the instruction address.
+        const start = parseReferenceRIP();
 
-        const nextRIP = U(start + 5n);
-        const target = U(nextRIP + rel);
+        const nextRIP = U(
+          start + BigInt(bytes.length)
+        );
+
+        const target = U(
+          nextRIP + rel
+        );
 
         asm =
-          "call " + (rel >= 0n ? "+" : "") +
-          rel + " (rel32)";
+          "call " +
+          (rel >= 0n ? "+" : "") +
+          rel +
+          " (rel32)";
 
         semantic = {
           kind: "call",
@@ -4199,53 +5834,111 @@ if (document.fonts && document.fonts.ready){
       }
 
       else if (first === 0x48) {
-        take("REX.W", "W=1, R=X=B=0");
+        take(
+          "REX.W",
+          "W=1, R=X=B=0"
+        );
 
-        const opcode = take("opcode", "명령어 opcode");
+        const opcode = take(
+          "opcode",
+          "명령어 opcode"
+        );
 
-        if (opcode >= 0xb8 && opcode <= 0xbf) {
-          const reg = REGS[opcode - 0xb8];
+        if (
+          opcode >= 0xb8 &&
+          opcode <= 0xbf
+        ) {
+          const reg =
+            REGS[opcode - 0xb8];
+
           const imm = takeLE(
-            8, "imm64", "little-endian 64비트 즉시값"
+            8,
+            "imm64",
+            "little-endian 64비트 즉시값"
           );
 
-          asm = "movabsq $" + hx64(imm) + ",%" + reg;
-          semantic = { kind: "movabs", reg, imm };
+          asm =
+            "movabsq $" +
+            hx64(imm) +
+            ",%" + reg;
+
+          semantic = {
+            kind: "movabs",
+            reg,
+            imm
+          };
         }
 
         else if (opcode === 0x83) {
-          const modrmByte = take("ModRM", "Group 1 /5");
+          const m = take(
+            "ModRM",
+            "Group 1 /5"
+          );
 
-          if (modrmByte !== 0xec) {
-            throw new Error("83은 subq imm8,%rsp 형식만 지원합니다.");
+          if (m !== 0xec) {
+            throw new Error(
+              "83은 subq imm8,%rsp 형식만 지원합니다."
+            );
           }
 
           const imm = I(
-            takeLE(1, "imm8", "signed immediate"),
+            takeLE(
+              1,
+              "imm8",
+              "signed immediate"
+            ),
             8
           );
 
-          asm = "subq $" + imm + ",%rsp";
-          semantic = { kind: "sub-rsp", imm };
+          asm =
+            "subq $" +
+            imm +
+            ",%rsp";
+
+          semantic = {
+            kind: "sub-rsp",
+            imm
+          };
         }
 
         else if (opcode === 0xc7) {
-          const m = take("ModRM", "mod/reg/rm");
+          const m = take(
+            "ModRM",
+            "mod/reg/rm"
+          );
 
-          const mod = m >> 6;
-          const ext = (m >> 3) & 7;
+          const mod =
+            (m >> 6) & 3;
+
+          const ext =
+            (m >> 3) & 7;
+
           const rm = m & 7;
 
-          if (mod !== 3 || ext !== 0) {
-            throw new Error("C7은 /0 레지스터 목적지만 지원합니다.");
+          if (
+            mod !== 3 ||
+            ext !== 0
+          ) {
+            throw new Error(
+              "C7은 /0 레지스터 목적지만 지원합니다."
+            );
           }
 
           const imm = I(
-            takeLE(4, "imm32", "signed immediate"),
+            takeLE(
+              4,
+              "imm32",
+              "signed immediate"
+            ),
             32
           );
 
-          asm = "movq $" + imm + ",%" + REGS[rm];
+          asm =
+            "movq $" +
+            imm +
+            ",%" +
+            REGS[rm];
+
           semantic = {
             kind: "mov-imm32",
             reg: REGS[rm],
@@ -4253,23 +5946,37 @@ if (document.fonts && document.fonts.ready){
           };
         }
 
-        else if (opcode === 0x89 || opcode === 0x8b) {
-          const m = take("ModRM", "mod(2) | reg(3) | r/m(3)");
+        else if (
+          opcode === 0x89 ||
+          opcode === 0x8b
+        ) {
+          const m = take(
+            "ModRM",
+            "mod(2) | reg(3) | r/m(3)"
+          );
 
-          const mod = (m >> 6) & 3;
-          const reg = REGS[(m >> 3) & 7];
+          const mod =
+            (m >> 6) & 3;
+
+          const reg =
+            REGS[(m >> 3) & 7];
+
           const rm = m & 7;
 
           let operand;
           let addressInfo = null;
 
           if (mod === 3) {
-            operand = "%" + REGS[rm];
+            operand =
+              "%" + REGS[rm];
+
             addressInfo = {
               kind: "reg",
               reg: REGS[rm]
             };
-          } else {
+          }
+
+          else {
             let base = null;
             let index = null;
             let scale = 1;
@@ -4282,22 +5989,37 @@ if (document.fonts && document.fonts.ready){
                 "scale(2) | index(3) | base(3)"
               );
 
-              scale = 1 << ((sibByte >> 6) & 3);
-              const indexCode = (sibByte >> 3) & 7;
-              const baseCode = sibByte & 7;
+              scale =
+                1 << ((sibByte >> 6) & 3);
+
+              const indexCode =
+                (sibByte >> 3) & 7;
+
+              const baseCode =
+                sibByte & 7;
 
               if (indexCode !== 4) {
                 index = REGS[indexCode];
               }
 
-              if (mod === 0 && baseCode === 5) {
+              if (
+                mod === 0 &&
+                baseCode === 5
+              ) {
                 noBaseSIB = true;
               } else {
                 base = REGS[baseCode];
               }
-            } else if (mod === 0 && rm === 5) {
+            }
+
+            else if (
+              mod === 0 &&
+              rm === 5
+            ) {
               ripRelative = true;
-            } else {
+            }
+
+            else {
               base = REGS[rm];
             }
 
@@ -4305,30 +6027,68 @@ if (document.fonts && document.fonts.ready){
 
             if (mod === 1) {
               disp = I(
-                takeLE(1, "disp8", "signed displacement"),
+                takeLE(
+                  1,
+                  "disp8",
+                  "signed displacement"
+                ),
                 8
               );
-            } else if (mod === 2 || noBaseSIB || ripRelative) {
+            }
+
+            else if (
+              mod === 2 ||
+              noBaseSIB ||
+              ripRelative
+            ) {
               disp = I(
-                takeLE(4, "disp32", "signed displacement"),
+                takeLE(
+                  4,
+                  "disp32",
+                  "signed displacement"
+                ),
                 32
               );
             }
 
             if (ripRelative) {
-              operand = disp + "(%rip)";
-            } else if (noBaseSIB) {
-              operand = disp.toString();
+              operand =
+                disp + "(%rip)";
+            }
+
+            else if (noBaseSIB) {
+              operand =
+                disp.toString();
 
               if (index !== null) {
-                operand += "(,%" + index + "," + scale + ")";
+                operand +=
+                  "(,%" +
+                  index +
+                  "," +
+                  scale +
+                  ")";
               }
-            } else if (index !== null) {
-              operand = memoryText(base, index, scale, disp);
-            } else {
+            }
+
+            else if (index !== null) {
+              operand = memoryText(
+                base,
+                index,
+                scale,
+                disp
+              );
+            }
+
+            else {
               operand =
-                (disp === 0n ? "" : disp.toString()) +
-                "(%" + base + ")";
+                (
+                  disp === 0n
+                    ? ""
+                    : disp.toString()
+                ) +
+                "(%" +
+                base +
+                ")";
             }
 
             addressInfo = {
@@ -4342,12 +6102,22 @@ if (document.fonts && document.fonts.ready){
             };
           }
 
-          asm = opcode === 0x89
-            ? "movq %" + reg + "," + operand
-            : "movq " + operand + ",%" + reg;
+          asm =
+            opcode === 0x89
+              ? "movq %" +
+                reg +
+                "," +
+                operand
+              : "movq " +
+                operand +
+                ",%" +
+                reg;
 
           semantic = {
-            kind: opcode === 0x89 ? "mov-store" : "mov-load",
+            kind:
+              opcode === 0x89
+                ? "mov-store"
+                : "mov-load",
             reg,
             address: addressInfo
           };
@@ -4355,7 +6125,8 @@ if (document.fonts && document.fonts.ready){
 
         else {
           throw new Error(
-            "REX.W 뒤 opcode 0x" + hx8(opcode) +
+            "REX.W 뒤 opcode " +
+            hx8(opcode) +
             "는 지원 범위 밖입니다."
           );
         }
@@ -4363,7 +6134,8 @@ if (document.fonts && document.fonts.ready){
 
       else {
         throw new Error(
-          "opcode 0x" + hx8(first) +
+          "opcode " +
+          hx8(first) +
           "는 지원하지 않습니다."
         );
       }
@@ -4385,7 +6157,15 @@ if (document.fonts && document.fonts.ready){
     function expectedSemantic() {
       const kind = state.selected;
 
-      if (["push", "pop", "ret", "nop", "leave"].includes(kind)) {
+      if (
+        [
+          "push",
+          "pop",
+          "ret",
+          "nop",
+          "leave"
+        ].includes(kind)
+      ) {
         const names = {
           push: "pushq %rbp",
           pop: "popq %rbp",
@@ -4393,14 +6173,20 @@ if (document.fonts && document.fonts.ready){
           nop: "nop",
           leave: "leaveq"
         };
-        return { kind: names[kind] };
+
+        return {
+          kind: names[kind]
+        };
       }
 
       if (kind === "mov-rsp-rbp") {
         return {
           kind: "mov-store",
           reg: "rsp",
-          address: { kind: "reg", reg: "rbp" }
+          address: {
+            kind: "reg",
+            reg: "rbp"
+          }
         };
       }
 
@@ -4408,26 +6194,39 @@ if (document.fonts && document.fonts.ready){
         return {
           kind: "mov-store",
           reg: "rbp",
-          address: { kind: "reg", reg: "rsp" }
+          address: {
+            kind: "reg",
+            reg: "rsp"
+          }
         };
       }
 
-      if (kind === "mov-store" || kind === "mov-load") {
+      if (
+        kind === "mov-store" ||
+        kind === "mov-load"
+      ) {
+        const index =
+          indexSelect.value === "none"
+            ? null
+            : indexSelect.value;
+
         return {
           kind,
           reg: regSelect.value,
           address: {
             kind: "mem",
             base: baseSelect.value,
-            index:
-              indexSelect.value === "none"
-                ? null
-                : indexSelect.value,
+            index,
             scale:
-              indexSelect.value === "none"
+              index === null
                 ? 1
-                : parseScale(scaleSelect.value),
-            disp: parseSigned32(dispInput.value),
+                : parseScale(
+                    scaleSelect.value
+                  ),
+            disp:
+              parseSigned32(
+                dispInput.value
+              ),
             noBaseSIB: false,
             ripRelative: false
           }
@@ -4435,14 +6234,23 @@ if (document.fonts && document.fonts.ready){
       }
 
       if (kind === "sub-rsp") {
-        return { kind, imm: parseNumber(immInput.value) };
+        return {
+          kind,
+          imm:
+            parseNumber(
+              immInput.value
+            )
+        };
       }
 
       if (kind === "mov-imm32") {
         return {
           kind,
           reg: regSelect.value,
-          imm: parseImm32(immInput.value)
+          imm:
+            parseImm32(
+              immInput.value
+            )
         };
       }
 
@@ -4450,30 +6258,56 @@ if (document.fonts && document.fonts.ready){
         return {
           kind,
           reg: regSelect.value,
-          imm: U(parseImm64(immInput.value))
+          imm: U(
+            parseImm64(
+              immInput.value
+            )
+          )
         };
       }
 
       if (kind === "call") {
         return {
           kind,
-          rel: parseImm32(immInput.value)
+          rel:
+            parseImm32(
+              immInput.value
+            )
         };
       }
 
-      throw new Error("알 수 없는 명령 프리셋입니다.");
+      throw new Error(
+        "알 수 없는 프리셋입니다."
+      );
     }
 
     function semanticEqual(a, b) {
-      if (!a || !b || a.kind !== b.kind) return false;
+      if (
+        !a ||
+        !b ||
+        a.kind !== b.kind
+      ) {
+        return false;
+      }
 
-      if (a.kind === "mov-store" || a.kind === "mov-load") {
-        if (a.reg !== b.reg) return false;
+      if (
+        a.kind === "mov-store" ||
+        a.kind === "mov-load"
+      ) {
+        if (a.reg !== b.reg) {
+          return false;
+        }
 
         const x = a.address;
         const y = b.address;
 
-        if (!x || !y || x.kind !== y.kind) return false;
+        if (
+          !x ||
+          !y ||
+          x.kind !== y.kind
+        ) {
+          return false;
+        }
 
         if (x.kind === "reg") {
           return x.reg === y.reg;
@@ -4483,49 +6317,107 @@ if (document.fonts && document.fonts.ready){
           x.base === y.base &&
           x.index === y.index &&
           x.disp === y.disp &&
-          (x.index === null || x.scale === y.scale) &&
+          (
+            x.index === null ||
+            x.scale === y.scale
+          ) &&
           x.noBaseSIB === y.noBaseSIB &&
           x.ripRelative === y.ripRelative
         );
       }
 
-      if (a.reg !== undefined && a.reg !== b.reg) return false;
-      if (a.imm !== undefined && a.imm !== b.imm) return false;
-      if (a.rel !== undefined && a.rel !== b.rel) return false;
+      if (
+        a.reg !== undefined &&
+        a.reg !== b.reg
+      ) {
+        return false;
+      }
+
+      if (
+        a.imm !== undefined &&
+        a.imm !== b.imm
+      ) {
+        return false;
+      }
+
+      if (
+        a.rel !== undefined &&
+        a.rel !== b.rel
+      ) {
+        return false;
+      }
 
       return true;
     }
 
+    function needsReferenceRIP(result) {
+      if (!result || !result.semantic) {
+        return false;
+      }
+
+      const semantic = result.semantic;
+
+      return (
+        semantic.kind === "call" ||
+        (
+          semantic.address &&
+          semantic.address.ripRelative
+        )
+      );
+    }
+
     function display(result, verification) {
       clear(resultHost);
-      heading(resultHost, "기계어 바이트 — Instruction Bytes");
 
-      const byteRow = node(
+      H(
+        resultHost,
+        "기계어 바이트 — Instruction Bytes"
+      );
+
+      const byteRow = E(
         "div",
         resultHost,
         "",
         "v6-byte-row"
       );
 
-      const selectedField = stateBox(resultHost);
+      const selectedField = S(
+        resultHost
+      );
 
       result.bytes.forEach((byte, index) => {
-        const b = button(byteRow, hx8(byte), () => {
-          const field = result.fields.find(
-            f => f.indices.includes(index)
-          );
+        const b = B(
+          byteRow,
+          hx8(byte),
+          () => {
+            const field =
+              result.fields.find(
+                entry =>
+                  entry.indices.includes(index)
+              );
 
-          if (field) {
-            selectedField.textContent =
-              "Byte " + index + " · " +
-              field.name + "\n" + field.meaning;
+            if (field) {
+              selectedField.textContent =
+                "Byte " +
+                index +
+                " · " +
+                field.name +
+                "\n" +
+                field.meaning;
+            }
           }
-        });
+        );
 
-        b.classList.add("v6-byte-button");
+        b.classList.add(
+          "v6-byte-button"
+        );
+
         b.setAttribute(
           "aria-label",
-          "바이트 " + index + ": " + hx8(byte)
+          "바이트 " +
+          index +
+          ": " +
+          hx8(byte)
         );
       });
 
@@ -4535,26 +6427,56 @@ if (document.fonts && document.fonts.ready){
         "의미"
       ]);
 
-      result.fields.forEach(f => {
+      result.fields.forEach(field => {
         fields.add([
-          f.name,
-          f.indices.map(i => hx8(result.bytes[i])).join(" "),
-          f.meaning
+          field.name,
+          field.indices
+            .map(i => hx8(result.bytes[i]))
+            .join(" "),
+          field.meaning
         ]);
       });
 
       details.textContent =
         "디스어셈블(Disassembly)\n" +
-        result.asm + "\n\n" +
-        "Hex bytes\n" +
-        result.bytes.map(hx8).join(" ");
+        result.asm +
+        "\n\nHex bytes\n" +
+        formatBytes(result.bytes);
 
-      if (result.semantic && result.semantic.kind === "call") {
+      if (
+        result.semantic &&
+        result.semantic.kind === "call"
+      ) {
         details.textContent +=
           "\n\n다음 RIP = " +
           hx64(result.semantic.nextRIP) +
           "\n목표 주소 = " +
           hx64(result.semantic.target);
+      }
+
+      if (
+        result.semantic &&
+        result.semantic.address &&
+        result.semantic.address.ripRelative
+      ) {
+        const start =
+          parseReferenceRIP();
+
+        const nextRIP = U(
+          start + BigInt(result.bytes.length)
+        );
+
+        const target = U(
+          nextRIP +
+          result.semantic.address.disp
+        );
+
+        details.textContent +=
+          "\n\nRIP-relative\n" +
+          "다음 RIP = " +
+          hx64(nextRIP) +
+          "\n실효주소 = " +
+          hx64(target);
       }
 
       if (verification) {
@@ -4569,14 +6491,17 @@ if (document.fonts && document.fonts.ready){
           "디코드 모드: 입력 바이트열을 한 명령어로 해석했습니다.";
       }
 
-      const start = parseNumber(ripInput.value);
-      requireRange(start, 0n, U64MAX, "기준 RIP");
+      // For instructions unrelated to RIP, the display address
+      // is a constant and the RIP input is not parsed.
+      const start = needsReferenceRIP(result)
+        ? parseReferenceRIP()
+        : 0n;
 
       objdump.textContent =
         "objdump 스타일\n" +
         start.toString(16).padStart(8, "0") +
         ":  " +
-        result.bytes.map(hx8).join(" ").toLowerCase() +
+        formatBytes(result.bytes).toLowerCase() +
         "    " +
         result.asm +
         "\n\nBomb Lab 포인트: 주소 → 바이트열 → 어셈블리 순서로 읽습니다.";
@@ -4591,13 +6516,19 @@ if (document.fonts && document.fonts.ready){
 
         if (state.mode === "encode") {
           const encoded = encode();
-          const decoded = decode(encoded.bytes);
-          const expected = expectedSemantic();
 
-          const ok = semanticEqual(
-            expected,
-            decoded.semantic
+          const decoded = decode(
+            encoded.bytes
           );
+
+          const expected =
+            expectedSemantic();
+
+          const ok =
+            semanticEqual(
+              expected,
+              decoded.semantic
+            );
 
           verification = {
             ok,
@@ -4612,10 +6543,14 @@ if (document.fonts && document.fonts.ready){
           };
 
           hexInput.value =
-            encoded.bytes.map(hx8).join(" ");
-        } else {
+            formatBytes(encoded.bytes);
+        }
+
+        else {
           result = decode(
-            parseHexBytes(hexInput.value)
+            parseHexBytes(
+              hexInput.value
+            )
           );
         }
 
@@ -4624,20 +6559,36 @@ if (document.fonts && document.fonts.ready){
         state.asm = result.asm;
         state.error = "";
 
-        display(result, verification);
+        display(
+          result,
+          verification
+        );
       } catch (e) {
         state.error = e.message;
+
         clear(resultHost);
-        errorState(details, e.message);
-        roundTrip.textContent = "검증을 수행하지 못했습니다.";
+
+        errorState(
+          details,
+          e.message
+        );
+
+        roundTrip.textContent =
+          "검증을 수행하지 못했습니다.";
+
         objdump.textContent = "";
       }
     }
 
-    instructionSelect.addEventListener("change", () => {
-      state.selected = instructionSelect.value;
-      render();
-    });
+    instructionSelect.addEventListener(
+      "change",
+      () => {
+        state.selected =
+          instructionSelect.value;
+
+        render();
+      }
+    );
 
     [
       regSelect,
@@ -4649,7 +6600,10 @@ if (document.fonts && document.fonts.ready){
       hexInput,
       ripInput
     ].forEach(input => {
-      input.addEventListener("change", render);
+      input.addEventListener(
+        "change",
+        render
+      );
     });
 
     render();
@@ -4668,10 +6622,6 @@ if (document.fonts && document.fonts.ready){
 
   const U64 = 1n << 64n;
   const MASK64 = U64 - 1n;
-
-  // ============================================================
-  // Shared UI helpers
-  // ============================================================
 
   function E(tag, parent, text, cls) {
     const x = document.createElement(tag);
@@ -4790,10 +6740,6 @@ if (document.fonts && document.fonts.ready){
     return BigInt.asUintN(64, BigInt(value));
   }
 
-  function signed64(value) {
-    return BigInt.asIntN(64, BigInt(value));
-  }
-
   function parseIntExact(text) {
     const s = String(text).trim();
 
@@ -4862,14 +6808,8 @@ if (document.fonts && document.fonts.ready){
     return x;
   }
 
-  function explanation(parent, text) {
-    const x = S(parent);
-    x.textContent = text;
-    return x;
-  }
-
   // ============================================================
-  // 1. Stack Frames — Procedures
+  // 1. Stack Frames
   // ============================================================
 
   V6.register("stack-frames", function (root, cfg) {
@@ -5010,7 +6950,7 @@ if (document.fonts && document.fonts.ready){
 
         ["foo: pushq %rbp", m => {
           push(m, m.rbp, "saved %rbp (foo)");
-          return "기존 frame pointer를 저장합니다.";
+          return "기존 frame pointer를 저장합니다. push 후 %rsp mod 16 = 0.";
         }],
 
         ["movq %rsp,%rbp", m => {
@@ -5022,7 +6962,8 @@ if (document.fonts && document.fonts.ready){
 
         ["subq $16,%rsp", m => {
           reserve(m, 16, "foo local");
-          return "foo의 로컬 변수 공간 16바이트를 확보합니다.";
+
+          return "foo의 로컬 변수 공간 16바이트를 확보합니다. %rsp mod 16 = 0이 유지됩니다.";
         }],
 
         ["movq %rbx,0(%rsp) — callee-saved 저장", m => {
@@ -5031,7 +6972,7 @@ if (document.fonts && document.fonts.ready){
             label: "saved %rbx (foo local slot)"
           });
 
-          return "%rbx는 callee-saved입니다. 사용 전에 기존 값을 저장합니다.";
+          return "%rbx는 callee-saved입니다. 기존에 확보한 로컬 슬롯에 저장하므로 %rsp는 변경되지 않습니다.";
         }],
 
         ["movq $99,%rbx — foo 본문", m => {
@@ -5039,8 +6980,13 @@ if (document.fonts && document.fonts.ready){
           return "foo에서 %rbx를 변경했습니다. 반환 전 복원해야 합니다.";
         }],
 
-        ["call bar (8바이트 정렬 패딩 확보)", m => {
-          reserve(m, 8, "bar 호출 정렬 패딩");
+        // foo's RSP is already 16-byte aligned.
+        // CALL alone pushes 8 bytes, so bar enters with RSP mod 16 = 8.
+        ["call bar", m => {
+          if (m.rsp % 16n !== 0n) {
+            throw new Error("bar 호출 직전 %rsp가 16바이트 정렬되지 않았습니다.");
+          }
+
           push(m, 0x401080n, "foo → 복귀 주소");
 
           m.frames.push({
@@ -5049,12 +6995,12 @@ if (document.fonts && document.fonts.ready){
             entry: m.rsp
           });
 
-          return "foo는 bar 호출 전에 %rsp를 16바이트 정렬합니다. call이 return address를 push합니다.";
+          return "추가 패딩은 필요하지 않습니다. call 직전 %rsp mod 16 = 0, bar 진입 직후 %rsp mod 16 = 8입니다.";
         }],
 
         ["bar: pushq %rbp", m => {
           push(m, m.rbp, "saved %rbp (bar)");
-          return "bar의 frame pointer를 저장합니다.";
+          return "bar의 frame pointer를 저장합니다. %rsp mod 16 = 0.";
         }],
 
         ["bar: movq %rsp,%rbp", m => {
@@ -5072,7 +7018,7 @@ if (document.fonts && document.fonts.ready){
           m.rsp = m.rbp;
           m.rbp = pop(m);
 
-          return "leave = movq %rbp,%rsp; popq %rbp.";
+          return "leave = movq %rbp,%rsp; popq %rbp. bar의 saved %rbp를 복원합니다.";
         }],
 
         ["bar: ret", m => {
@@ -5081,24 +7027,20 @@ if (document.fonts && document.fonts.ready){
 
           return "ret은 복귀 주소 " +
             hex(address) +
-            "를 pop한 뒤 그 주소로 점프합니다.";
+            "를 pop한 뒤 그 주소로 점프합니다. foo의 %rsp는 호출 직전 값으로 복구됩니다.";
         }],
 
-        ["foo: addq $8,%rsp", m => {
-          drop(m, 8);
-          return "bar 호출 전 마련한 8바이트 정렬 패딩을 제거합니다.";
-        }],
-
+        // No addq $8,%rsp: no padding was reserved for bar.
         ["foo: %rbx 복원", m => {
           const slot = m.slots.get(m.rsp);
 
-          if (!slot) {
-            throw new Error("saved %rbx가 없습니다.");
+          if (!slot || slot.label !== "saved %rbx (foo local slot)") {
+            throw new Error("saved %rbx 슬롯이 없습니다.");
           }
 
           m.rbx = slot.value;
 
-          return "callee-saved %rbx를 원래 값으로 복원했습니다.";
+          return "foo의 로컬 슬롯에서 callee-saved %rbx를 복원합니다. %rsp는 변경되지 않습니다.";
         }],
 
         ["foo: movq $56,%rax", m => {
@@ -5110,7 +7052,7 @@ if (document.fonts && document.fonts.ready){
           m.rsp = m.rbp;
           m.rbp = pop(m);
 
-          return "foo의 local 공간을 한꺼번에 해제하고 saved %rbp를 복구합니다.";
+          return "foo의 로컬 공간을 해제하고 saved %rbp를 복구합니다.";
         }],
 
         ["foo: ret", m => {
@@ -5128,6 +7070,8 @@ if (document.fonts && document.fonts.ready){
       ];
     }
 
+    // The recursive preset preserves its existing stack allocation
+    // and alignment behavior.
     function buildRecursive() {
       const ops = [];
       const n0 = 4;
@@ -5509,14 +7453,12 @@ if (document.fonts && document.fonts.ready){
         minWidth: "670px"
       });
 
-      const headers = [
+      [
         "주소(Address)",
         "슬롯 역할",
         "저장 값",
         "포인터"
-      ];
-
-      headers.forEach(text => noteHeader(grid, text));
+      ].forEach(text => noteHeader(grid, text));
 
       slots.forEach(([address, slot]) => {
         const changed =
@@ -5648,14 +7590,18 @@ if (document.fonts && document.fonts.ready){
             throw new Error("필드는 최대 24개까지 추가할 수 있습니다.");
           }
 
+          // Use the same identifier for both id and label.
+          // The sequence is independent of array indices and deletion.
+          const id = nextId++;
+
           fields.push({
-            id: nextId++,
+            id,
             type: type === "char[n]"
               ? "char[" + actualSize + "]"
               : type,
             size: actualSize,
             align,
-            label: "f" + nextId
+            label: "f" + id
           });
 
           messageText = type + " 필드를 추가했습니다.";
@@ -5683,7 +7629,9 @@ if (document.fonts && document.fonts.ready){
       messageText =
         "정렬 요구 K가 큰 필드부터 배치했습니다.\n" +
         "sizeof " + before + " → " + after +
-        " B · 절약 " + (before - after) + " B.";
+        " B · 절약 " + (before - after) + " B.\n" +
+        "이 재배열은 정렬 요구와 크기를 기준으로 하는 휴리스틱입니다. " +
+        "모든 필드 조합에서 전역 최적을 보장하지 않습니다.";
 
       render();
     });
@@ -5876,6 +7824,7 @@ if (document.fonts && document.fonts.ready){
         "끝 패딩 = " + result.external + " B\n\n" +
         "각 필드의 offset은 해당 타입 정렬 요구 K의 배수입니다.\n" +
         "구조체 전체 크기는 최대 정렬 요구의 배수로 올림합니다.\n" +
+        "정렬 최적화 버튼은 휴리스틱이며 모든 경우의 최적을 보장하지 않습니다.\n" +
         "모델: 일반적인 x86-64 System V ABI " +
         "(long, 포인터, double = 8B).";
     }
@@ -6114,7 +8063,7 @@ if (document.fonts && document.fonts.ready){
 
     const controls = C(root);
 
-    const sizeControl = range(
+    range(
       controls,
       "buf 크기 N",
       4,
@@ -6134,6 +8083,11 @@ if (document.fonts && document.fonts.ready){
       () => {
         input = text.value;
         retResult = "";
+
+        // Synchronize the slider to Unicode character count.
+        // The byte count is displayed independently because UTF-8
+        // characters may occupy multiple bytes.
+        syncLengthSlider();
         render();
       }
     );
@@ -6145,28 +8099,48 @@ if (document.fonts && document.fonts.ready){
       "입력 길이(ASCII 예시)",
       0,
       40,
-      input.length,
+      Array.from(input).length,
       value => {
         input = "A".repeat(value);
         text.value = input;
         retResult = "";
+
+        syncLengthSlider();
         render();
       }
     );
 
+    function characterCount(s) {
+      return Array.from(s).length;
+    }
+
+    function syncLengthSlider() {
+      const count = characterCount(input);
+
+      // Expand the slider when direct text input exceeds its
+      // default range, so the current value is represented exactly.
+      lengthControl.input.max = String(Math.max(40, count));
+      lengthControl.input.value = String(count);
+      lengthControl.current.textContent = String(count);
+    }
+
     const defenseBar = C(root);
 
     function checkbox(parent, caption, checked, fn) {
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = checked;
-      L(parent, caption, input);
+      const control = document.createElement("input");
+      control.type = "checkbox";
+      control.checked = checked;
+      L(parent, caption, control);
 
-      input.addEventListener("change", () => fn(input.checked));
-      return input;
+      control.addEventListener(
+        "change",
+        () => fn(control.checked)
+      );
+
+      return control;
     }
 
-    const canaryInput = checkbox(
+    checkbox(
       defenseBar,
       "Stack protector(canary)",
       false,
@@ -6197,7 +8171,7 @@ if (document.fonts && document.fonts.ready){
       }
     );
 
-    const retButton = B(defenseBar, "ret 실행", () => {
+    B(defenseBar, "ret 실행", () => {
       const model = calculate();
 
       if (canary && model.canaryCorrupt) {
@@ -6239,6 +8213,8 @@ if (document.fonts && document.fonts.ready){
 
       return {
         bytes,
+        characterLength: characterCount(input),
+        byteLength: bytes.length,
         writeLength,
         canaryStart,
         rbpStart,
@@ -6309,6 +8285,8 @@ if (document.fonts && document.fonts.ready){
 
     function render() {
       try {
+        syncLengthSlider();
+
         const m = calculate();
         clear(diagram);
 
@@ -6371,9 +8349,13 @@ if (document.fonts && document.fonts.ready){
 
         resultPanel.textContent =
           "buf 크기: " + N + " B\n" +
-          "입력 UTF-8 길이: " + m.bytes.length + " B\n" +
+          "입력 문자 수(Unicode 문자 기준): " +
+          m.characterLength + "개\n" +
+          "입력 UTF-8 바이트 수: " +
+          m.byteLength + " B\n" +
           "gets()가 쓰는 길이: " + m.writeLength +
-          " B (끝 NUL 포함)\n" +
+          " B (UTF-8 " + m.byteLength +
+          " B + 끝 NUL 1 B)\n" +
           "버퍼 경계 초과: " + overflowCount + " B\n\n" +
           "saved %rbp 침범: " +
           (m.rbpCorrupt ? "예" : "아니오") + "\n" +
@@ -6392,6 +8374,10 @@ if (document.fonts && document.fonts.ready){
           " — 주소 배치를 예측하기 어렵게 합니다.\n" +
           "NX: " + (nx ? "활성" : "비활성") +
           " — 비실행 메모리에서 코드 실행을 제한합니다.\n\n" +
+          "길이 슬라이더는 ASCII 'A' 반복 입력을 생성하며, " +
+          "텍스트를 직접 입력하면 실제 문자 수로 동기화됩니다.\n" +
+          "한글 등 비ASCII 문자는 UTF-8에서 여러 바이트를 차지하므로 " +
+          "버퍼 초과 계산은 문자 수가 아니라 바이트 수를 사용합니다.\n\n" +
           "핵심 방어는 입력 길이를 검사하는 안전한 코드입니다.\n" +
           "이 그림은 설명용 스택 배치입니다. " +
           "실제 컴파일러의 패딩·canary·frame pointer 구성은 다를 수 있습니다.";
@@ -6402,6 +8388,7 @@ if (document.fonts && document.fonts.ready){
       }
     }
 
+    syncLengthSlider();
     render();
   });
 
@@ -6484,6 +8471,19 @@ if (document.fonts && document.fonts.ready){
 
     function drawRow(parent, name, bytes, indices) {
       H(parent, name);
+
+      const direction = E(
+        "div",
+        parent,
+        "낮은 주소 (Low Address)  →  높은 주소 (High Address)"
+      );
+
+      Object.assign(direction.style, {
+        fontSize: "12px",
+        fontWeight: "600",
+        margin: "4px 0 9px",
+        color: INK
+      });
 
       const grid = E("div", parent);
 
@@ -6601,6 +8601,7 @@ if (document.fonts && document.fonts.ready){
           "0x" + x.toString(16).padStart(2, "0")
         ).join(" ") +
         "\n\n" +
+        "화살표 방향은 낮은 메모리 주소에서 높은 메모리 주소로 증가하는 방향입니다.\n" +
         "Little-endian은 최하위 바이트(LSB)를 낮은 주소에 저장합니다.\n" +
         "Big-endian은 최상위 바이트(MSB)를 낮은 주소에 저장합니다.\n" +
         "바이트 저장 순서는 달라도 같은 규칙으로 해석하면 원래 정수 값은 같습니다.";
@@ -6618,7 +8619,10 @@ if (document.fonts && document.fonts.ready){
 
     T(root, "프로세스 가상주소 공간 — Virtual Memory Layout");
 
-    const USER_TOP = 0x00007ffffffffffen;
+    // Last canonical address in the lower 47-bit user half:
+    // 2^47 - 1 = 0x00007FFFFFFFFFFF.
+    const USER_TOP = 0x00007fffffffffffn;
+    const FIRST_NONCANONICAL = 0x0000800000000000n;
     const KERNEL_START = 0xffff800000000000n;
 
     const BASES = {
@@ -6629,9 +8633,13 @@ if (document.fonts && document.fonts.ready){
       stack: 0x7fffffffe000n
     };
 
-    let heapSize = 0x1000n;
-    let stackUsed = 0x1000n;
-    let selected = BASES.text;
+    const INITIAL_HEAP_SIZE = 0x1000n;
+    const INITIAL_STACK_USED = 0x1000n;
+    const INITIAL_ADDRESS = BASES.text;
+
+    let heapSize = INITIAL_HEAP_SIZE;
+    let stackUsed = INITIAL_STACK_USED;
+    let selected = INITIAL_ADDRESS;
     let messageText = "";
     let errorText = "";
 
@@ -6663,7 +8671,7 @@ if (document.fonts && document.fonts.ready){
 
     addressInput.style.width = "230px";
 
-    const mallocButton = B(
+    B(
       controls,
       "malloc(+4KiB)",
       () => {
@@ -6682,7 +8690,7 @@ if (document.fonts && document.fonts.ready){
       }
     );
 
-    const callButton = B(
+    B(
       controls,
       "함수 호출(stack −256B)",
       () => {
@@ -6701,7 +8709,7 @@ if (document.fonts && document.fonts.ready){
       }
     );
 
-    const returnButton = B(
+    B(
       controls,
       "반환(stack +256B)",
       () => {
@@ -6717,8 +8725,13 @@ if (document.fonts && document.fonts.ready){
     );
 
     B(controls, "리셋", () => {
-      heapSize = 0x1000n;
-      stackUsed = 0x1000n;
+      heapSize = INITIAL_HEAP_SIZE;
+      stackUsed = INITIAL_STACK_USED;
+
+      // Reset the selected address and the visible input together.
+      selected = INITIAL_ADDRESS;
+      addressInput.value = hex(INITIAL_ADDRESS);
+
       errorText = "";
       messageText = "";
       render();
@@ -6742,7 +8755,11 @@ if (document.fonts && document.fonts.ready){
         };
       }
 
-      if (addr > USER_TOP) {
+      // Includes the first non-canonical address:
+      // 0x0000800000000000.
+      // The final user canonical address:
+      // 0x00007FFFFFFFFFFF, remains in the user half.
+      if (addr >= FIRST_NONCANONICAL) {
         return {
           key: "gap",
           text: "비정규 주소(non-canonical gap)"
@@ -6801,7 +8818,7 @@ if (document.fonts && document.fonts.ready){
 
       return {
         key: "unmapped",
-        text: "교육용 지도에서 매핑되지 않은 영역"
+        text: "교육용 지도에서 매핑되지 않은 사용자 영역"
       };
     }
 
@@ -6942,8 +8959,10 @@ if (document.fonts && document.fonts.ready){
           chosen.style.marginTop = "5px";
         }
 
-        if (region.key === "stack" ||
-            region.key === "heap") {
+        if (
+          region.key === "stack" ||
+          region.key === "heap"
+        ) {
           const track = E("div", card);
 
           Object.assign(track.style, {
@@ -6979,6 +8998,12 @@ if (document.fonts && document.fonts.ready){
         heapSize + " B\n" +
         "현재 stack 시뮬레이션 사용량: " +
         stackUsed + " B\n\n" +
+        "사용자 영역의 마지막 canonical 주소: " +
+        hex(USER_TOP) + "\n" +
+        "첫 비정규 주소: " +
+        hex(FIRST_NONCANONICAL) + "\n" +
+        "커널 canonical 영역 시작: " +
+        hex(KERNEL_START) + "\n\n" +
         "Linux x86-64의 전형적인 4단계 페이지 테이블 " +
         "(48비트 canonical 주소) 설명용 지도입니다.\n" +
         "실제 주소·권한은 운영체제, ASLR, PIE, 프로세스 구성에 따라 달라집니다.\n" +
