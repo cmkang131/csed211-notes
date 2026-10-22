@@ -496,6 +496,7 @@ int iy = (int) y;   // FF FF C4 93</pre>
 <h3>Two's Complement Addition</h3>
 <ul>
 <li><b>TAdd와 UAdd는 비트 수준에서 동일</b> → 같은 adder 사용</li>
+<li>적용 범위: TMax+1 = TMin 같은 wrap 규칙은 비트 벡터/기계 모델의 항등식 — C의 unsigned 연산은 모듈로로 보장되지만 signed overflow는 C 표준상 UB</li>
 </ul>
 <pre class="c">int s, t, u, v;
 s = (int) ((unsigned) u + (unsigned) v);
