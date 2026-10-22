@@ -96,17 +96,26 @@ MSB = 1 → signed int로 보면 음수</pre>
 <li><span class="k-red">C에서 &gt;&gt;는 operand type에 따라 다름</span>: unsigned → logical, signed → arithmetic</li>
 </ul>
 <figure class="fig" style="--figw:620px">
-<svg viewBox="0 0 620 168" width="620" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
-<g font-size="12.5">
-<text x="8" y="18" font-weight="700" fill="#23252d">a = 01100010 (MSB 0) · b = 10100010 (MSB 1) — 8-bit</text>
-<text x="8" y="46" fill="#4b4e57">x &lt;&lt; 3</text>
-<text x="150" y="46" fill="#23252d" font-family="monospace">a → 00010000 · b → 00010000 (위로 밀린 3 bit 소실, 아래는 0)</text>
-<text x="8" y="76" fill="#4b4e57">x &gt;&gt; 2 logical</text>
-<text x="150" y="76" fill="#23252d" font-family="monospace">a → 00011000 · b → 00101000 (왼쪽을 0으로 채움)</text>
-<text x="8" y="106" fill="#4b4e57">x &gt;&gt; 2 arithmetic</text>
-<text x="150" y="106" fill="#23252d" font-family="monospace">a → 00011000 · b → 11101000 (왼쪽을 sign bit로 채움)</text>
-<text x="8" y="140" fill="#9e2b25" font-weight="700">a는 logical = arithmetic이지만 b는 MSB = 1이라 결과가 다름 → 부호 있는 값의 &gt;&gt;는 항상 arithmetic이라고 가정하고 풀 것</text>
-</g>
+<svg viewBox="0 0 1040 205" width="1040" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
+  <rect width="1040" height="205" fill="#ffffff"/>
+  <g font-size="13" fill="#1a1a1a">
+    <text x="12" y="22" font-weight="700">a = 01100010 (MSB 0) · b = 10100010 (MSB 1) — 8-bit</text>
+    <text x="12" y="57" fill="#666666">x &lt;&lt; 3</text>
+    <text x="165" y="57" font-family="monospace">a → 00010000 · b → 00010000</text>
+    <text x="165" y="76" fill="#666666">(위로 밀린 3 bit 소실, 아래는 0)</text>
+    <text x="12" y="100" fill="#666666">x &gt;&gt; 2 logical</text>
+    <text x="165" y="100" font-family="monospace">a → 00011000 · b → 00101000</text>
+    <text x="165" y="119" fill="#666666">(왼쪽을 0으로 채움)</text>
+    <text x="12" y="143" fill="#666666">x &gt;&gt; 2 arithmetic</text>
+    <text x="165" y="143" font-family="monospace">a → 00011000 · b → 11101000</text>
+    <text x="165" y="162" fill="#666666">(왼쪽을 sign bit로 채움)</text>
+  </g>
+  <g fill="#9e2b25" font-size="13" font-weight="700">
+    <text x="12" y="184">
+      <tspan x="12" dy="0">a는 logical = arithmetic이지만 b는 MSB = 1이라 결과가 다름 →</tspan>
+      <tspan x="12" dy="17">부호 있는 값의 &gt;&gt;는 항상 arithmetic이라고 가정하고 풀 것</tspan>
+    </text>
+  </g>
 </svg>
 <figcaption>손계산 3: 같은 bit pattern도 type에 따라 shift 결과가 갈림</figcaption>
 </figure>
