@@ -152,7 +152,7 @@ MSB = 1 → signed int로 보면 음수</pre>
   int m = x &gt;&gt; 31;
   return (x + m) ^ m;  /* &gt;&gt; + ^ : 3 ops */
 }</pre>
-<p>손계산 5: x = 5 → m = 0 → 5 · x = -5 → m = 0xFFFFFFFF, x+m = -6, ^ m → 5 · x = TMin → 절댓값 2³¹은 int로 표현 불가 → TMin 그대로 (C의 -TMin과 같은 결과)</p>
+<p>손계산 5: x = 5 → m = 0 → 5 · x = -5 → m = 0xFFFFFFFF, x+m = -6, ^ m → 5 · x = TMin → 절댓값 2³¹은 int로 표현 불가 → TMin 그대로 (Data Lab 비트벡터 모델에서 -TMin = TMin — ISO C에서는 signed overflow UB)</p>
 </div>
 <div class="nb"><p class="bx-h"><b>Q5 logicalShift(x, n): n칸 logical right shift · 최대 20 ops</b></p>
 <ul>
@@ -179,7 +179,7 @@ MSB = 1 → signed int로 보면 음수</pre>
 <ul>
 <li>먼저 exp == 0xFF (NaN/∞), exp == 0 (denorm/0), 그 외 (normalized)로 경우를 나눔</li>
 <li>abs: sign bit만 0인 수. NaN 입력은 그대로 돌려줘야 하는지 명세 확인</li>
-<li>twice: normalized는 exp + 1 (결과가 0xFF면 ∞) · denorm은 frac을 한 칸 왼쪽으로 (넘치면 자연스럽게 normalized로) · NaN/∞는 그대로</li>
+<li>twice: normalized는 exp + 1 (결과가 0xFF면 ∞) · denorm은 (exp|frac) 비트를 통째로 한 칸 왼쪽으로 (frac 최상위 bit의 carry가 exp로 넘어가 자연스럽게 normalized로 — exp를 따로 갱신할 필요 없음) · NaN/∞는 그대로</li>
 <li>i2f: 0과 TMin 특별 취급 · 절댓값의 최상위 1 위치로 E 결정 · 23 bit 넘는 부분은 round-to-even</li>
 <li>f2i: E &lt; 0이면 0 · int 범위 초과·NaN·∞이면 0x80000000 · 그 외는 1.f를 E만큼 shift 후 sign 적용</li>
 </ul>
@@ -251,6 +251,7 @@ MSB = 1 → signed int로 보면 음수</pre>
 </div>
 
 <h2><span class="h2no">7</span>연습문제</h2>
+<p>연습 문제는 <a href="problems.html">문제 풀이 페이지</a>의 Data Lab 연습 섹션으로 옮김 (비트 기본기 8문제, 힌트·정답 토글).</p>
 
 
 
