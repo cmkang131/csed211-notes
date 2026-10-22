@@ -72,7 +72,7 @@
 </div>
 <div class="subpart">
 <span class="part">(c)</span>
-<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보인다. 반환 값은 0.<br></li></ol>
+<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보인다. 반환 값은 0. <span style="color:#555">(어셈블리의 32-bit wraparound 기준 — 복원한 C 코드의 signed overflow는 ISO C에서 UB이므로, C 소스로 컴파일하면 이 동작이 보장되지는 않음)</span><br></li></ol>
 </div>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">f(4)=24, f(5)=120 · 0 반환 (약 2^32회 반복 후 종료)</span></div>
 </div></details>

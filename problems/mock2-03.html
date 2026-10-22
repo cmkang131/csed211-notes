@@ -75,14 +75,14 @@
 <span class="sol-tag">풀이</span>
 <div class="subpart first">
 <span class="part">(a)</span>
-<ol class="steps"><li>테이블 .L4의 i번째 항목이 case i의 목적지.</li><li>case 0 → 10, case 1 → 20+1 = 21, case 2 → 30−5 = 25, case 3 → 40, 그 외 → −1.<br>
+<ol class="steps"><li>테이블 .L4의 i번째 항목이 case i의 목적지.</li><li>case 0 → 10, case 1 → 20+1 = 21, case 2 → 30−5 = 25, case 3 → 40, 그 외 → .L8의 movl $-1, %eax — %eax에 쓰면 상위 32bit가 0으로 확장되므로 long 반환값은 0x00000000FFFFFFFF = 4294967295.<br>
 <pre class="c">long f(long x) {
     switch (x) {
         case 0: return 10;
         case 1: return 21;
         case 2: return 25;
         case 3: return 40;
-        default: return -1;
+        default: return 4294967295L;  /* asm은 movl $-1, %eax — 상위 32bit는 0으로 확장 */
     }
 }</pre></li></ol>
 </div>
