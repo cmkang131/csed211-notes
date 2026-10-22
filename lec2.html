@@ -837,6 +837,7 @@ show_bytes((pointer) &amp;a, sizeof(int));</pre>
 <div class="prob-head"><span class="pid">2-6</span><span class="ptitle">항상 참인가? (종합)</span>★★★</div>
 <div class="prob-body">
 <p>32비트, two's complement, <code>int x, y; unsigned ux = x;</code> 일 때 각 명제가 항상 참인지 판정하라. 거짓이면 반례를 들라.</p>
+<p>판정 기준: 32비트 two's complement 비트 모델(기계 동작) — C 표준상 signed overflow는 UB라, 실제 C 코드에서는 표준이 보장하지 않는 결과가 포함될 수 있음에 유의.</p>
 <ul><li>① x &lt; 0 ⇒ x*2 &lt; 0</li><li>② ux &gt;= 0</li><li>③ x &gt; 0 &amp;&amp; y &gt; 0 ⇒ x + y &gt; 0</li><li>④ x &gt;= 0 ⇒ -x &lt;= 0</li><li>⑤ x &lt;= 0 ⇒ -x &gt;= 0</li><li>⑥ ux &gt;&gt; 3 == ux/8</li><li>⑦ x &gt;&gt; 3 == x/8</li></ul>
 <details class="pd hint"><summary>힌트 보기</summary>
 <div class="pd-body"><div>반례 후보는 항상 극값에서: TMin, TMax, −1. shift 문제는 음수에서 floor vs 0 방향 차이를 본다.</div></div></details>
