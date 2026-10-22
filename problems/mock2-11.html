@@ -49,7 +49,7 @@
 <span class="sol-tag">풀이</span>
 <div class="subpart first">
 <span class="part">(a)</span>
-<ol class="steps"><li>!!x로 x를 0 또는 1로 정규화.</li><li><< 31 >> 31 (arithmetic shift)로 1을 all-1 마스크 0xFFFFFFFF로 확장. x=0이면 마스크는 0.</li><li>(m & y) | (~m & z): m이 all-1이면 y, all-0이면 z.<br>
+<ol class="steps"><li>!!x로 x를 0 또는 1로 정규화.</li><li><< 31 >> 31 (arithmetic shift)로 1을 all-1 마스크 0xFFFFFFFF로 확장. x=0이면 마스크는 0.</li><li style="color:#555">32-bit 비트벡터(Data Lab) 모델 기준 — 일반 ISO C에서는 !!x << 31이 signed int 최상위 비트 시프트로 UB, 음수의 >> 31은 구현 정의일 수 있음</li><li>(m & y) | (~m & z): m이 all-1이면 y, all-0이면 z.<br>
 <pre class="c">int conditional(int x, int y, int z) {
     int m = (!!x) << 31 >> 31;
     return (m & y) | (~m & z);
