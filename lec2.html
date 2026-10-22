@@ -13,6 +13,9 @@
 <link rel="prev" href="lec1.html">
 <link rel="next" href="lec3.html">
 <link rel="stylesheet" href="assets/v5-layer.css">
+<link rel="stylesheet" href="assets/v6.css">
+<script src="assets/v6.js" defer></script>
+<script src="assets/v6-extra.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -172,6 +175,7 @@
 </ul></li>
 </ul>
 <div class="nb">
+<div class="v6-widget" data-widget="bit-ops" data-config='{"w":8,"a":165,"b":60,"k":1}'></div>
 <p class="bx-h"><b>Undefined behavior</b></p>
 shift 양이 <b>0보다 작거나 word size 이상</b>이면 undefined → 기계마다 다름 (exception을 내기도, 음수를 아주 큰 양수로 해석하기도). shift는 보수적으로 사용.
 </div>
@@ -449,6 +453,7 @@ int iy = (int) y;   // FF FF C4 93</pre>
 </ul>
 </div>
 <div class="nb">
+<div class="v6-widget" data-widget="int-rep" data-config='{"w":5,"value":7}'></div>
 <p class="bx-h"><b>손계산 6 · Truncation</b></p>
 <ul>
 <li>8비트 → 4비트 (하위 4비트만 남김)
