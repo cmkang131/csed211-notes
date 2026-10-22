@@ -42,7 +42,7 @@
 .Ldef: movl $0, %eax
       ret
 .Ltab: .quad .LA, .LB, .Ldef, .LA, .LC, .LB</pre>
-<p>(a) C switch로 복원 (case 값 포함) (b) f(13, 5), f(9, 5), f(14, 7), f(12, 99)의 값 (c) x &lt; 10이어도 ja 하나로 처리되는 이유.</p>
+<p>(a) C switch로 옮기기 (case 값 포함) (b) f(13, 5), f(9, 5), f(14, 7), f(12, 99)의 값 (c) x &lt; 10이어도 ja 하나로 처리되는 이유.</p>
 <div class="nb"><div>x = 11을 기준값 10만큼 빼서 jump table index를 만들면 index = 1 → 표의 1번 엔트리로 이동. 각 엔트리가 가리키는 case는 직접 대응시켜 보기.</div></div>
 </div>
 </section>

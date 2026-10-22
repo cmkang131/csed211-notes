@@ -55,7 +55,7 @@ call을 가로질러 값이 살아야 하면 caller-saved register는 못 씀: c
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li>(a) n을 재귀 호출 뒤 곱셈에 써야 하는데 %rdi는 caller-saved라 call 중에 바뀜 → callee-saved인 %rbx를 쓰려면 규약상 원래 값을 저장했다가 복원해야 함</li>
+<ol class="steps"><li>(a) n을 재귀 호출 뒤 곱셈에 써야 하는데 %rdi는 caller-saved라 call 중에 바뀜 → callee-saved인 %rbx를 쓰려면 규약상 원래 값을 저장했다가 되돌려야 함</li>
 <li>(b) fact(4), fact(3), fact(2) frame은 return address 8 + 저장된 rbx 8 = 16B씩, fact(1)은 push 없이 return address 8B만 → 16×3 + 8 = 56B</li>
 <li>(c) fact(4) frame이 저장한 rbx = main의 rbx, fact(3) frame = 4, fact(2) frame = 3</li></ol>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">(a) %rdi가 caller-saved라서 (b) 56 byte (c) main의 rbx / 4 / 3 · 반환값은 4×3×2×1 = 24</span></div>

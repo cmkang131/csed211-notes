@@ -28,7 +28,7 @@
 <section>
 <div class="problem">
 <span class="prob-no">Phase 4</span>
-<p>다음은 phase_4의 disassembly다. func4를 C로 복원하고 폭탄을 해제하는 입력 2개를 찾아라.</p>
+<p>다음은 phase_4의 disassembly다. func4를 C로 옮기고 폭탄을 해제하는 입력 2개를 찾아라.</p>
 <pre class="c">  cmpl $0x2,%eax          # sscanf로 정확히 2개
   mov 0xc(%rsp),%eax
   sub $0x2,%eax
@@ -44,7 +44,7 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-재귀 함수는 반환 규칙을 C로 복원한 뒤, 원하는 반환 값이 나오는 입력을 역산한다. 종료 조건(base case)부터 확인.
+재귀 함수는 반환 규칙을 C로 옮긴 뒤, 원하는 반환 값이 나오는 입력을 역산한다. 종료 조건(base case)부터 확인.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>

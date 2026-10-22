@@ -4,7 +4,7 @@
 <script src="../assets/theme.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Q2 · 루프 어셈블리 → C 복원 — 컴퓨터 시스템 문제</title>
+<title>Q2 · 루프 어셈블리 → C로 옮기기 — 컴퓨터 시스템 문제</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
   <span class="phead-c">문제 풀이 &middot; 모의고사 2탄</span>
   <span class="phead-r">CSED211 &middot; 2026 가을 &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
-<h1 class="pagetitle">Q2 · 루프 어셈블리 → C 복원</h1>
+<h1 class="pagetitle">Q2 · 루프 어셈블리 → C로 옮기기</h1>
 <p class="psub">모의고사 2탄 · 자작 · Lec5 Control: do-while 번역 유형 (강의 루프 번역 규칙 기반) · 8점</p>
 <div class="body notes">
 <section>
@@ -37,7 +37,7 @@
 <p>jne .L2</p>
 <p>ret</pre></p>
 <ul>
-<li>(a) f의 C 코드를 복원하시오. 함수 시그니처는 int f(int n)이다.</li>
+<li>(a) f의 C 코드로 옮기시오. 함수 시그니처는 int f(int n)이다.</li>
 </ul>
 <ul>
 <li>(b) f(4)와 f(5)의 값을 쓰시오.</li>
@@ -72,7 +72,7 @@
 </div>
 <div class="subpart">
 <span class="part">(c)</span>
-<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보인다. 반환 값은 0. <span style="color:#555">(어셈블리의 32-bit wraparound 기준 — 복원한 C 코드의 signed overflow는 ISO C에서 UB이므로, C 소스로 컴파일하면 이 동작이 보장되지는 않음)</span><br></li></ol>
+<ol class="steps"><li>do-while이라 본문이 먼저 1회 실행되어 result = 0. 이후 n은 −1, −2, … 로 감소하다가 32비트에서 2^32회 감소 후 다시 0이 되면 종료. 무한 루프는 아니지만 사실상 멈춘 것처럼 보인다. 반환 값은 0. <span style="color:#555">(어셈블리의 32-bit wraparound 기준 — 옮긴 C 코드의 signed overflow는 ISO C에서 UB이므로, C 소스로 컴파일하면 이 동작이 보장되지는 않음)</span><br></li></ol>
 </div>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">f(4)=24, f(5)=120 · 0 반환 (약 2^32회 반복 후 종료)</span></div>
 </div></details>
