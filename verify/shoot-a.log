@@ -1,0 +1,11 @@
+screens: 46
+mount states: mounted,mounted,mounted,mounted,mounted,mounted,mounted,mounted,mounted,mounted,mounted,mounted,mounted,error,mounted,mounted,mounted
+horizontal overflow: none
+console/exception messages (all): 0
+in-widget error/warning lines: 4
+  13: 위젯 'bit-ops': data-config 가 올바른 JSON 이 아닙니다 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
+  14: config 경고: w는 4 또는 8 / A="zz"는 8비트 범위 밖/형식 오류 / op 이름 오류 / k는 0..8 → 기본값 사용
+  15: config 경고: bits 형식 오류 / preset 이름 오류 → 기본값 사용
+  16: config 경고: value는 이진 소수, 비트 24개까지 (예: 10.0110, −1.101) / k는 0..8 → 기본값 사용
+unexpected in-widget errors (outside the 4 intentional bad-config widgets): 0
+console errors/warnings/exceptions: 0

@@ -1,0 +1,50 @@
+[PASS] 1. B2U/B2T exhaustive w=3..8: 1792/1792 passed, 0 failed
+[PASS] 2. bitop (w=4 all a,b,k,ops; w=8 binary all a,b; shifts/unary all a,k) + src + identities: 665856/665856 passed, 0 failed
+    note: 218368 bitop calls
+[PASS] 3. inc/sext/trunc exhaustive w=3..8: 16224/16224 passed, 0 failed
+[PASS] 4. f32Decode presets + random + exponent boundaries vs DataView: 241729/241729 passed, 0 failed
+    note: 30000 random u32 + 4608 exponent-boundary patterns (all 256 exponents x 9 fractions x 2 signs)
+[PASS] 5. f32Encode vs exact BigInt RNE reference and Math.fround: 271193/271193 passed, 0 failed
+    note: 30000 random decimal strings + 37 boundary strings + 600 crafted halfway+/-eps strings
+    note: double-rounding cases (widget == exact reference, Math.fround(Number(s)) differs; NOT failures): 317 (crafted: 309, random/boundary: 8)
+    double-rounding cases (first 25 of 317):
+      "340282356779733661637539395458142568447"  widget/ref 0x7F7FFFFF  fround 0x7F800000
+      "340282356779733661637539395458142568447....43418788909912109375 [len 120]"  widget/ref 0x7F7FFFFF  fround 0x7F800000
+      "0.00000000000000000000000000000000000000...20340824127197265625 [len 212]"  widget/ref 0x00000001  fround 0x00000000
+      "0.00000000000000000000000000000000000000...00000000000000000001 [len 186]"  widget/ref 0x00000001  fround 0x00000000
+      "0.00000000000000000000000000000000000001...54578304290771484375 [len 192]"  widget/ref 0x007FFFFF  fround 0x00800000
+      "1.000000059604644776257986737988403547205962240695953369140625"  widget/ref 0x3F800001  fround 0x3F800000
+      "1.000000178813934325304513262011596452794037759304046630859375"  widget/ref 0x3F800001  fround 0x3F800002
+      "1.00000005960464477539062500000000000000...47160434722900390625 [len 202]"  widget/ref 0x3F800001  fround 0x3F800000
+      "2072887914932234944512"  widget/ref 0x62E0BE33  fround 0x62E0BE32  (crafted)
+      "0.00000000000000000000000000000000012033...06747341156005859375 [len 174]"  widget/ref 0x071FF387  fround 0x071FF388  (crafted)
+      "0.00000000002912708095548221995097408607...10448360443115234375 [len 92]"  widget/ref 0x2E001A2D  fround 0x2E001A2E  (crafted)
+      "-0.0000000000000000000000000000000317130...09776592254638671875 [len 166]"  widget/ref 0x8B24A9D5  fround 0x8B24A9D6  (crafted)
+      "0.00000000000000000004387752255864972365...96362590789794921875 [len 121]"  widget/ref 0x1F4F34AB  fround 0x1F4F34AC  (crafted)
+      "0.00000000000000000000000000000000013929...93252658843994140625 [len 174]"  widget/ref 0x07392935  fround 0x07392934  (crafted)
+      "3150183689606712669218275328"  widget/ref 0x6D22DC55  fround 0x6D22DC56  (crafted)
+      "0.00000000000000000000000000000000000785...65422534942626953125 [len 187]"  widget/ref 0x0527113F  fround 0x0527113E  (crafted)
+      "0.00000000000000000000000000000000000024...13084506988525390625 [len 186]"  widget/ref 0x02A5A65F  fround 0x02A5A65E  (crafted)
+      "0.00000000000000000000000000000000000475...66263294219970703125 [len 175]"  widget/ref 0x04CA3EF9  fround 0x04CA3EF8  (crafted)
+      "4839179631966277034650525417905061888"  widget/ref 0x7C68FF7F  fround 0x7C68FF7E  (crafted)
+      "0.00000000000000000000000000194562055584...67236232757568359375 [len 150]"  widget/ref 0x131A25DF  fround 0x131A25E0  (crafted)
+      "9764704016916499557627388761974243328"  widget/ref 0x7CEB13A3  fround 0x7CEB13A2  (crafted)
+      "85839.2148437499927240423858165740966796875"  widget/ref 0x47A7A79B  fround 0x47A7A79C  (crafted)
+      "0.00000000008172022433750036734513119936...22089672088623046875 [len 91]"  widget/ref 0x2EB3B465  fround 0x2EB3B466  (crafted)
+      "0.00000000000000000000000000000000026530...93252658843994140625 [len 174]"  widget/ref 0x07B05337  fround 0x07B05336  (crafted)
+      "2639284481592622820851712"  widget/ref 0x680BB8F9  fround 0x680BB8FA  (crafted)
+[PASS] 6. roundBin exhaustive (int 0..7, <=8 frac bits, +/-, k=0..6, 4 modes) + textbook: 758202/758202 passed, 0 failed
+    note: 228928 (value,k,mode) combinations
+    note: 20 textbook checks (CS:APP 2.4.4, PP 2.50, Fig 2.37)
+
+==== SUMMARY ====
+seed=0xC5ED211  N_DECODE_RANDOM=30000  N_ENCODE_RANDOM=30000  N_DR_CRAFTED=600  node v22.23.2
+  PASS  1792/1792  1. B2U/B2T exhaustive w=3..8
+  PASS  665856/665856  2. bitop (w=4 all a,b,k,ops; w=8 binary all a,b; shifts/unary all a,k) + src + identities
+  PASS  16224/16224  3. inc/sext/trunc exhaustive w=3..8
+  PASS  241729/241729  4. f32Decode presets + random + exponent boundaries vs DataView
+  PASS  271193/271193  5. f32Encode vs exact BigInt RNE reference and Math.fround
+  PASS  758202/758202  6. roundBin exhaustive (int 0..7, <=8 frac bits, +/-, k=0..6, 4 modes) + textbook
+  double-rounding cases (reference wins, not failures): 317
+runtime 5.45 s
+ALL PASS
