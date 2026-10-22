@@ -211,7 +211,7 @@
       const w = state.w, out = state.u & 15;
       state.extra = { type: "truncate", width: 4, value: out, original: w };
       state.message = w <= 4 ? (w === 4 ? "w=4: 제거되는 비트가 없습니다." : "w=3: 상위 0을 붙여 4비트로 표시합니다(잘라내기 아님).") :
-        `버린 상위 ${w - 4}비트; U mod 16 = ${state.u} mod 16 = ${out}; U2T₄ = ${signed(out, 4)}.`;
+        `버린 상위 ${w - 4}비트; U mod 16 = ${state.u} mod 16 = ${out}; signed 해석(4비트) = ${signed(out, 4)}.`;
       render();
     });
     let row;
@@ -247,10 +247,10 @@
         state.u ^= 1 << (state.w - p - 1); state.extra = null; state.message = "비트를 직접 변경했습니다."; render();
       });
       const terms = bits(state.u, state.w).map((v, p) => ({ v, power: state.w - 1 - p }));
-      const unsignedExpansion = terms.map(t => `${t.v}×2^${t.power}`).join(" + ");
-      const signedExpansion = terms.map((t, i) => `${i === 0 ? "−" : "+ "}${t.v}×2^${t.power}`).join(" ");
+      const unsignedExpansion = terms.map(t => `${t.v}×2<sup>${t.power}</sup>`).join(" + ");
+      const signedExpansion = terms.map((t, i) => `${i === 0 ? "−" : "+ "}${t.v}×2<sup>${t.power}</sup>`).join(" ");
       const notes = node("div", host, "", "v6-state");
-      notes.textContent = `B2U = Σ xᵢ·2ⁱ = ${unsignedExpansion} = ${state.u}\nB2T = −x₍w−1₎·2^(w−1) + Σ(i<w−1)xᵢ·2ⁱ = ${signedExpansion} = ${signed(state.u, state.w)}\nTMin=${-(1 << (state.w - 1))}, TMax=${(1 << (state.w - 1)) - 1}, UMax=${mask(state.w)}.`;
+      notes.innerHTML = `B2U<sub>w</sub>(x) = Σ<sub>i</sub> x<sub>i</sub>·2<sup>i</sup> = ${unsignedExpansion} = ${state.u}<br>B2T<sub>w</sub>(x) = −x<sub>w−1</sub>·2<sup>w−1</sup> + Σ<sub>i&lt;w−1</sub> x<sub>i</sub>·2<sup>i</sup> = ${signedExpansion} = ${signed(state.u, state.w)}<br>TMin = ${-(1 << (state.w - 1))}, TMax = ${(1 << (state.w - 1)) - 1}, UMax = ${mask(state.w)}.`;
       if (state.extra) {
         const x = state.extra, box = node("div", host);
         node("div", box, x.type === "extend" ? "부호 확장 결과(새 비트는 빨강)" : "잘라내기 결과(버려지는 비트는 빨강)");
@@ -374,8 +374,8 @@
     const host = node("div", el);
     const fieldRow = node("div", host);
     const fieldLabels = node("div", fieldRow);
-    Object.assign(fieldLabels.style, { display: "grid", gridTemplateColumns: "1fr 8fr 23fr", gap: "4px", fontSize: "12px", marginTop: "12px" });
-    ["부호(sign) 1", "지수(exponent) 8", "가수(frac) 23"].forEach(x => node("span", fieldLabels, x));
+    Object.assign(fieldLabels.style, { display: "grid", gridTemplateColumns: "1fr 8fr 23fr", gap: "4px", fontSize: "11px", marginTop: "12px", maxWidth: "900px" });
+    ["부호(sign) 1", "지수(exponent) 8", "가수(frac) 23"].forEach(x => { const sp = node("span", fieldLabels, x); Object.assign(sp.style, { whiteSpace: "nowrap", textAlign: "center" }); });
     const strip = node("div", fieldRow);
     Object.assign(strip.style, { display: "grid", gridTemplateColumns: "repeat(32, minmax(0, 1fr))", gap: "1px", maxWidth: "900px" });
     const cells = [];
@@ -396,8 +396,8 @@
       if (!d.finite) {
         lines.push(d.kind === "NaN" ? "exp=255, frac≠0 → NaN (숫자가 아님)" : "exp=255, frac=0 → 무한대(infinity)");
       } else {
-        const M = d.e ? `1 + ${d.f}/2^23` : `${d.f}/2^23`;
-        lines.push(`E=${d.E}; M=${M}; 값=(-1)^${d.s} × (${M}) × 2^(${d.E})`);
+        const M = d.e ? `1 + ${d.f}/2<sup>23</sup>` : `${d.f}/2<sup>23</sup>`;
+        lines.push(`E = ${d.E}; M = ${M}; 값 = (−1)<sup>${d.s}</sup> × (${M}) × 2<sup>${d.E}</sup>`);
         lines.push(`정확한 유리수(num/den): ${d.value.n}/${d.value.d}`);
         lines.push(`정확한 10진 값: ${d.s && d.value.n === ZERO ? "−0" : rationalDecimal(d.value)}`);
       }
@@ -407,7 +407,7 @@
       } else if (previousInput && !d.finite) {
         lines.push("오차: 무한대 결과는 유한한 유리수 오차로 표시할 수 없습니다(overflow).");
       }
-      info.textContent = lines.join("\n");
+      info.innerHTML = lines.join("<br>");
     }
     paint();
   });
@@ -460,7 +460,7 @@
         const upper = lower + 1 / Number(scale);
         const left = lower - 1 / Number(scale), right = upper + 1 / Number(scale);
         plot.replaceChildren();
-        node("div", plot, `입력 ${input.value}₂ = ${rationalDecimal(signedValue)}₁₀ · 해상도 2^(-${k}) = ${1 / (2 ** k)}`);
+        (d => { d.innerHTML = `입력 ${input.value}<sub>2</sub> = ${rationalDecimal(signedValue)}<sub>10</sub> · 해상도 2<sup>−${k}</sup> = ${1 / (2 ** k)}`; })(node("div", plot));
         rows.forEach(([name, magnitude]) => {
           const result = signedResult(magnitude), num = Number(result.n) / Number(result.d);
           const heading = node("div", plot, `${name}: ${rationalDecimal(result)} (이진: ${formatBinary(result, k)})`);
@@ -485,8 +485,8 @@
         });
         const halfway = rem !== ZERO && halfCmp === ZERO;
         const nearest = rows[0][1];
-        info.textContent = `원래 값 ${rationalDecimal(signedValue)} · 버려지는 부분의 크기 ${rem}/${x.denom} (단위: 2^(-${k}))\n` +
-          (halfway ? `정확히 halfway(중간값): ${q}와 ${q + ONE} 중 짝수 ${nearest}을 선택했습니다.\n` : "halfway가 아니므로 가장 가까운 격자점을 선택합니다.\n") +
+        info.innerHTML = `원래 값 ${rationalDecimal(signedValue)} · 버려지는 부분의 크기 ${rem}/${x.denom} (단위: 2<sup>−${k}</sup>)<br>` +
+          (halfway ? `정확히 halfway(중간값): ${q}와 ${q + ONE} 중 짝수 ${nearest}을 선택했습니다.<br>` : "halfway가 아니므로 가장 가까운 격자점을 선택합니다.<br>") +
           "점선(빨강)은 원래 값과 반올림 결과의 간격이며 ●가 결과입니다. round-to-even은 정확한 중간값에서 위·아래를 번갈아 택해 한쪽 방향의 누적 편향을 줄입니다.";
       } catch (e) { plot.replaceChildren(); error(info, e.message); }
     }
