@@ -8046,973 +8046,978 @@ if (document.fonts && document.fonts.ready){
   });
 
   // ============================================================
-  // 4. Buffer Overflow
-  // ============================================================
+// 4. Buffer Overflow
+// ============================================================
 
-  V6.register("buf-overflow", function (root, cfg) {
-    cfg = cfg && typeof cfg === "object" ? cfg : {};
+V6.register("buf-overflow", function (root, cfg) {
+  cfg = cfg && typeof cfg === "object" ? cfg : {};
 
-    T(root, "스택 버퍼 오버플로 — Stack Smashing");
+  T(root, "스택 버퍼 오버플로 — Stack Smashing");
 
-    let N = goodInteger(cfg.n, 8, 4, 16);
-    let input = "HELLO";
-    let canary = false;
-    let aslr = true;
-    let nx = true;
-    let retResult = "";
+  let N = goodInteger(cfg.n, 8, 4, 16);
+  let input = "HELLO";
+  let canary = false;
+  let aslr = true;
+  let nx = true;
+  let retResult = "";
 
-    const controls = C(root);
+  const controls = C(root);
 
-    range(
-      controls,
-      "buf 크기 N",
-      4,
-      16,
-      N,
-      value => {
-        N = value;
-        retResult = "";
-        render();
-      }
-    );
+  range(controls, "buf 크기 N", 4, 16, N, value => {
+    N = value;
+    retResult = "";
+    render();
+  });
 
-    const text = inputText(
-      controls,
-      "입력 문자열",
-      input,
-      () => {
-        input = text.value;
-        retResult = "";
-
-        // Synchronize the slider to Unicode character count.
-        // The byte count is displayed independently because UTF-8
-        // characters may occupy multiple bytes.
-        syncLengthSlider();
-        render();
-      }
-    );
-
-    text.style.width = "230px";
-
-    const lengthControl = range(
-      controls,
-      "입력 길이(ASCII 예시)",
-      0,
-      40,
-      Array.from(input).length,
-      value => {
-        input = "A".repeat(value);
-        text.value = input;
-        retResult = "";
-
-        syncLengthSlider();
-        render();
-      }
-    );
-
-    function characterCount(s) {
-      return Array.from(s).length;
-    }
-
-    function syncLengthSlider() {
-      const count = characterCount(input);
-
-      // Expand the slider when direct text input exceeds its
-      // default range, so the current value is represented exactly.
-      lengthControl.input.max = String(Math.max(40, count));
-      lengthControl.input.value = String(count);
-      lengthControl.current.textContent = String(count);
-    }
-
-    const defenseBar = C(root);
-
-    function checkbox(parent, caption, checked, fn) {
-      const control = document.createElement("input");
-      control.type = "checkbox";
-      control.checked = checked;
-      L(parent, caption, control);
-
-      control.addEventListener(
-        "change",
-        () => fn(control.checked)
-      );
-
-      return control;
-    }
-
-    checkbox(
-      defenseBar,
-      "Stack protector(canary)",
-      false,
-      value => {
-        canary = value;
-        retResult = "";
-        render();
-      }
-    );
-
-    checkbox(
-      defenseBar,
-      "ASLR",
-      true,
-      value => {
-        aslr = value;
-        render();
-      }
-    );
-
-    checkbox(
-      defenseBar,
-      "NX",
-      true,
-      value => {
-        nx = value;
-        render();
-      }
-    );
-
-    B(defenseBar, "ret 실행", () => {
-      const model = calculate();
-
-      if (canary && model.canaryCorrupt) {
-        retResult =
-          "__stack_chk_fail: canary가 변경되어 반환 전 프로그램을 중단합니다.";
-      } else if (model.returnCorrupt) {
-        retResult =
-          "반환 주소(return address)가 오염되었습니다. " +
-          "ret은 변조된 주소를 읽습니다.\n" +
-          "실제 결과는 메모리 권한·주소·시스템 방어에 따라 달라집니다. " +
-          "유효하지 않은 주소라면 segmentation fault가 발생할 수 있습니다.";
-      } else if (model.rbpCorrupt) {
-        retResult =
-          "saved %rbp가 손상되었지만 반환 주소 자체는 이 모델에서 보존되었습니다. " +
-          "이후 실행은 손상된 프레임 포인터의 사용 여부에 따라 달라집니다.";
-      } else {
-        retResult =
-          "saved %rbp와 반환 주소가 보존되었습니다. 정상 복귀를 시뮬레이션합니다.";
-      }
-
-      render();
-    });
-
-    const diagram = E("section", root);
-    const resultPanel = S(root);
-    const info = S(root);
-
-    function utf8Bytes(s) {
-      return Array.from(new TextEncoder().encode(s));
-    }
-
-    function calculate() {
-      const bytes = utf8Bytes(input);
-      const writeLength = bytes.length + 1;
-
-      const canaryStart = N;
-      const rbpStart = N + (canary ? 8 : 0);
-      const retStart = rbpStart + 8;
-
-      return {
-        bytes,
-        characterLength: characterCount(input),
-        byteLength: bytes.length,
-        writeLength,
-        canaryStart,
-        rbpStart,
-        retStart,
-        canaryCorrupt:
-          canary && writeLength > canaryStart,
-        rbpCorrupt:
-          writeLength > rbpStart,
-        returnCorrupt:
-          writeLength > retStart
-      };
-    }
-
-    function regionName(offset, m) {
-      if (offset < N) return "buf";
-      if (canary && offset < m.rbpStart) return "canary";
-      if (offset < m.retStart) return "saved %rbp";
-      return "return address";
-    }
-
-    function renderRegion(parent, name, offsets, m, base) {
-      const group = E("div", parent);
-      group.style.marginBottom = "16px";
-
-      noteHeader(group, name);
-
-      const scroll = E("div", group, "", "v6-table-scroll");
-      const grid = E("div", scroll);
-
-      Object.assign(grid.style, {
-        display: "grid",
-        gridTemplateColumns: "repeat(8, minmax(64px,1fr))",
-        gap: "4px",
-        minWidth: "580px",
-        marginTop: "8px"
-      });
-
-      offsets.forEach(offset => {
-        const overwritten = offset < m.writeLength;
-        const corrupted = overwritten && offset >= N;
-
-        let value = "기존 값";
-
-        if (offset < m.bytes.length) {
-          value =
-            "0x" +
-            m.bytes[offset].toString(16).padStart(2, "0");
-        } else if (offset === m.bytes.length) {
-          value = "0x00 NUL";
-        }
-
-        const cell = box(
-          grid,
-          hex(base + BigInt(offset)) +
-          "\n" +
-          (overwritten ? value : "—"),
-          corrupted
-        );
-
-        cell.style.whiteSpace = "pre-wrap";
-        cell.style.textAlign = "center";
-        cell.style.fontSize = "11px";
-        cell.title =
-          regionName(offset, m) +
-          (corrupted ? " · 경계 밖 쓰기" : "");
-      });
-    }
-
-    function render() {
-      try {
-        syncLengthSlider();
-
-        const m = calculate();
-        clear(diagram);
-
-        H(diagram, "스택 메모리 — 낮은 주소에서 높은 주소 순서");
-
-        const base = 0x7fffffffe000n;
-        const total = m.retStart + 8;
-
-        const offsets = Array.from(
-          { length: total },
-          (_, i) => i
-        );
-
-        renderRegion(
-          diagram,
-          "1 · 지역 버퍼 buf[" + N + "]",
-          offsets.filter(x => x < N),
-          m,
-          base
-        );
-
-        if (canary) {
-          renderRegion(
-            diagram,
-            "2 · Stack Canary (8바이트)",
-            offsets.filter(
-              x => x >= N && x < m.rbpStart
-            ),
-            m,
-            base
-          );
-        }
-
-        renderRegion(
-          diagram,
-          canary
-            ? "3 · Saved %rbp (8바이트)"
-            : "2 · Saved %rbp (8바이트)",
-          offsets.filter(
-            x => x >= m.rbpStart && x < m.retStart
-          ),
-          m,
-          base
-        );
-
-        renderRegion(
-          diagram,
-          canary
-            ? "4 · Return Address (8바이트)"
-            : "3 · Return Address (8바이트)",
-          offsets.filter(x => x >= m.retStart),
-          m,
-          base
-        );
-
-        const overflowCount = Math.max(
-          0,
-          m.writeLength - N
-        );
-
-        resultPanel.textContent =
-          "buf 크기: " + N + " B\n" +
-          "입력 문자 수(Unicode 문자 기준): " +
-          m.characterLength + "개\n" +
-          "입력 UTF-8 바이트 수: " +
-          m.byteLength + " B\n" +
-          "gets()가 쓰는 길이: " + m.writeLength +
-          " B (UTF-8 " + m.byteLength +
-          " B + 끝 NUL 1 B)\n" +
-          "버퍼 경계 초과: " + overflowCount + " B\n\n" +
-          "saved %rbp 침범: " +
-          (m.rbpCorrupt ? "예" : "아니오") + "\n" +
-          "return address 침범: " +
-          (m.returnCorrupt ? "예" : "아니오") +
-          (canary
-            ? "\ncanary 변경: " +
-              (m.canaryCorrupt ? "예" : "아니오")
-            : "") +
-          (retResult ? "\n\n" + retResult : "");
-
-        info.textContent =
-          "방어 기법 — Mitigations\n" +
-          "Stack canary: 반환 직전에 변조 여부를 검사합니다.\n" +
-          "ASLR: " + (aslr ? "활성" : "비활성") +
-          " — 주소 배치를 예측하기 어렵게 합니다.\n" +
-          "NX: " + (nx ? "활성" : "비활성") +
-          " — 비실행 메모리에서 코드 실행을 제한합니다.\n\n" +
-          "길이 슬라이더는 ASCII 'A' 반복 입력을 생성하며, " +
-          "텍스트를 직접 입력하면 실제 문자 수로 동기화됩니다.\n" +
-          "한글 등 비ASCII 문자는 UTF-8에서 여러 바이트를 차지하므로 " +
-          "버퍼 초과 계산은 문자 수가 아니라 바이트 수를 사용합니다.\n\n" +
-          "핵심 방어는 입력 길이를 검사하는 안전한 코드입니다.\n" +
-          "이 그림은 설명용 스택 배치입니다. " +
-          "실제 컴파일러의 패딩·canary·frame pointer 구성은 다를 수 있습니다.";
-      } catch (e) {
-        clear(diagram);
-        resultPanel.textContent = "";
-        notice(info, e.message);
-      }
-    }
-
+  const text = inputText(controls, "입력 문자열", input, () => {
+    input = text.value;
+    retResult = "";
     syncLengthSlider();
     render();
   });
 
-  // ============================================================
-  // 5. Byte Ordering
-  // ============================================================
+  text.style.width = "230px";
+  text.style.maxWidth = "100%";
 
-  V6.register("byte-order", function (root, cfg) {
-    cfg = cfg && typeof cfg === "object" ? cfg : {};
-
-    T(root, "바이트 순서 — Little / Big Endian");
-
-    let value = 0x01234567n;
-    let width = 4;
-    let mode = "number";
-    const ascii = "0123";
-    let errorText = "";
-
-    if (cfg.value !== undefined) {
-      try {
-        const parsed = parseIntExact(cfg.value);
-
-        if (parsed < 0n || parsed > 0xffffffffn) {
-          throw new Error("32비트 범위를 초과했습니다.");
-        }
-
-        value = parsed;
-      } catch (e) {
-        errorText = e.message;
-      }
-    }
-
-    const controls = C(root);
-
-    const text = inputText(
-      controls,
-      "정수(hex 또는 10진)",
-      hex(value, 8),
-      update
-    );
-
-    const intButton = B(controls, "32비트(int)", () => {
-      width = 4;
-      mode = "number";
+  const lengthControl = range(
+    controls,
+    "입력 길이(ASCII 예시)",
+    0,
+    15,
+    Array.from(input).length,
+    value => {
+      input = "A".repeat(value);
+      text.value = input;
+      retResult = "";
+      syncLengthSlider();
       render();
+    }
+  );
+
+  function characterCount(s) {
+    return Array.from(s).length;
+  }
+
+  function syncLengthSlider() {
+    const count = characterCount(input);
+
+    // Keep some room for extension, but shrink the maximum
+    // when a long directly-entered string becomes shorter.
+    const max = Math.max(10, count + 10);
+
+    lengthControl.input.max = String(max);
+    lengthControl.input.min = "0";
+    lengthControl.input.value = String(count);
+    lengthControl.current.textContent = String(count);
+  }
+
+  const defenseBar = C(root);
+
+  function checkbox(parent, caption, checked, fn) {
+    const control = document.createElement("input");
+    control.type = "checkbox";
+    control.checked = checked;
+    L(parent, caption, control);
+
+    control.addEventListener("change", () => {
+      fn(control.checked);
     });
 
-    const shortButton = B(controls, "16비트(short)", () => {
-      width = 2;
-      mode = "number";
+    return control;
+  }
+
+  checkbox(
+    defenseBar,
+    "Stack protector (canary)",
+    false,
+    value => {
+      canary = value;
+      retResult = "";
       render();
-    });
+    }
+  );
 
-    const asciiButton = B(controls, "문자열(ASCII)", () => {
-      mode = "ascii";
+  checkbox(
+    defenseBar,
+    "ASLR (개념 토글)",
+    true,
+    value => {
+      aslr = value;
       render();
-    });
-
-    const diagram = E("section", root);
-    const info = S(root);
-
-    function update() {
-      try {
-        const n = parseIntExact(text.value);
-
-        if (n < 0n || n > 0xffffffffn) {
-          throw new Error("0부터 0xFFFFFFFF까지 입력하세요.");
-        }
-
-        value = n;
-        mode = "number";
-        errorText = "";
-        render();
-      } catch (e) {
-        errorText = e.message;
-        clear(diagram);
-        notice(info, errorText);
-      }
     }
+  );
 
-    function drawRow(parent, name, bytes, indices) {
-      H(parent, name);
-
-      const direction = E(
-        "div",
-        parent,
-        "낮은 주소 (Low Address)  →  높은 주소 (High Address)"
-      );
-
-      Object.assign(direction.style, {
-        fontSize: "12px",
-        fontWeight: "600",
-        margin: "4px 0 9px",
-        color: INK
-      });
-
-      const grid = E("div", parent);
-
-      Object.assign(grid.style, {
-        display: "grid",
-        gridTemplateColumns:
-          "repeat(" + bytes.length + ", minmax(0,1fr))",
-        gap: "6px",
-        maxWidth: "720px"
-      });
-
-      bytes.forEach((byte, index) => {
-        const cell = box(
-          grid,
-          "주소 +" + index +
-          "\n0x" +
-          byte.toString(16).padStart(2, "0")
-        );
-
-        cell.style.whiteSpace = "pre-wrap";
-        cell.style.textAlign = "center";
-        cell.style.fontSize = "14px";
-        cell.style.padding = "13px 6px";
-
-        cell.title =
-          "원래 정수의 byte " + indices[index];
-      });
+  checkbox(
+    defenseBar,
+    "NX (개념 토글)",
+    true,
+    value => {
+      nx = value;
+      render();
     }
+  );
 
-    function render() {
-      selectState(
-        intButton,
-        mode === "number" && width === 4
-      );
+  B(defenseBar, "ret 실행", () => {
+    const model = calculate();
 
-      selectState(
-        shortButton,
-        mode === "number" && width === 2
-      );
-
-      selectState(asciiButton, mode === "ascii");
-
-      clear(diagram);
-
-      if (errorText) {
-        notice(info, errorText);
-        return;
-      }
-
-      if (mode === "ascii") {
-        const bytes = [
-          ...Array.from(new TextEncoder().encode(ascii)),
-          0
-        ];
-
-        H(diagram, '문자열 "0123"');
-
-        drawRow(
-          diagram,
-          "메모리 주소 증가 방향",
-          bytes,
-          [0, 1, 2, 3, "NUL"]
-        );
-
-        info.textContent =
-          '문자열 "0123" + NUL의 바이트\n' +
-          "0x30 0x31 0x32 0x33 0x00\n\n" +
-          "문자열은 바이트 배열이므로 바이트 순서가 문자를 재배열하지 않습니다.\n" +
-          "다만 같은 바이트열을 다바이트 정수로 해석하면 endian에 따라 숫자 값이 달라집니다.";
-        return;
-      }
-
-      const mask = (1n << BigInt(width * 8)) - 1n;
-      const v = value & mask;
-
-      const little = [];
-      const big = [];
-
-      for (let i = 0; i < width; i++) {
-        little.push(
-          Number((v >> BigInt(i * 8)) & 255n)
-        );
-      }
-
-      for (let i = width - 1; i >= 0; i--) {
-        big.push(little[i]);
-      }
-
-      drawRow(
-        diagram,
-        "Little-endian — x86-64",
-        little,
-        Array.from({ length: width }, (_, i) => i)
-      );
-
-      drawRow(
-        diagram,
-        "Big-endian",
-        big,
-        Array.from(
-          { length: width },
-          (_, i) => width - 1 - i
-        )
-      );
-
-      info.textContent =
-        "값: " + hex(v, width * 2) + "\n" +
-        "크기: " + width + "바이트\n\n" +
-        "Little-endian: " +
-        little.map(x =>
-          "0x" + x.toString(16).padStart(2, "0")
-        ).join(" ") +
-        "\nBig-endian: " +
-        big.map(x =>
-          "0x" + x.toString(16).padStart(2, "0")
-        ).join(" ") +
-        "\n\n" +
-        "화살표 방향은 낮은 메모리 주소에서 높은 메모리 주소로 증가하는 방향입니다.\n" +
-        "Little-endian은 최하위 바이트(LSB)를 낮은 주소에 저장합니다.\n" +
-        "Big-endian은 최상위 바이트(MSB)를 낮은 주소에 저장합니다.\n" +
-        "바이트 저장 순서는 달라도 같은 규칙으로 해석하면 원래 정수 값은 같습니다.";
+    if (canary && model.canaryCorrupt) {
+      retResult =
+        "__stack_chk_fail: canary가 변경되어 반환 전 프로그램을 중단합니다.\n" +
+        "교육용 모델의 판정이며 실제 컴파일러의 보호 동작 전체를 재현하지 않습니다.";
+    } else if (model.returnCorrupt) {
+      retResult =
+        "반환 주소(return address)가 오염되었습니다. " +
+        "이 모델에서 ret은 변조된 주소를 읽는 것으로 취급합니다.\n" +
+        "실제 결과는 주소 유효성, 메모리 매핑, 권한 및 시스템 방어에 따라 달라집니다. " +
+        "유효하지 않은 주소라면 예외가 발생할 수 있습니다.\n" +
+        (
+          nx
+            ? "NX가 활성화된 시스템에서는 스택을 실행 불가능하게 설정할 수 있습니다. " +
+              "따라서 스택에 입력된 바이트를 코드로 실행하는 것은 차단될 수 있지만, " +
+              "NX가 변조된 반환 주소 자체를 복구하거나 모든 제어 흐름 공격을 차단하는 것은 아닙니다."
+            : "NX가 비활성화된 경우에도 실제 코드 실행 성공이 보장되지는 않습니다."
+        ) +
+        "\nASLR은 주소 배치를 무작위화하지만, 이 모델은 실제 주소 무작위화나 공격 성공 여부를 계산하지 않습니다.";
+    } else if (model.rbpCorrupt) {
+      retResult =
+        "saved %rbp가 손상되었지만 반환 주소는 이 모델에서 보존되었습니다. " +
+        "이후 동작은 손상된 프레임 포인터의 사용 여부 등에 따라 달라집니다.\n" +
+        "교육용 단순화 모델이며 실제 함수 복귀 과정을 완전히 시뮬레이트하지 않습니다.";
+    } else {
+      retResult =
+        "saved %rbp와 반환 주소가 보존되었습니다. " +
+        "이 모델에서는 정상 복귀로 취급합니다.\n" +
+        "실제 실행 결과를 보장하는 시뮬레이션은 아닙니다.";
     }
 
     render();
   });
 
-  // ============================================================
-  // 6. Virtual Memory Layout
-  // ============================================================
+  const diagram = E("section", root);
+  const resultPanel = S(root);
+  const info = S(root);
 
-  V6.register("mem-layout", function (root, cfg) {
-    cfg = cfg && typeof cfg === "object" ? cfg : {};
+  function utf8Bytes(s) {
+    return Array.from(new TextEncoder().encode(s));
+  }
 
-    T(root, "프로세스 가상주소 공간 — Virtual Memory Layout");
+  function calculate() {
+    const bytes = utf8Bytes(input);
+    const writeLength = bytes.length + 1;
 
-    // Last canonical address in the lower 47-bit user half:
-    // 2^47 - 1 = 0x00007FFFFFFFFFFF.
-    const USER_TOP = 0x00007fffffffffffn;
-    const FIRST_NONCANONICAL = 0x0000800000000000n;
-    const KERNEL_START = 0xffff800000000000n;
+    const canaryStart = N;
+    const rbpStart = N + (canary ? 8 : 0);
+    const retStart = rbpStart + 8;
 
-    const BASES = {
-      text: 0x400000n,
-      data: 0x600000n,
-      heap: 0x800000n,
-      mmap: 0x7f0000000000n,
-      stack: 0x7fffffffe000n
+    return {
+      bytes,
+      characterLength: characterCount(input),
+      byteLength: bytes.length,
+      writeLength,
+      canaryStart,
+      rbpStart,
+      retStart,
+      canaryCorrupt: canary && writeLength > canaryStart,
+      rbpCorrupt: writeLength > rbpStart,
+      returnCorrupt: writeLength > retStart
     };
+  }
 
-    const INITIAL_HEAP_SIZE = 0x1000n;
-    const INITIAL_STACK_USED = 0x1000n;
-    const INITIAL_ADDRESS = BASES.text;
+  function regionName(offset, m) {
+    if (offset < N) return "buf";
+    if (canary && offset < m.rbpStart) return "canary";
+    if (offset < m.retStart) return "saved %rbp";
+    return "return address";
+  }
 
-    let heapSize = INITIAL_HEAP_SIZE;
-    let stackUsed = INITIAL_STACK_USED;
-    let selected = INITIAL_ADDRESS;
-    let messageText = "";
-    let errorText = "";
+  function renderRegion(parent, name, offsets, m, base) {
+    const group = E("div", parent);
+    group.style.marginBottom = "16px";
 
-    const controls = C(root);
+    noteHeader(group, name);
 
-    const addressInput = inputText(
-      controls,
-      "가상주소(hex)",
-      hex(selected),
-      () => {
-        try {
-          const parsed = parseIntExact(addressInput.value);
+    const scroll = E("div", group, "", "v6-table-scroll");
+    scroll.style.width = "100%";
+    scroll.style.maxWidth = "100%";
 
-          if (parsed < 0n || parsed > MASK64) {
-            throw new Error("64비트 주소 범위를 초과했습니다.");
-          }
+    const grid = E("div", scroll);
 
-          selected = parsed;
-          messageText = "";
-          errorText = "";
-          render();
-        } catch (e) {
-          errorText = e.message;
-          clear(diagram);
-          notice(info, errorText);
-        }
-      }
-    );
-
-    addressInput.style.width = "230px";
-
-    B(
-      controls,
-      "malloc(+4KiB)",
-      () => {
-        if (heapSize + 0x1000n > 0x100000n) {
-          errorText =
-            "교육용 heap 크기 상한(1MiB)에 도달했습니다.";
-          render();
-          return;
-        }
-
-        heapSize += 0x1000n;
-        errorText = "";
-        messageText =
-          "malloc 시뮬레이션: heap이 높은 주소 방향으로 4KiB 증가.";
-        render();
-      }
-    );
-
-    B(
-      controls,
-      "함수 호출(stack −256B)",
-      () => {
-        if (stackUsed + 256n > 0x10000n) {
-          errorText =
-            "교육용 stack 사용량 상한(64KiB)에 도달했습니다.";
-          render();
-          return;
-        }
-
-        stackUsed += 256n;
-        errorText = "";
-        messageText =
-          "함수 호출 시뮬레이션: %rsp가 낮은 주소로 256B 이동.";
-        render();
-      }
-    );
-
-    B(
-      controls,
-      "반환(stack +256B)",
-      () => {
-        stackUsed = stackUsed > 0x1000n
-          ? stackUsed - 256n
-          : 0x1000n;
-
-        errorText = "";
-        messageText =
-          "함수 반환으로 스택 사용량이 감소했습니다.";
-        render();
-      }
-    );
-
-    B(controls, "리셋", () => {
-      heapSize = INITIAL_HEAP_SIZE;
-      stackUsed = INITIAL_STACK_USED;
-
-      // Reset the selected address and the visible input together.
-      selected = INITIAL_ADDRESS;
-      addressInput.value = hex(INITIAL_ADDRESS);
-
-      errorText = "";
-      messageText = "";
-      render();
+    Object.assign(grid.style, {
+      display: "grid",
+      gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
+      gap: "4px",
+      width: "100%",
+      marginTop: "8px"
     });
 
-    const diagram = E("section", root);
-    const info = S(root);
+    offsets.forEach(offset => {
+      const overwritten = offset < m.writeLength;
+      const corrupted = overwritten && offset >= N;
 
-    function classify(addr) {
-      if (addr < 0n || addr > MASK64) {
-        return {
-          key: "invalid",
-          text: "잘못된 주소"
-        };
+      let value = "기존 값";
+
+      if (offset < m.bytes.length) {
+        value =
+          "0x" + m.bytes[offset].toString(16).padStart(2, "0");
+      } else if (offset === m.bytes.length) {
+        value = "0x00 NUL";
       }
 
-      if (addr >= KERNEL_START) {
-        return {
-          key: "kernel",
-          text: "커널 영역(kernel canonical half) — 사용자 모드 접근 불가"
-        };
+      const cell = box(
+        grid,
+        hex(base + BigInt(offset)) +
+          "\n" +
+          (overwritten ? value : "—"),
+        corrupted
+      );
+
+      Object.assign(cell.style, {
+        whiteSpace: "pre-wrap",
+        overflowWrap: "anywhere",
+        wordBreak: "break-word",
+        minWidth: "0",
+        textAlign: "center",
+        fontSize: "12px",
+        lineHeight: "1.35"
+      });
+
+      cell.title =
+        regionName(offset, m) +
+        (corrupted ? " · 버퍼 경계 밖 쓰기" : "");
+    });
+  }
+
+  function render() {
+    try {
+      syncLengthSlider();
+
+      const m = calculate();
+      clear(diagram);
+
+      H(diagram, "스택 메모리 — 낮은 주소에서 높은 주소 순서");
+
+      const base = 0x7fffffffe000n;
+      const total = m.retStart + 8;
+
+      const offsets = Array.from({ length: total }, (_, i) => i);
+
+      renderRegion(
+        diagram,
+        "1 · 지역 버퍼 buf[" + N + "]",
+        offsets.filter(x => x < N),
+        m,
+        base
+      );
+
+      if (canary) {
+        renderRegion(
+          diagram,
+          "2 · Stack Canary (8바이트)",
+          offsets.filter(x => x >= N && x < m.rbpStart),
+          m,
+          base
+        );
       }
 
-      // Includes the first non-canonical address:
-      // 0x0000800000000000.
-      // The final user canonical address:
-      // 0x00007FFFFFFFFFFF, remains in the user half.
-      if (addr >= FIRST_NONCANONICAL) {
-        return {
-          key: "gap",
-          text: "비정규 주소(non-canonical gap)"
-        };
+      renderRegion(
+        diagram,
+        canary
+          ? "3 · Saved %rbp (8바이트)"
+          : "2 · Saved %rbp (8바이트)",
+        offsets.filter(x => x >= m.rbpStart && x < m.retStart),
+        m,
+        base
+      );
+
+      renderRegion(
+        diagram,
+        canary
+          ? "4 · Return Address (8바이트)"
+          : "3 · Return Address (8바이트)",
+        offsets.filter(x => x >= m.retStart),
+        m,
+        base
+      );
+
+      const overflowCount = Math.max(0, m.writeLength - N);
+
+      resultPanel.textContent =
+        "buf 크기: " + N + " B\n" +
+        "입력 문자 수(Unicode 코드 포인트 기준): " +
+        m.characterLength + "개\n" +
+        "입력 UTF-8 바이트 수: " + m.byteLength + " B\n" +
+        "gets() 모델의 쓰기 길이: " + m.writeLength +
+        " B (UTF-8 " + m.byteLength + " B + 끝 NUL 1 B)\n" +
+        "버퍼 경계 초과 바이트 수: " + overflowCount + " B\n\n" +
+        "saved %rbp 침범: " + (m.rbpCorrupt ? "예" : "아니오") + "\n" +
+        "return address 침범: " + (m.returnCorrupt ? "예" : "아니오") +
+        (canary
+          ? "\ncanary 변경: " + (m.canaryCorrupt ? "예" : "아니오")
+          : "") +
+        (retResult ? "\n\nret 결과 — 단순화 모델\n" + retResult : "");
+
+      info.textContent =
+        "방어 기법 — Mitigations\n" +
+        "Stack canary: 반환 전에 보호 값이 변경되었는지 검사합니다. 이 위젯에서는 8바이트 영역으로 단순화합니다.\n" +
+        "ASLR: " + (aslr ? "개념상 활성" : "개념상 비활성") +
+        " — 주소 배치를 무작위화하는 기법입니다. 토글은 개념 설명용이며 실제 주소나 침범 계산을 바꾸지 않습니다.\n" +
+        "NX: " + (nx ? "개념상 활성" : "개념상 비활성") +
+        " — 비실행 메모리에서의 코드 실행을 제한합니다. 토글은 개념 설명용이며 실제 명령어 실행을 시뮬레이트하지 않습니다.\n\n" +
+        "주의: ret 결과는 교육용 단순화 모델입니다. 실제 CPU의 ret, 프로세스 종료, 메모리 권한 및 운영체제의 방어 동작 전체를 재현하지 않습니다.\n\n" +
+        "길이 슬라이더는 ASCII 'A' 반복 입력을 생성합니다. 텍스트 직접 입력 시 문자 수에 맞춰 슬라이더가 동기화됩니다.\n" +
+        "한글 등 비ASCII 문자는 UTF-8에서 여러 바이트를 차지할 수 있으므로 버퍼 침범 계산은 문자 수가 아니라 바이트 수를 사용합니다.\n\n" +
+        "핵심 방어는 입력 길이를 검사하는 안전한 코드입니다. 이 그림은 설명용 스택 배치이며 실제 컴파일러의 패딩, canary 및 프레임 포인터 구성은 다를 수 있습니다.";
+    } catch (e) {
+      clear(diagram);
+      resultPanel.textContent = "";
+      notice(info, e.message);
+    }
+  }
+
+  syncLengthSlider();
+  render();
+});
+
+// 5. Byte Ordering
+// ============================================================
+
+V6.register("byte-order", function (root, cfg) {
+  cfg = cfg && typeof cfg === "object" ? cfg : {};
+
+  T(root, "바이트 순서 — Little / Big Endian");
+
+  let value = 0x01234567n;
+  let width = 4;
+  let mode = "number";
+  const ascii = "0123";
+  let errorText = "";
+
+  if (cfg.value !== undefined) {
+    try {
+      const parsed = parseIntExact(cfg.value);
+
+      if (parsed < 0n || parsed > 0xffffffffn) {
+        throw new Error("32비트 범위를 초과했습니다.");
       }
 
-      if (
-        addr >= BASES.stack - stackUsed &&
-        addr < BASES.stack
-      ) {
-        return {
-          key: "stack",
-          text: "스택(stack) — 아래로 성장"
-        };
+      value = parsed;
+    } catch (e) {
+      errorText = e.message;
+    }
+  }
+
+  const controls = C(root);
+
+  const text = inputText(
+    controls,
+    "정수(hex 또는 10진)",
+    hex(value, 8),
+    update
+  );
+
+  text.style.maxWidth = "100%";
+
+  const intButton = B(controls, "32비트(int)", () => {
+    width = 4;
+    mode = "number";
+    errorText = "";
+    render();
+  });
+
+  const shortButton = B(controls, "16비트(short)", () => {
+    width = 2;
+    mode = "number";
+    errorText = "";
+    render();
+  });
+
+  const asciiButton = B(controls, "문자열(ASCII)", () => {
+    mode = "ascii";
+    errorText = "";
+    render();
+  });
+
+  const diagram = E("section", root);
+  const info = S(root);
+
+  info.style.fontSize = "14px";
+  info.style.lineHeight = "1.5";
+  info.style.overflowWrap = "anywhere";
+
+  function update() {
+    try {
+      const n = parseIntExact(text.value);
+
+      if (n < 0n || n > 0xffffffffn) {
+        throw new Error("0부터 0xFFFFFFFF까지 입력하세요.");
       }
 
-      if (
-        addr >= BASES.mmap &&
-        addr < BASES.mmap + 0x100000n
-      ) {
-        return {
-          key: "mmap",
-          text: "mmap/공유 라이브러리 영역(예시)"
-        };
-      }
+      value = n;
+      mode = "number";
+      errorText = "";
+      render();
+    } catch (e) {
+      errorText = e.message;
+      clear(diagram);
+      notice(info, errorText);
+    }
+  }
 
-      if (
-        addr >= BASES.heap &&
-        addr < BASES.heap + heapSize
-      ) {
-        return {
-          key: "heap",
-          text: "힙(heap) — 위로 성장"
-        };
-      }
+  function drawRow(parent, name, bytes, indices) {
+    H(parent, name);
 
-      if (
-        addr >= BASES.data &&
-        addr < BASES.data + 0x10000n
-      ) {
-        return {
-          key: "data",
-          text: "data/bss 영역(예시)"
-        };
-      }
+    const direction = E(
+      "div",
+      parent,
+      "낮은 주소 (Low Address)  →  높은 주소 (High Address)"
+    );
 
-      if (
-        addr >= BASES.text &&
-        addr < BASES.text + 0x10000n
-      ) {
-        return {
-          key: "text",
-          text: "text 코드 영역(예시, 읽기+실행)"
-        };
-      }
+    Object.assign(direction.style, {
+      fontSize: "14px",
+      lineHeight: "1.5",
+      fontWeight: "600",
+      margin: "4px 0 9px",
+      color: INK,
+      overflowWrap: "anywhere"
+    });
 
+    const grid = E("div", parent);
+
+    Object.assign(grid.style, {
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(" + bytes.length + ", minmax(0, 1fr))",
+      gap: "6px",
+      width: "100%",
+      maxWidth: "720px"
+    });
+
+    bytes.forEach((byte, index) => {
+      const cell = box(
+        grid,
+        "주소 +" + index +
+          "\n0x" +
+          byte.toString(16).padStart(2, "0")
+      );
+
+      Object.assign(cell.style, {
+        whiteSpace: "pre-wrap",
+        overflowWrap: "anywhere",
+        minWidth: "0",
+        textAlign: "center",
+        fontSize: "14px",
+        lineHeight: "1.5",
+        padding: "13px 6px"
+      });
+
+      cell.title = "원래 정수의 byte " + indices[index];
+    });
+  }
+
+  function render() {
+    selectState(intButton, mode === "number" && width === 4);
+    selectState(shortButton, mode === "number" && width === 2);
+    selectState(asciiButton, mode === "ascii");
+
+    clear(diagram);
+
+    if (errorText) {
+      notice(info, errorText);
+      return;
+    }
+
+    if (mode === "ascii") {
+      const bytes = [
+        ...Array.from(new TextEncoder().encode(ascii)),
+        0
+      ];
+
+      H(diagram, '문자열 "0123"');
+
+      drawRow(
+        diagram,
+        "메모리 주소 증가 방향",
+        bytes,
+        [0, 1, 2, 3, "NUL"]
+      );
+
+      info.textContent =
+        '문자열 "0123" + NUL의 바이트\n' +
+        "0x30 0x31 0x32 0x33 0x00\n\n" +
+        "문자열은 바이트 배열이므로 endian에 따라 문자 순서가 자동으로 재배열되지 않습니다.\n" +
+        "같은 바이트열을 다바이트 정수로 해석하면 endian에 따라 숫자 값이 달라질 수 있습니다.";
+
+      return;
+    }
+
+    const mask = (1n << BigInt(width * 8)) - 1n;
+    const v = value & mask;
+    const truncated = width === 2 && value > 0xffffn;
+
+    const little = [];
+    const big = [];
+
+    for (let i = 0; i < width; i++) {
+      little.push(Number((v >> BigInt(i * 8)) & 255n));
+    }
+
+    for (let i = width - 1; i >= 0; i--) {
+      big.push(little[i]);
+    }
+
+    drawRow(
+      diagram,
+      "Little-endian — x86-64",
+      little,
+      Array.from({ length: width }, (_, i) => i)
+    );
+
+    drawRow(
+      diagram,
+      "Big-endian",
+      big,
+      Array.from({ length: width }, (_, i) => width - 1 - i)
+    );
+
+    info.textContent =
+      "입력값: " + hex(value, 8) + "\n" +
+      "표시 폭: " + width + "바이트\n" +
+      "해당 폭으로 해석한 값: " + hex(v, width * 2) +
+      (truncated
+        ? "\n주의: 16비트 폭을 초과하는 값입니다. 상위 2바이트가 버려지고 하위 2바이트만 표시됩니다."
+        : "") +
+      "\n\n" +
+      "Little-endian: " +
+      little.map(x =>
+        "0x" + x.toString(16).padStart(2, "0")
+      ).join(" ") +
+      "\nBig-endian: " +
+      big.map(x =>
+        "0x" + x.toString(16).padStart(2, "0")
+      ).join(" ") +
+      "\n\n" +
+      "화살표는 낮은 메모리 주소에서 높은 메모리 주소로 증가하는 방향입니다.\n" +
+      "Little-endian은 최하위 바이트(LSB)를 낮은 주소에 저장합니다.\n" +
+      "Big-endian은 최상위 바이트(MSB)를 낮은 주소에 저장합니다.\n" +
+      "바이트 저장 순서는 달라도 같은 폭과 해석 규칙을 사용하면 원래 정수 값을 복원할 수 있습니다.";
+
+  }
+
+  render();
+});
+
+// 6. Virtual Memory Layout
+// ============================================================
+
+V6.register("mem-layout", function (root, cfg) {
+  cfg = cfg && typeof cfg === "object" ? cfg : {};
+
+  T(root, "프로세스 가상주소 공간 — Virtual Memory Layout");
+
+  // Last canonical address in the lower 47-bit user half.
+  const USER_TOP = 0x00007fffffffffffn;
+  const FIRST_NONCANONICAL = 0x0000800000000000n;
+  const KERNEL_START = 0xffff800000000000n;
+
+  const BASES = {
+    text: 0x400000n,
+    data: 0x600000n,
+    heap: 0x800000n,
+    mmap: 0x7f0000000000n,
+    stack: 0x7fffffffe000n
+  };
+
+  const INITIAL_HEAP_SIZE = 0x1000n;
+  const INITIAL_STACK_USED = 0x1000n;
+  const INITIAL_ADDRESS = BASES.text;
+
+  let heapSize = INITIAL_HEAP_SIZE;
+  let stackUsed = INITIAL_STACK_USED;
+  let selected = INITIAL_ADDRESS;
+  let messageText = "";
+  let errorText = "";
+
+  const controls = C(root);
+
+  const addressInput = inputText(
+    controls,
+    "가상주소(hex)",
+    hex(selected),
+    () => {
+      try {
+        const parsed = parseIntExact(addressInput.value);
+
+        if (parsed < 0n || parsed > MASK64) {
+          throw new Error("64비트 주소 범위를 초과했습니다.");
+        }
+
+        // Commit only valid input. Invalid input must not replace
+        // the last valid selected address or clear the map.
+        selected = parsed;
+        errorText = "";
+        messageText = "";
+        render();
+      } catch (e) {
+        errorText = e.message;
+        render();
+      }
+    }
+  );
+
+  addressInput.style.width = "230px";
+  addressInput.style.maxWidth = "100%";
+
+  B(controls, "malloc(+4KiB)", () => {
+    if (heapSize + 0x1000n > 0x100000n) {
+      errorText = "교육용 heap 크기 상한(1MiB)에 도달했습니다.";
+      render();
+      return;
+    }
+
+    heapSize += 0x1000n;
+    errorText = "";
+    messageText =
+      "malloc 시뮬레이션: heap이 높은 주소 방향으로 4KiB 증가.";
+    render();
+  });
+
+  B(controls, "함수 호출(stack −256B)", () => {
+    if (stackUsed + 256n > 0x10000n) {
+      errorText = "교육용 stack 사용량 상한(64KiB)에 도달했습니다.";
+      render();
+      return;
+    }
+
+    stackUsed += 256n;
+    errorText = "";
+    messageText =
+      "함수 호출 시뮬레이션: %rsp가 낮은 주소로 256B 이동.";
+    render();
+  });
+
+  B(controls, "반환(stack +256B)", () => {
+    stackUsed = stackUsed > 0x1000n
+      ? stackUsed - 256n
+      : 0x1000n;
+
+    errorText = "";
+    messageText = "함수 반환으로 스택 사용량이 감소했습니다.";
+    render();
+  });
+
+  B(controls, "리셋", () => {
+    heapSize = INITIAL_HEAP_SIZE;
+    stackUsed = INITIAL_STACK_USED;
+    selected = INITIAL_ADDRESS;
+    addressInput.value = hex(INITIAL_ADDRESS);
+    errorText = "";
+    messageText = "";
+    render();
+  });
+
+  const diagram = E("section", root);
+  const info = S(root);
+
+  function classify(addr) {
+    if (addr < 0n || addr > MASK64) {
       return {
-        key: "unmapped",
-        text: "교육용 지도에서 매핑되지 않은 사용자 영역"
+        key: "invalid",
+        text: "잘못된 주소"
       };
     }
 
-    function render() {
-      clear(diagram);
-
-      if (errorText) {
-        notice(info, errorText);
-        return;
-      }
-
-      const current = classify(selected);
-
-      const exampleNotice = E(
-        "div",
-        diagram,
-        "주소 공간 개념도 · 실제 프로세스 매핑이 아닌 교육용 예시",
-        "v6-state"
-      );
-
-      exampleNotice.style.fontWeight = "600";
-
-      H(diagram, "높은 주소 ↑ / 낮은 주소 ↓");
-
-      const regions = [
-        {
-          key: "kernel",
-          name: "커널 영역(kernel)",
-          address: "0xFFFF800000000000 ~",
-          desc: "사용자 접근 불가"
-        },
-        {
-          key: "gap",
-          name: "비정규 주소 간격",
-          address: "canonical hole",
-          desc: "접근 불가"
-        },
-        {
-          key: "stack",
-          name: "스택(stack)",
-          address: "0x00007FFFFFFFE000 부근",
-          desc: "↓ 낮은 주소 방향"
-        },
-        {
-          key: "mmap",
-          name: "mmap / 공유 라이브러리",
-          address: "0x00007F0000000000 부근",
-          desc: "매핑 기반"
-        },
-        {
-          key: "unmapped",
-          name: "미매핑 간격",
-          address: "주소 범위는 실행마다 다름",
-          desc: ""
-        },
-        {
-          key: "heap",
-          name: "힙(heap)",
-          address: "0x0000000000800000 부근",
-          desc: "↑ 높은 주소 방향"
-        },
-        {
-          key: "data",
-          name: "data / bss",
-          address: "0x0000000000600000 부근",
-          desc: "전역·정적 데이터"
-        },
-        {
-          key: "text",
-          name: "text",
-          address: "0x0000000000400000 부근",
-          desc: "읽기 + 실행"
-        },
-        {
-          key: "unmapped-low",
-          name: "낮은 주소 / 보호 영역",
-          address: "0x0000000000000000 부근",
-          desc: "NULL 등"
-        }
-      ];
-
-      const layout = E("div", diagram);
-
-      Object.assign(layout.style, {
-        display: "grid",
-        gap: "5px",
-        maxWidth: "720px"
-      });
-
-      regions.forEach(region => {
-        const active =
-          region.key === current.key ||
-          (
-            region.key === "unmapped-low" &&
-            current.key === "unmapped" &&
-            selected < BASES.text
-          );
-
-        const card = E("div", layout);
-
-        Object.assign(card.style, {
-          border: `1px solid ${active ? RED : INK}`,
-          borderLeft: active
-            ? `4px solid ${RED}`
-            : `1px solid ${INK}`,
-          padding: "12px 14px",
-          background: active ? GRID : "white"
-        });
-
-        const name = E("div", card, region.name);
-        name.style.fontWeight = "700";
-        name.style.fontSize = "14px";
-        name.style.color = active ? RED : INK;
-
-        const address = E("div", card, region.address);
-
-        Object.assign(address.style, {
-          fontFamily: MONO,
-          fontSize: "12px",
-          overflowWrap: "anywhere"
-        });
-
-        if (region.desc) {
-          const desc = E("div", card, region.desc);
-          desc.style.fontSize = "12px";
-        }
-
-        if (active) {
-          const chosen = E(
-            "div",
-            card,
-            "← 선택 주소가 속하는 영역"
-          );
-
-          chosen.style.color = RED;
-          chosen.style.fontWeight = "600";
-          chosen.style.fontSize = "12px";
-          chosen.style.marginTop = "5px";
-        }
-
-        if (
-          region.key === "stack" ||
-          region.key === "heap"
-        ) {
-          const track = E("div", card);
-
-          Object.assign(track.style, {
-            height: "7px",
-            border: `1px solid ${GRID}`,
-            marginTop: "10px",
-            overflow: "hidden"
-          });
-
-          const fill = E("div", track);
-
-          const fraction = region.key === "stack"
-            ? Number(stackUsed) / 65536
-            : Number(heapSize) / 1048576;
-
-          Object.assign(fill.style, {
-            width: Math.max(
-              2,
-              Math.min(100, fraction * 100)
-            ) + "%",
-            height: "100%",
-            background: RED,
-            transition: "width 250ms ease"
-          });
-        }
-      });
-
-      info.textContent =
-        (messageText ? messageText + "\n\n" : "") +
-        "선택 주소: " + hex(selected) + "\n" +
-        "영역 판정: " + current.text + "\n\n" +
-        "현재 heap 시뮬레이션 크기: " +
-        heapSize + " B\n" +
-        "현재 stack 시뮬레이션 사용량: " +
-        stackUsed + " B\n\n" +
-        "사용자 영역의 마지막 canonical 주소: " +
-        hex(USER_TOP) + "\n" +
-        "첫 비정규 주소: " +
-        hex(FIRST_NONCANONICAL) + "\n" +
-        "커널 canonical 영역 시작: " +
-        hex(KERNEL_START) + "\n\n" +
-        "Linux x86-64의 전형적인 4단계 페이지 테이블 " +
-        "(48비트 canonical 주소) 설명용 지도입니다.\n" +
-        "실제 주소·권한은 운영체제, ASLR, PIE, 프로세스 구성에 따라 달라집니다.\n" +
-        "스택은 높은 주소에서 낮은 주소로 성장하고, " +
-        "전형적인 brk 기반 힙은 낮은 주소에서 높은 주소로 확장됩니다.\n" +
-        "Buffer Overflow 위젯에서는 return address 손상의 의미를 확인할 수 있습니다.";
+    if (addr >= KERNEL_START) {
+      return {
+        key: "kernel",
+        text: "커널 영역(kernel canonical half) — 사용자 모드 접근 불가"
+      };
     }
 
-    render();
-  });
+    if (addr >= FIRST_NONCANONICAL) {
+      return {
+        key: "gap",
+        text: "비정규 주소(non-canonical gap)"
+      };
+    }
+
+    if (
+      addr >= BASES.stack - stackUsed &&
+      addr < BASES.stack
+    ) {
+      return {
+        key: "stack",
+        text: "스택(stack) — 아래로 성장"
+      };
+    }
+
+    if (
+      addr >= BASES.mmap &&
+      addr < BASES.mmap + 0x100000n
+    ) {
+      return {
+        key: "mmap",
+        text: "mmap/공유 라이브러리 영역(예시)"
+      };
+    }
+
+    if (
+      addr >= BASES.heap &&
+      addr < BASES.heap + heapSize
+    ) {
+      return {
+        key: "heap",
+        text: "힙(heap) — 위로 성장"
+      };
+    }
+
+    if (
+      addr >= BASES.data &&
+      addr < BASES.data + 0x10000n
+    ) {
+      return {
+        key: "data",
+        text: "data/bss 영역(예시)"
+      };
+    }
+
+    if (
+      addr >= BASES.text &&
+      addr < BASES.text + 0x10000n
+    ) {
+      return {
+        key: "text",
+        text: "text 코드 영역(예시, 읽기+실행)"
+      };
+    }
+
+    return {
+      key: "unmapped",
+      text: "교육용 지도에서 매핑되지 않은 사용자 영역"
+    };
+  }
+
+  function render() {
+    // Always render from the last valid state, even when the
+    // current address text contains invalid input.
+    clear(diagram);
+
+    const current = classify(selected);
+
+    const exampleNotice = E(
+      "div",
+      diagram,
+      "주소 공간 개념도 · 실제 프로세스 매핑이 아닌 교육용 예시",
+      "v6-state"
+    );
+
+    exampleNotice.style.fontWeight = "600";
+
+    const scaleLegend = E(
+      "div",
+      diagram,
+      "범례: 카드 높이와 간격은 시각적 구분용이며, 실제 주소 범위의 크기 비율을 나타내지 않습니다. 주소 예시와 성장 방향을 기준으로 읽으세요.",
+      "v6-state"
+    );
+
+    Object.assign(scaleLegend.style, {
+      fontSize: "14px",
+      lineHeight: "1.5",
+      marginTop: "6px",
+      marginBottom: "10px",
+      overflowWrap: "anywhere"
+    });
+
+    H(diagram, "높은 주소 ↑ / 낮은 주소 ↓");
+
+    const regions = [
+      {
+        key: "kernel",
+        name: "커널 영역(kernel)",
+        address: "0xFFFF800000000000 ~",
+        desc: "사용자 접근 불가"
+      },
+      {
+        key: "gap",
+        name: "비정규 주소 간격",
+        address: "canonical hole",
+        desc: "비정규 주소는 일반적인 canonical 주소가 아님"
+      },
+      {
+        key: "stack",
+        name: "스택(stack)",
+        address: "0x00007FFFFFFFE000 부근",
+        desc: "↓ 낮은 주소 방향"
+      },
+      {
+        key: "mmap",
+        name: "mmap / 공유 라이브러리",
+        address: "0x00007F0000000000 부근",
+        desc: "매핑 기반"
+      },
+      {
+        key: "unmapped",
+        name: "미매핑 간격",
+        address: "주소 범위는 실행마다 다름",
+        desc: ""
+      },
+      {
+        key: "heap",
+        name: "힙(heap)",
+        address: "0x0000000000800000 부근",
+        desc: "↑ 높은 주소 방향"
+      },
+      {
+        key: "data",
+        name: "data / bss",
+        address: "0x0000000000600000 부근",
+        desc: "전역·정적 데이터"
+      },
+      {
+        key: "text",
+        name: "text",
+        address: "0x0000000000400000 부근",
+        desc: "읽기 + 실행"
+      },
+      {
+        key: "unmapped-low",
+        name: "낮은 주소 / 보호 영역",
+        address: "0x0000000000000000 부근",
+        desc: "NULL 등"
+      }
+    ];
+
+    const layout = E("div", diagram);
+
+    Object.assign(layout.style, {
+      display: "grid",
+      gap: "5px",
+      width: "100%",
+      maxWidth: "720px"
+    });
+
+    regions.forEach(region => {
+      const active =
+        region.key === current.key ||
+        (
+          region.key === "unmapped-low" &&
+          current.key === "unmapped" &&
+          selected < BASES.text
+        );
+
+      const card = E("div", layout);
+
+      Object.assign(card.style, {
+        boxSizing: "border-box",
+        minWidth: "0",
+        border: `1px solid ${active ? RED : INK}`,
+        borderLeft: active
+          ? `4px solid ${RED}`
+          : `1px solid ${INK}`,
+        padding: "12px 14px",
+        background: active ? "white" : "white",
+        overflowWrap: "anywhere"
+      });
+
+      const name = E("div", card, region.name);
+
+      Object.assign(name.style, {
+        fontWeight: "700",
+        fontSize: "14px",
+        lineHeight: "1.5",
+        color: active ? RED : INK
+      });
+
+      const address = E("div", card, region.address);
+
+      Object.assign(address.style, {
+        fontFamily: MONO,
+        fontSize: "12px",
+        lineHeight: "1.5",
+        overflowWrap: "anywhere",
+        wordBreak: "break-word"
+      });
+
+      if (region.desc) {
+        const desc = E("div", card, region.desc);
+
+        Object.assign(desc.style, {
+          fontSize: "12px",
+          lineHeight: "1.5",
+          overflowWrap: "anywhere"
+        });
+      }
+
+      if (active) {
+        const chosen = E(
+          "div",
+          card,
+          "← 선택 주소가 속하는 영역"
+        );
+
+        Object.assign(chosen.style, {
+          color: RED,
+          fontWeight: "600",
+          fontSize: "12px",
+          marginTop: "5px"
+        });
+      }
+
+      if (region.key === "stack" || region.key === "heap") {
+        const track = E("div", card);
+
+        Object.assign(track.style, {
+          height: "7px",
+          border: `1px solid ${GRID}`,
+          marginTop: "10px",
+          overflow: "hidden"
+        });
+
+        const fill = E("div", track);
+
+        const fraction = region.key === "stack"
+          ? Number(stackUsed) / 65536
+          : Number(heapSize) / 1048576;
+
+        Object.assign(fill.style, {
+          width: Math.max(2, Math.min(100, fraction * 100)) + "%",
+          height: "100%",
+          background: RED,
+          transition: "width 250ms ease"
+        });
+      }
+    });
+
+    info.textContent =
+      (messageText ? messageText + "\n\n" : "") +
+      "선택 주소: " + hex(selected) + "\n" +
+      "영역 판정: " + current.text + "\n\n" +
+      "현재 heap 시뮬레이션 크기: " + heapSize + " B\n" +
+      "현재 stack 시뮬레이션 사용량: " + stackUsed + " B\n\n" +
+      "사용자 영역의 마지막 canonical 주소: " + hex(USER_TOP) + "\n" +
+      "첫 비정규 주소: " + hex(FIRST_NONCANONICAL) + "\n" +
+      "커널 canonical 영역 시작: " + hex(KERNEL_START) + "\n\n" +
+      "Linux x86-64의 전형적인 4단계 페이지 테이블과 48비트 canonical 주소를 설명하기 위한 개념도입니다.\n" +
+      "실제 주소와 권한은 운영체제, ASLR, PIE 및 프로세스 구성에 따라 달라집니다.\n" +
+      "스택은 일반적으로 높은 주소에서 낮은 주소로 성장하고, 전형적인 brk 기반 힙은 낮은 주소에서 높은 주소로 확장됩니다.\n" +
+      "스택·힙의 막대는 시뮬레이션 내부의 사용량을 보여주며, 카드의 위치나 높이는 주소 간 거리의 축척이 아닙니다.\n" +
+      "Buffer Overflow 위젯에서는 return address 손상의 의미를 확인할 수 있습니다.";
+
+    // Keep the map and last valid classification visible.
+    // Display input errors separately as a single concise line.
+    if (errorText) {
+      const errorLine = E("div", info, errorText);
+
+      Object.assign(errorLine.style, {
+        color: RED,
+        fontSize: "14px",
+        lineHeight: "1.5",
+        marginTop: "8px",
+        overflowWrap: "anywhere"
+      });
+    }
+  }
+
+  render();
+});
 
 })();
