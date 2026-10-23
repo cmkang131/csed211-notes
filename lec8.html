@@ -257,27 +257,27 @@ ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 �
     <text x="24" y="22">struct S1 { char c; int i[2]; double v; } — size 24, 모든 member가 동시에 존재</text>
   </g>
   <g stroke="#666666" stroke-width="1" font-size="13">
-    <rect x="24" y="34" width="60" height="30" fill="#ffffff"/>
-    <rect x="84" y="34" width="60" height="30" fill="#f2f2f2" stroke-dasharray="4 3"/>
-    <rect x="144" y="34" width="56" height="30" fill="#ffffff"/>
-    <rect x="200" y="34" width="56" height="30" fill="#ffffff"/>
-    <rect x="256" y="34" width="56" height="30" fill="#f2f2f2" stroke-dasharray="4 3"/>
-    <rect x="312" y="34" width="112" height="30" fill="#ffffff"/>
+    <rect x="24" y="34" width="14" height="30" fill="#ffffff"/>
+    <rect x="38" y="34" width="42" height="30" fill="#f2f2f2" stroke-dasharray="4 3"/>
+    <rect x="80" y="34" width="56" height="30" fill="#ffffff"/>
+    <rect x="136" y="34" width="56" height="30" fill="#ffffff"/>
+    <rect x="192" y="34" width="56" height="30" fill="#f2f2f2" stroke-dasharray="4 3"/>
+    <rect x="248" y="34" width="112" height="30" fill="#ffffff"/>
   </g>
   <g fill="#1a1a1a" font-size="13" text-anchor="middle">
-    <text x="54" y="54">c</text>
-    <text x="114" y="54" fill="#666666">pad</text>
-    <text x="172" y="54">i[0]</text>
-    <text x="228" y="54">i[1]</text>
-    <text x="284" y="54" fill="#666666">pad</text>
-    <text x="368" y="54">v</text>
+    <text x="31" y="54">c</text>
+    <text x="59" y="54" fill="#666666">pad</text>
+    <text x="108" y="54">i[0]</text>
+    <text x="164" y="54">i[1]</text>
+    <text x="220" y="54" fill="#666666">pad</text>
+    <text x="304" y="54">v</text>
   </g>
   <g fill="#666666" font-size="12">
     <text x="26" y="82">0</text>
-    <text x="146" y="82">8</text>
-    <text x="202" y="82">12</text>
-    <text x="314" y="82">16</text>
-    <text x="414" y="82">24</text>
+    <text x="82" y="82">4</text>
+    <text x="138" y="82">8</text>
+    <text x="250" y="82">16</text>
+    <text x="354" y="82">24</text>
   </g>
   <g fill="#1a1a1a" font-size="13" font-weight="700">
     <text x="24" y="116">union U1 { char c; int i[2]; double v; } — 모든 member가 offset 0, size = 가장 큰 member = 8</text>
