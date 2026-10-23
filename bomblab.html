@@ -53,7 +53,7 @@
 <div class="nb"><p class="bx-h"><b>어셈블리 읽기 규칙 (lec4·lec5)</b></p>
 <ul>
 <li>AT&T 문법: <code>mov src, dst</code> (Intel과 반대 방향). <code>(%rax)</code>는 메모리 역참조, <code>lea</code>는 주소 계산만 하고 메모리는 읽지 않음. 접미사 b/w/l/q = 1/2/4/8바이트</li>
-<li><code>cmp b, a</code>는 a − b로 flag를 세움 → 이어지는 <code>jle</code>는 "a ≤ b". 기준은 두 번째 피연산자</li>
+<li><code>cmp b, a</code>는 a − b를 계산해 flag만 세팅함 (비교 결과를 저장하거나 점프하지 않음) → 다음 <code>jX</code>가 그 flag를 해석. <code>jle</code>면 "a ≤ b". 기준은 두 번째 피연산자</li>
 <li><code>ja/jbe</code>는 unsigned 비교, <code>jg/jle</code>는 signed 비교. phase 3 첫 검사 <code>cmpl $0x7; ja</code>가 unsigned라 음수 입력은 7보다 큰 것처럼 보여 바로 폭발</li>
 <li><code>D(%rb,%ri,s)</code> = Mem[%rb + %ri×s + D]. jump table의 <code>jmp *0x402540(,%rax,8)</code>도 이 형태</li>
 </ul></div>

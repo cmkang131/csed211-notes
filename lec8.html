@@ -316,7 +316,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <ul>
 <li>short/int/long: memory에 2/4/8개의 연속 byte (long 8byte는 Linux x86-64 LP64 기준 — Windows x64는 4byte). 어느 byte가 가장 낮은 주소에 오는가가 endian</li>
 </ul>
-<dl class="def"><dt>Big endian</dt><dd>most significant byte가 가장 낮은 주소 (SPARC)</dd><dt>Little endian</dt><dd>least significant byte가 가장 낮은 주소 (Intel x86)</dd><dt>Bi-endian</dt><dd>설정에 따라 둘 다 (ARM)</dd></dl>
+<dl class="def"><dt>Big endian</dt><dd>most significant byte가 가장 낮은 주소 (SPARC)</dd><dt>Little endian</dt><dd>least significant byte가 가장 낮은 주소 (Intel x86) — 강의 녹화본 표현: "lll 법칙" (LSB in Lowest address)</dd><dt>Bi-endian</dt><dd>설정에 따라 둘 다 (ARM)</dd></dl>
 <ul>
 <li>machine 사이에 binary data를 교환할 때 문제가 됨</li>
 </ul>
