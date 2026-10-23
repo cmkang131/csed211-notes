@@ -20,7 +20,7 @@
   <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
 </div>
 <h1 class="pagetitle">Bomb Lab: gdb disassembly 분석</h1>
-<p class="psub">풀이 도구와 접근 순서 · phase별 분석은 문제 풀이 페이지에</p>
+<p class="psub">풀이 도구와 접근 순서 · 랩이 전제하는 배경과 암기 포인트 · phase별 풀이는 문제 페이지에</p>
 <div class="body notes">
 
 
@@ -48,7 +48,50 @@
 </ul>
 </div>
 
-<h2><span class="h2no">4</span>정답 모음</h2>
+<h2><span class="h2no">4</span>랩이 설명하지 않는 배경 지식</h2>
+<p>핸드아웃은 "gdb로 disassembly를 읽어라"까지만 말하고 아래는 전부 전제한다. 여기가 막히면 phase가 어려운 게 아니라 asm이 안 읽히는 것.</p>
+<div class="nb"><p class="bx-h"><b>어셈블리 읽기 규칙 (lec4·lec5)</b></p>
+<ul>
+<li>AT&T 문법: <code>mov src, dst</code> (Intel과 반대 방향). <code>(%rax)</code>는 메모리 역참조, <code>lea</code>는 주소 계산만 하고 메모리는 읽지 않음. 접미사 b/w/l/q = 1/2/4/8바이트</li>
+<li><code>cmp b, a</code>는 a − b로 flag를 세움 → 이어지는 <code>jle</code>는 "a ≤ b". 기준은 두 번째 피연산자</li>
+<li><code>ja/jbe</code>는 unsigned 비교, <code>jg/jle</code>는 signed 비교. phase 3 첫 검사 <code>cmpl $0x7; ja</code>가 unsigned라 음수 입력은 7보다 큰 것처럼 보여 바로 폭발</li>
+<li><code>D(%rb,%ri,s)</code> = Mem[%rb + %ri×s + D]. jump table의 <code>jmp *0x402540(,%rax,8)</code>도 이 형태</li>
+</ul></div>
+<div class="nb"><p class="bx-h"><b>함수 호출 규약 (lec6)</b></p>
+<ul>
+<li>인자는 <code>%rdi %rsi %rdx %rcx %r8 %r9</code> 순서, 반환값은 <code>%rax</code>. <code>call sscanf</code> 직전에 rsi·rdx에 뭘 싣는지가 입력 형식 힌트</li>
+<li><code>sscanf</code> 반환값 %eax = 읽은 항목 수 → <code>cmp $0x1,%eax; jg</code> = "2개 이상 입력해야 통과" (phase 3·4)</li>
+<li><code>read_six_numbers</code>: 정수 6개가 %rsp부터 int 배열로 깔림 → <code>(%rsp)</code>, <code>0x4(%rsp)</code> … <code>0x14(%rsp)</code> (phase 2·6)</li>
+<li>이 과목의 <code>func4</code>는 인자 2개(n=%edi, x=%esi)의 이중 재귀: n≤0 → 0, n==1 → x, 아니면 func4(n−1,x)+func4(n−2,x). base case부터 읽고 C로 옮긴 뒤 원하는 반환값이 나오는 입력을 역산 (phase 4)</li>
+</ul></div>
+<div class="nb"><p class="bx-h"><b>자료구조와 메모리 (lec7)</b></p>
+<ul>
+<li>phase 1: <code>strings_not_equal</code>은 같으면 %eax=0. 정답 문자열 주소는 <code>mov $ADDR,%esi</code>로 실려 있음 → <code>x/s ADDR</code>로 바로 읽힘</li>
+<li>phase 3: switch = jump table. <code>x/8gx TABLE</code>로 case 주소 8개를 읽고 case별 상수 연산 추적</li>
+<li>phase 5: 입력의 하위 4 bit가 시작 인덱스. arr[i]를 다음 인덱스로 삼아 15를 만날 때까지 따라가는 포인터 체이스. 배열 16개는 <code>x/16dw</code></li>
+<li>phase 6 노드: value·index는 +0/+4의 int, next는 +8의 8바이트 포인터. 다음 노드로 갈 때 주소에 8을 더하는 게 아니라 +8에 저장된 주소를 읽는 것</li>
+</ul></div>
+
+<h2><span class="h2no">5</span>외워야 할 것 (시험 직전 체크)</h2>
+<ul>
+<li>인자 레지스터 순서: <b>%rdi → %rsi → %rdx → %rcx → %r8 → %r9</b>, 반환값 <b>%rax</b></li>
+<li>callee-saved(함수가 보존해야 하는): <code>%rbx %rbp %r12–%r15</code> · caller-saved(호출 뒤 날아갈 수 있는): <code>%rax %rcx %rdx %rsi %rdi %r8–%r11</code></li>
+<li>스택은 낮은 주소로 자람 · <code>call</code> = 리턴 주소 push 후 점프, <code>ret</code> = pop 후 점프</li>
+<li>gdb 최소 세트: <code>b explode_bomb</code> (폭발 직전 정지) · <code>disas 함수명</code> · <code>stepi</code>/<code>nexti</code> · <code>info registers</code> · <code>x/s</code> 문자열 · <code>x/6dw</code> 정수 6개 · <code>x/8gx</code> 테이블 · <code>finish</code> 함수 끝까지</li>
+<li>비교 읽기: <code>cmp $imm, reg; jX</code> → "reg X imm"으로 읽기</li>
+<li>phase별 입력 형태: 1 문자열 / 2 정수 6개(2배 수열) / 3 정수 2개(switch) / 4 정수 2개(재귀) / 5 인덱스 체이싱 / 6 1~6 순열(리스트 재배열)</li>
+</ul>
+
+<h2><span class="h2no">6</span>강의 연결 — 놓치기 쉬운 포인트</h2>
+<ul>
+<li>lec4 addressing mode의 <code>D(%rb,%ri,s)</code> 계산식 → phase 3 테이블 주소와 phase 5 배열 접근이 전부 이 형태</li>
+<li>lec5 condition codes: 같은 flag라도 unsigned 해석(CF)과 signed 해석(OF)이 다름 → ja와 jg 구분이 phase 3·6 검사 읽기의 핵심</li>
+<li>lec6 스택 프레임: caller가 인자 세팅 → call → callee가 <code>sub $N,%rsp</code>. func4 재귀 프레임을 손으로 한 번 그려볼 것</li>
+<li>lec7 struct 정렬: 포인터는 8바이트 정렬 → int 2개(8바이트) 뒤 포인터는 +8. phase 6 노드 레이아웃이 그대로</li>
+<li>섹션 3의 실수 5개 + mov/lea 혼동 + cmp 방향 혼동이 시험에서 그대로 재현됨</li>
+</ul>
+
+<h2><span class="h2no">7</span>정답 모음</h2>
 <details class="tg"><summary>정답 보기</summary>
 <pre class="c">Phase 1: Current frameworks are mainly designed for a solo training case.
 Phase 2: 1 2 4 8 16 32
