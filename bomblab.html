@@ -78,7 +78,7 @@
 <li>callee-saved(함수가 보존해야 하는): <code>%rbx %rbp %r12–%r15</code> · caller-saved(호출 뒤 날아갈 수 있는): <code>%rax %rcx %rdx %rsi %rdi %r8–%r11</code></li>
 <li>스택은 낮은 주소로 자람 · <code>call</code> = 리턴 주소 push 후 점프, <code>ret</code> = pop 후 점프</li>
 <li>gdb 최소 세트: <code>b explode_bomb</code> (폭발 직전 정지) · <code>disas 함수명</code> · <code>stepi</code>/<code>nexti</code> · <code>info registers</code> · <code>x/s</code> 문자열 · <code>x/6dw</code> 정수 6개 · <code>x/8gx</code> 테이블 · <code>finish</code> 함수 끝까지</li>
-<li>비교 읽기: <code>cmp $imm, reg; jX</code> → "reg X imm"으로 읽기</li>
+<li>비교 읽기: <code>cmp</code>는 flag를 세팅만 하고, 실제 판단은 다음 <code>jX</code>가 그 flag를 해석. <code>cmp $imm, reg; jX</code> → "reg X imm"은 jX의 부호 의미(signed/unsigned)가 맞을 때만 성립하는 축약</li>
 <li>phase별 입력 형태: 1 문자열 / 2 정수 6개(2배 수열) / 3 정수 2개(switch) / 4 정수 2개(재귀) / 5 인덱스 체이싱 / 6 1~6 순열(리스트 재배열)</li>
 </ul>
 
@@ -86,7 +86,7 @@
 <ul>
 <li>lec4 addressing mode의 <code>D(%rb,%ri,s)</code> 계산식 → phase 3 테이블 주소와 phase 5 배열 접근이 전부 이 형태</li>
 <li>lec5 condition codes: <code>ja</code>는 CF=0·ZF=0일 때(unsigned "위"), <code>jg</code>는 ZF=0·SF=OF일 때(signed "큼") 점프. 같은 <code>cmp</code> 결과라도 쓰인 jump에 따라 해석이 달라짐 → phase 3·6 검사 읽기의 핵심</li>
-<li>lec6 스택 프레임: caller가 인자 세팅 → call → callee가 <code>sub $N,%rsp</code>. func4 재귀 프레임을 손으로 한 번 그려볼 것</li>
+<li>lec6 스택 프레임: caller가 인자 세팅 → call → callee가 필요한 만큼 <code>sub $N,%rsp</code>로 프레임 확보 (모든 함수가 만드는 건 아님 — leaf 함수 등은 생략 가능). func4 재귀 프레임을 손으로 한 번 그려볼 것</li>
 <li>lec7 struct 정렬: 포인터는 8바이트 정렬 → int 2개(8바이트) 뒤 포인터는 +8. phase 6 노드 레이아웃이 그대로</li>
 <li>섹션 3의 실수 5개 + mov/lea 혼동 + cmp 방향 혼동 — 분석할 때 실제로 틀린 유형이라, 시험 전에 한 번 더 확인해 둘 것</li>
 </ul>
