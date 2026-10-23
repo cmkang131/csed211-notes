@@ -245,7 +245,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 </figure>
 <div class="nb">
 <p class="bx-h"><b>무엇을 우회하고 무엇을 못 우회하나</b></p>
-ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 우회하지 못함</b>. gadget의 code도 return address를 덮어야 도달할 수 있기 때문.
+ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 일반적인 ROP에 추가 장벽</b>: gadget도 return address를 덮어야 도달할 수 있어 canary 값이 바뀌면 탐지함. 단 canary 값이 유출되면 우회될 수 있음.
 </div>
 
 <h2><span class="h2no">6</span>Union</h2>

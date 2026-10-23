@@ -27,7 +27,7 @@
 <div class="nb">
 <p class="bx-h"><b>시험 정보 (교수님 메일 10/21 확인)</b></p>
 <ul>
-<li><b>중간고사 10/29 (목) 18:00~21:00 (3시간) · LG사이언스 101호</b>. 일시·장소 모두 교수님 메일(10/21)로 확정. 형식(객관식/서술형, 오픈북 여부), 문항 수는 언급 없음 → PLMS 공지 확인</li>
+<li><b>중간고사 10/29 (목) 18:00~21:00 (3시간) · 환경동101</b>. 일시는 교수님 메일(10/21), 장소는 TA 메일(10/22 23:30)로 확정. 형식(객관식/서술형, 오픈북 여부), 문항 수는 언급 없음 → PLMS 공지 확인</li>
 <li>실습(lab) 내용에서도 시험 문제가 나올 수 있음: "Under consideration (Tentative)"라 확정 아님. 실습 문제를 못 풀면 그 실습 점수가 음수로 뒤집히는 부호 반전 감점 안이 함께 검토 중</li>
 <li><span class="k-blue">결시하면 예외 없이 과목 낙제</span>: "If you miss any of the exams, you will fail this course"</li>
 </ul>
@@ -187,7 +187,7 @@
 <tr><td>Stack canary</td><td>compiler</td><td>buffer 뒤 special value, exit 전 check (%fs:0x28, __stack_chk_fail, -fstack-protector 기본)</td><td>off-by-one null 덮기는 통과 가능 · 앞쪽 local 변수 손상은 못 막음</td></tr>
 </tbody></table></div>
 <dl class="def sum">
-<div><dt>ROP</dt><dd>ret(0xc3)으로 끝나는 gadget을 이어 붙여 기존 code를 재사용: non-executable stack과 ASLR(고정 code 영역) 우회 — PIE로 code까지 무작위화되면 주소 정보 없이는 어려움 · <span class="k-blue">canary는 우회 못 함</span> (gadget에 도달하려면 return address를 덮어야 하므로)</dd></div>
+<div><dt>ROP</dt><dd>ret(0xc3)으로 끝나는 gadget을 이어 붙여 기존 code를 재사용: non-executable stack과 ASLR(고정 code 영역) 우회 — PIE로 code까지 무작위화되면 주소 정보 없이는 어려움 · <span class="k-blue">canary는 일반적인 ROP의 추가 장벽</span> (return address를 덮는 과정에서 canary 값이 바뀌면 탐지됨, 단 canary 값 유출 시 우회 가능)</dd></div>
 <div><dt>union</dt><dd>모든 member가 offset 0, size = 가장 큰 member, 한 번에 한 field만 (S1은 24 B지만 U1은 8 B) · union은 같은 bit의 재해석, cast는 값 변환. bit2float/float2bit에 사용</dd></div>
 <div><dt>endian</dt><dd>dw.c = f0..f7일 때 little: s[0]=0xf1f0, i[0]=0xf3f2f1f0, l[0]=0xf7f6f5f4f3f2f1f0</dd></div>
 <div><dt>big</dt><dd>그대로 0xf0f1, 0xf0f1f2f3, 0xf0f1f2f3f4f5f6f7</dd></div>
