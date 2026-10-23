@@ -29,7 +29,7 @@
 <div class="body notes">
 
 
-<h2><span class="h2no">1</span>Memory layout</h2>
+<h2 id="memory-layout"><span class="h2no">1</span>Memory layout</h2>
 <h3>x86-64 address space의 다섯 영역</h3>
 <figure class="fig" style="--figw:560px">
 <svg viewBox="0 0 700 330" width="700" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
@@ -87,7 +87,7 @@ p2 = malloc(1L&lt;&lt;8);       /* 256 B */     p4 = malloc(1L&lt;&lt;8);   /* 2
 <li>ASLR이 켜져 있으면 실행마다 stack 주소가 달라짐 (아래 Defenses)</li>
 </ul>
 
-<h2><span class="h2no">2</span>Buffer overflow</h2>
+<h2 id="buffer-overflow"><span class="h2no">2</span>Buffer overflow</h2>
 <h3>struct_t 예제: array 범위를 넘으면</h3>
 <pre class="c">struct_t { int a[2]; double d; }      // a[0] offset 0, a[1] offset 4, d offset 8
 
@@ -169,7 +169,7 @@ void smash() { printf("I've been smashed!\n"); exit; }  /* 슬라이드 표기 �
 <li>실제 사례: 원격 machine에서 arbitrary code 실행 가능. Lab 4 Attack Lab에서 직접 실습</li>
 </ul>
 
-<h2><span class="h2no">4</span>Defenses</h2>
+<h2 id="defenses"><span class="h2no">4</span>Defenses</h2>
 <h3>code 수준(길이 제한 함수)</h3>
 <ul>
 <li><code>gets(buf)</code> → <code>fgets(buf, 4, stdin)</code>: 최대 3문자 + null · <code>strcpy</code> → <code>strncpy</code> (널 종료를 보장하지 않으므로 별도 처리 필요) · <code>scanf %s</code> → fgets 또는 <code>%ns</code> (n은 널 문자 자리를 뺀 최대 문자 수 — char buf[4]라면 %3s)</li>
@@ -215,7 +215,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 <li>canary는 return address를 덮는 공격을 막는 데 초점. buffer 앞쪽 local variable 손상까지 막지는 않음</li>
 </ul>
 
-<h2><span class="h2no">5</span>Return-Oriented Programming (ROP)</h2>
+<h2 id="rop"><span class="h2no">5</span>Return-Oriented Programming (ROP)</h2>
 <ul>
 <li>배경: stack randomization + non-executable stack → code injection이 어려워짐. 대안: <b>이미 존재하는 code/library code를 재사용</b>해 fragment(gadget)를 이어 붙임</li>
 <li><b>gadget</b>: ret(0xc3)으로 끝나는 instruction sequence. code 위치는 fixed, executable</li>
@@ -248,7 +248,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 일반적인 ROP에 추가 장벽</b>: gadget도 return address를 덮어야 도달할 수 있어 canary 값이 바뀌면 탐지함. 단 canary 값이 유출되면 우회될 수 있음.
 </div>
 
-<h2><span class="h2no">6</span>Union</h2>
+<h2 id="union"><span class="h2no">6</span>Union</h2>
 <h3>struct와 union의 배치</h3>
 <figure class="fig" style="--figw:620px">
 <svg viewBox="0 0 1000 250" width="1000" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
@@ -312,7 +312,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>IEEE 754 float의 sign·exponent·fraction을 확인할 때 사용</li>
 </ul>
 
-<h2><span class="h2no">7</span>Byte ordering</h2>
+<h2 id="byte-ordering"><span class="h2no">7</span>Byte ordering</h2>
 <ul>
 <li>short/int/long: memory에 2/4/8개의 연속 byte (long 8byte는 Linux x86-64 LP64 기준 — Windows x64는 4byte). 어느 byte가 가장 낮은 주소에 오는가가 endian</li>
 </ul>

@@ -230,7 +230,7 @@ void sumstore(long x, long y, long *dest) {
 </div>
 
 <div class="v6-widget" data-widget="asm-encode" data-config='{"preset":"mov-rsp-rbp"}'></div>
-<h2><span class="h2no">3</span>Assembly 기본 연산: mov, Addressing Mode</h2>
+<h2 id="addressing-mov"><span class="h2no">3</span>Assembly 기본 연산: mov, Addressing Mode</h2>
 <h3>Operand의 세 종류와 movq</h3>
 <div class="tblwrap"><table>
 <thead><tr><th>Operand</th><th>형태</th><th>의미</th><th>예</th></tr></thead>
@@ -293,7 +293,7 @@ void sumstore(long x, long y, long *dest) {
 </div>
 
 <div class="v6-widget" data-widget="addr-modes" data-config='{"rbx":64,"rcx":16,"scale":4,"disp":8}'></div>
-<h2><span class="h2no">4</span>lea(Load Effective Address)와 산술 연산</h2>
+<h2 id="lea-arithmetic"><span class="h2no">4</span>lea(Load Effective Address)와 산술 연산</h2>
 <h3>leaq : 주소만 계산하는 명령어</h3>
 <ul>
 <li><code>leaq src, dst</code>: src(address mode 표현식)가 나타내는 <b>주소 자체</b>를 dst에 저장. <span class="hl">memory에 접근하지 않음</span></li>

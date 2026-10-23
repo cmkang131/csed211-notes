@@ -120,7 +120,7 @@ MSB = 1 → signed int로 보면 음수</pre>
 <figcaption>손계산 3: 같은 bit pattern도 type에 따라 shift 결과가 갈림</figcaption>
 </figure>
 
-<h2><span class="h2no">3</span>Data Lab 1 문제 풀이 (정수 6개)</h2>
+<h2 id="integer-functions"><span class="h2no">3</span>Data Lab 1 문제 풀이 (정수 6개)</h2>
 <div class="nb"><p class="bx-h"><b>Q0 minusOne (수업 예제): -1 반환 · 허용 ! ~ &amp; ^ | + &lt;&lt; &gt;&gt; · 최대 2 ops</b></p>
 <ul>
 <li>허용 연산에 -가 없으니 return -1;은 규칙 위반 → -1의 bit pattern(모든 bit 1)은 0을 반전한 것</li>
@@ -177,7 +177,7 @@ MSB = 1 → signed int로 보면 음수</pre>
 <p>손계산 6: logicalShift(-16, 2): x = 0xFFFFFFF0 → x &gt;&gt; 2 = 0xFFFFFFFC · (1&lt;&lt;31) &gt;&gt; 2 = 0xE0000000 → &lt;&lt; 1 = 0xC0000000 → mask = 0x3FFFFFFF · 결과 0xFFFFFFFC &amp; 0x3FFFFFFF = 0x3FFFFFFC (unsigned 계산과 일치)</p>
 </div>
 
-<h2><span class="h2no">4</span>Data Lab 2: FP 문제 접근</h2>
+<h2 id="float-functions"><span class="h2no">4</span>Data Lab 2: FP 문제 접근</h2>
 <h3>문제 목록</h3>
 <ul>
 <li>정수 (DL1과 같은 규칙): Q1 negate(x): 최대 5 ops · Q2 isLess(x, y): 최대 24 ops</li>
