@@ -85,10 +85,10 @@
 <h2><span class="h2no">6</span>강의 연결 — 놓치기 쉬운 포인트</h2>
 <ul>
 <li>lec4 addressing mode의 <code>D(%rb,%ri,s)</code> 계산식 → phase 3 테이블 주소와 phase 5 배열 접근이 전부 이 형태</li>
-<li>lec5 condition codes: 같은 flag라도 unsigned 해석(CF)과 signed 해석(OF)이 다름 → ja와 jg 구분이 phase 3·6 검사 읽기의 핵심</li>
+<li>lec5 condition codes: <code>ja</code>는 CF=0·ZF=0일 때(unsigned "위"), <code>jg</code>는 ZF=0·SF=OF일 때(signed "큼") 점프. 같은 <code>cmp</code> 결과라도 쓰인 jump에 따라 해석이 달라짐 → phase 3·6 검사 읽기의 핵심</li>
 <li>lec6 스택 프레임: caller가 인자 세팅 → call → callee가 <code>sub $N,%rsp</code>. func4 재귀 프레임을 손으로 한 번 그려볼 것</li>
 <li>lec7 struct 정렬: 포인터는 8바이트 정렬 → int 2개(8바이트) 뒤 포인터는 +8. phase 6 노드 레이아웃이 그대로</li>
-<li>섹션 3의 실수 5개 + mov/lea 혼동 + cmp 방향 혼동이 시험에서 그대로 재현됨</li>
+<li>섹션 3의 실수 5개 + mov/lea 혼동 + cmp 방향 혼동 — 분석할 때 실제로 틀린 유형이라, 시험 전에 한 번 더 확인해 둘 것</li>
 </ul>
 
 <h2><span class="h2no">7</span>정답 모음</h2>
