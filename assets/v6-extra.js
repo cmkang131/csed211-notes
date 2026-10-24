@@ -397,12 +397,15 @@ if (document.fonts && document.fonts.ready){
         fontSize: "11px",
         lineHeight: "1.4",
         whiteSpace: "nowrap",
-        maxWidth: "100%",
         color: INK
       });
 
       // Endpoint labels anchor inward instead of extending
-      // past the track boundary.
+      // past the track boundary. The caption must keep its real
+      // text width for these transforms to work: a max-width:100%
+      // against the zero-width tick collapses it to 0 and turns
+      // translateX(-100%) into a no-op (labels then spill past
+      // the widget border on narrow screens).
       if (t.pos <= 10) {
         caption.style.transform = "translateX(0)";
       } else if (t.pos >= 90) {

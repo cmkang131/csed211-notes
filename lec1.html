@@ -139,11 +139,12 @@ x2B64 CMPI R5, #100
 x03F8 BRn array_sum_loop</pre>
 <ul>
 <li><code>ADD R4, R3, R4</code> 한 줄: "R3와 R4를 더해 R4에 저장". <b>무엇을</b> 하는지만 보여주고 data가 내부에서 어떻게 움직이는지는 숨김</li>
+<li class="note">슬라이드 18의 hex 세 개는 인코딩 오기: x1BA1은 ADD R5, R6, #1로 해독됨 (ADD R5, R5, #1 = x1B61) · x2B64는 CMPI R5, −28로 해독됨 (CMPI의 7-bit immediate는 부호 있음 — #100은 CMPI로 인코딩 불가, CMPIU R5, #100 = x2BE4가 가능한 재구성이나 원본 의도 미확인) · x03F8은 BRp로 해독됨 (BRn = x09F8). 원문은 슬라이드 그대로 유지</li>
 </ul>
 <div class="nb">
 <p class="bx-h"><b>손계산 2 · Machine Code 한 줄 해독 (보충)</b></p>
 <ul>
-<li>슬라이드 ISA는 교육용 LC-4 형식으로 보임 (16-bit instruction, 앞 4 bit = opcode) (추정)</li>
+<li>슬라이드 ISA는 Penn LC-4 (16-bit instruction, 앞 4 bit = opcode) — 13개 명령어 중 10개 인코딩이 공식 ISA와 일치 (나머지 3개는 위 슬라이드 hex 오기)</li>
 <li><code>x18C4</code> = 0001 1000 1100 0100 → <code>ADD R4, R3, R4</code> &nbsp;(0001=ADD · 100=Rd(R4) · 011=Rs(R3) · 000 · 100=Rt(R4))</li>
 <li><code>x6640</code> = 0110 0110 0100 0000 → <code>LDR R3, R1, #0</code> &nbsp;(0110=LDR · 011=Rd(R3) · 001=Rs(R1) · 000000=offset 0)</li>
 </ul>

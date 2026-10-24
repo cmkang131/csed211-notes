@@ -467,7 +467,7 @@ C의 for, switch 문법은 사람이 읽기 쉽지만 어셈블리에는 그런 
 <ul>
 <li>CF는 unsigned overflow(carry/borrow), OF는 signed overflow</li>
 <li>SF는 결과 MSB, ZF는 결과 0</li>
-<li>하드웨어는 CF와 OF를 항상 둘 다 세팅 → signed/unsigned 해석은 사용자 몫</li>
+<li>add·sub·cmp는 CF와 OF를 둘 다 계산해 세팅 → signed/unsigned 중 어떤 비교인지는 쓰는 jCC가 정함 (명령마다 갱신 규칙은 다름: leaq 미갱신, inc/dec는 CF 보존, 논리 명령은 CF=OF=0)</li>
 <li>leaq는 flag를 바꾸지 않음</li>
 <li>뺄셈의 CF = borrow 여부: 실제 carry out이 없으면 CF = 1 (unsigned로 a &lt; b)</li>
 <li>OF 조건: 덧셈은 같은 부호끼리 더해 부호가 바뀔 때</li>
