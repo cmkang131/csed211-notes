@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="assets/v6-extra.css">
 <script src="assets/v6.js" defer></script>
 <script src="assets/v6-extra.js" defer></script>
+<script src="assets/v6-pipeline.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -262,6 +263,9 @@ Done:</pre>
 <li>단계 수만큼 명령어를 겹쳐 동시 실행 = <b>pipeline</b>. 예전 4~5단계, 지금은 20단계 정도 → 단계가 많을수록 성능 향상 폭이 큼</li>
 <li><span class="k-red">분기는 파이프라인을 깨뜨림</span>. 조건을 계산하기 전까지 다음 명령이 어디 있는지 모름. 미리 가져와 실행하던 명령이 틀렸으면 다 버리고 점프 대상에서 새로 가져와야 함 → 컴파일러는 분기를 최대한 안 쓰려 함</li>
 </ul>
+<div class="v6-widget" data-widget="pipe-trace" data-config='{"preset":0}'></div>
+<div class="v6-widget" data-widget="pipe-hazard" data-config='{"preset":0}'></div>
+
 <h3>cmov의 아이디어</h3>
 <ul>
 <li><b>conditional move</b> (cmovX src, dst): if (test) dst = src를 명령어 하나로 수행</li>
