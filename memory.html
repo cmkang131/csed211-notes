@@ -47,7 +47,7 @@
 <h2><span class="h2no">3</span>캐시 시뮬레이터 (Hit / Miss / Eviction)</h2>
 <ul>
 <li>접근 순서(주소 trace)가 hit rate을 결정한다. Cache Lab (Part A/B) 전에 손으로 trace를 따라가 보는 연습용</li>
-<li>cold miss (처음 접근, valid=0) / conflict miss (같은 set에 다른 tag가 이미 차 있음)를 구분해 볼 것</li>
+<li>miss를 구분해 볼 것: cold (compulsory, 처음 접근) / conflict (set은 안 찼는데도 같은 set의 다른 tag들 때문에 쫓겨남) / capacity (working set 자체가 캐시보다 큼). 시뮬레이터는 valid bit 기준으로 "이 주소를 본 적 있는가"까지만 보여 주니, conflict와 capacity의 구분은 접근 패턴을 보고 직접 판단하는 연습</li>
 <li>LRU: set이 꽉 차면 가장 오래 전에 쓰인 라인이 쫓겨남</li>
 </ul>
 <div class="v6-widget" data-widget="cache-sim" data-config='{"title":"캐시 시뮬레이터"}'></div>
@@ -55,7 +55,7 @@
 <h2><span class="h2no">4</span>가상 메모리 (VA → PA Translation)</h2>
 <ul>
 <li>가상 주소는 <b>VPN (virtual page number) + VPO (page offset)</b>. 페이지 크기 P = 2<sup>p</sup>면 VPO는 하위 p bits</li>
-<li>CPU는 먼저 <b>TLB</b>에서 VPN을 찾고, miss면 page table에서 PTE를 읽는다. PTE의 valid bit가 0이면 <b>page fault</b> → disk에서 페이지를 가져옴</li>
+<li>CPU는 먼저 <b>TLB</b>에서 VPN을 찾고, miss면 page table에서 PTE를 읽는다. PTE의 valid bit가 0이면 <b>page fault</b> (교육용 resident-bit 단순화: 실제로는 invalid PTE가 미매핑을 뜻할 수도 있고 fault가 항상 disk I/O는 아님). 시뮬레이터의 TLB는 cache-sim과 달리 <b>단순 교체 모델</b>(고정 way)이라 LRU가 아님에 주의</li>
 <li>물리 주소는 PPN + VPO를 그대로 이어붙인 것 (PPO = VPO)</li>
 </ul>
 <div class="v6-widget" data-widget="virtual-memory" data-config='{"title":"가상 주소 변환 시뮬레이터"}'></div>

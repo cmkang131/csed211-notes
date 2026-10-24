@@ -1155,3 +1155,7 @@
           font-size: 10px;
         }
       }
+
+
+/* review fix (2026-10-24): mobile touch targets >= 44px */
+.v6-widget button, .v6-widget .v6-btn { min-height: 44px; }
