@@ -37,6 +37,7 @@
   add  %eax, %eax               # %eax = 2 × 이전 원소
   cmp  %eax, (%rbx)             # 현재 원소와 비교
   je   &lt;phase_2+41&gt;            # x_i = 2 × x_(i-1) 여야 함
+  callq &lt;explode_bomb&gt;          # 다르면 폭발
   add  $0x4, %rbx               # 다음 정수로
   cmp  %rbp, %rbx
   jne  &lt;phase_2+27&gt;            # 끝까지 반복</pre>
