@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<script src="assets/theme.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory Hierarchy · Cache · Virtual Memory — 컴퓨터 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/study-note.css">
+<link rel="stylesheet" href="assets/csed211.css">
+<link rel="prev" href="lec8.html">
+<link rel="stylesheet" href="assets/v5-layer.css">
+<link rel="stylesheet" href="assets/v6.css">
+<link rel="stylesheet" href="assets/v6-memory.css">
+<script src="assets/v6.js" defer></script>
+<script src="assets/v6-memory.js" defer></script>
+</head>
+<body>
+<article class="paper">
+<div class="phead">
+  <a class="to-home" href="index.html">&larr; 목차</a>
+  <span class="phead-c">CSED211 컴퓨터 시스템</span>
+  <span class="phead-r">2026 가을 &middot; 중간고사 10/29 (목) &middot; <a class="to-home" href="https://cmkang131.github.io">전체 홈&#8599;</a></span>
+</div>
+<h1 class="pagetitle">Memory Hierarchy · Cache · Virtual Memory</h1>
+<p class="psub">이후 진도 미리보기 (Lec1 교수 슬라이드의 topic 순서: memory hierarchy/cache → linking → ECF → VM → malloc) · <b>중간고사(Lec2~8) 범위 밖</b> · 교수 원본 슬라이드 공개 전이라 CS:APP 3판 / CMU 15-213 기준으로 구성, 강의 진도 나가면 원본 기준으로 보강</p>
+<div class="body notes">
+
+<h2><span class="h2no">1</span>메모리 계층 (Memory Hierarchy)</h2>
+<ul>
+<li><b>핵심 직관</b>: 위로 갈수록 빠르고 · 작고 · (byte당) 비쌈. Lec4 슬라이드 그림의 계층(Register → Cache → Main memory → SSD/Disk)을 CS:APP 기준으로 확장한 것</li>
+<li>register는 사실상 1 cycle 접근. cache miss로 main memory까지 내려가면 수백 cycle (Lec4 슬라이드 기준)</li>
+<li>아래 위젯에서 각 층을 클릭해 대표 크기·지연과 "L1 = 1초" 환산 스케일을 확인할 것</li>
+</ul>
+<div class="v6-widget" data-widget="mem-hierarchy" data-config='{"title":"메모리 계층 탐색기"}'></div>
+
+<h2><span class="h2no">2</span>캐시 주소 해석 (Address → Tag / Set / Offset)</h2>
+<ul>
+<li>물리 주소는 <b>tag (t bits) · set index (s bits) · block offset (b bits)</b>으로 쪼개진다. S = 2<sup>s</sup>개 set, block 크기 B = 2<sup>b</sup></li>
+<li>주소가 어느 set으로 가는지는 <b>set index bits</b>만이 결정. 같은 set 안에서는 tag 비교로 hit/miss가 갈림</li>
+<li>직접 사상(direct-mapped, E=1)은 충돌이 잦고, E-way set associative는 그 충돌을 E개 라인으로 흡수</li>
+</ul>
+<div class="v6-widget" data-widget="cache-mapping" data-config='{"title":"캐시 주소 해석기","m":32,"s":4,"b":4,"E":4,"address":"0x1A3F"}'></div>
+
+<h2><span class="h2no">3</span>캐시 시뮬레이터 (Hit / Miss / Eviction)</h2>
+<ul>
+<li>접근 순서(주소 trace)가 hit rate을 결정한다. Cache Lab (Part A/B) 전에 손으로 trace를 따라가 보는 연습용</li>
+<li>cold miss (처음 접근, valid=0) / conflict miss (같은 set에 다른 tag가 이미 차 있음)를 구분해 볼 것</li>
+<li>LRU: set이 꽉 차면 가장 오래 전에 쓰인 라인이 쫓겨남</li>
+</ul>
+<div class="v6-widget" data-widget="cache-sim" data-config='{"title":"캐시 시뮬레이터"}'></div>
+
+<h2><span class="h2no">4</span>가상 메모리 (VA → PA Translation)</h2>
+<ul>
+<li>가상 주소는 <b>VPN (virtual page number) + VPO (page offset)</b>. 페이지 크기 P = 2<sup>p</sup>면 VPO는 하위 p bits</li>
+<li>CPU는 먼저 <b>TLB</b>에서 VPN을 찾고, miss면 page table에서 PTE를 읽는다. PTE의 valid bit가 0이면 <b>page fault</b> → disk에서 페이지를 가져옴</li>
+<li>물리 주소는 PPN + VPO를 그대로 이어붙인 것 (PPO = VPO)</li>
+</ul>
+<div class="v6-widget" data-widget="virtual-memory" data-config='{"title":"가상 주소 변환 시뮬레이터"}'></div>
+
+</div>
+</article>
+<script>window.addEventListener('beforeprint',function(){document.querySelectorAll('details').forEach(function(d){d.setAttribute('open','')})});</script>
+<script src="assets/v5.js"></script>
+</body>
+</html>
