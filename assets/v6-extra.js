@@ -7064,6 +7064,10 @@ if (document.fonts && document.fonts.ready){
       }]);
 
       if (n > 1) {
+        ops.push(["fact(" + n + "): leaq -1(%rdi),%rdi", m => {
+          m.registers.rdi = BigInt(n - 1);
+          return "다음 호출에 넘길 인자 n-1=" + (n - 1) + "을 첫 번째 인자 레지스터 %rdi에 준비합니다. call이 실행되면 fact(" + (n - 1) + ")은 이 %rdi 값을 자신의 n으로 받습니다.";
+        }]);
         ops.push(["fact(" + n + "): call fact(" + (n - 1) + ")", m => {
           push(m, BigInt(0x402100 + n * 16), "fact(" + n + ") 복귀 주소", "fact(" + (n - 1) + ")");
           m.frames.push({ name: "fact(" + (n - 1) + ")", rbp: null, entry: m.rsp });
@@ -7083,7 +7087,7 @@ if (document.fonts && document.fonts.ready){
           const slot = m.slots.get(m.rbp - 8n);
           if (!slot || slot.released) throw new Error("활성 fact(" + n + ")의 n 저장 슬롯이 없습니다.");
           m.rax = u64(m.rax * slot.value);
-          return "fact(" + n + ")의 n 저장 슬롯 값 " + n + "과 하위 호출의 반환값을 곱합니다. 현재 %rax = " + m.rax + ".";
+          return "fact(" + n + ")의 n 저장 슬롯 값 " + n + "과 하위 호출의 반환값을 곱합니다. 현재 %rax = " + m.rax + ". %rdi는 caller-saved라 하위 호출을 거치며 값이 달라질 수 있으므로, 곱셈에는 프레임에 저장해 둔 n을 사용합니다.";
         }]);
       }
 
@@ -7506,6 +7510,7 @@ if (document.fonts && document.fonts.ready){
       "Caller-saved: rax, rcx, rdx, rsi, rdi, r8–r11. Callee-saved: rbx, rbp, r12–r15. 함수는 보존 의무가 있는 레지스터를 복구해야 합니다.\n" +
       "call 직전 %rsp는 16바이트 정렬, 일반적인 함수 진입 직후 %rsp mod 16 = 8입니다.\n" +
       "재귀 예제의 fact(n) 저장 슬롯은 각 호출의 n을 보존해 하위 호출 반환 후 곱셈에 사용합니다.\n" +
+      "재귀 예제에서 %rdi는 call 직전에 준비된 인자(n-1)를 담고 있으며, 반환 후 원래 값이 복원된다고 보장되지 않습니다(caller-saved).\n" +
       "회색 점선 슬롯은 반환된 프레임의 잔존 메모리를 나타내며, 활성 슬롯이 아닙니다. 실제 프로그램에서는 이후 호출이 해당 주소를 덮어쓸 수 있습니다.\n" +
       "교육용 고정 단계 추적이며 실제 명령어 인터프리터는 아닙니다.";
 
