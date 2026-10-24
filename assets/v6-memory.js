@@ -15,6 +15,28 @@ function remount(){
   });
 }
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){setTimeout(remount,50);});}
+/* mobile: wrap each widget canvas in a local horizontal-scroll box (see v6-memory.css).
+   Canvases are re-created on remount and on widget resets, so observe for them. */
+function wrapCanvases(){
+  if(window.innerWidth>760)return;
+  document.querySelectorAll('.v6-widget').forEach(function(w){
+    w.querySelectorAll('canvas').forEach(function(cv){
+      var p=cv.parentElement;
+      if(p&&p.classList&&p.classList.contains('v6-scrollx'))return;
+      var d=document.createElement('div');d.className='v6-scrollx';
+      p.insertBefore(d,cv);d.appendChild(cv);
+    });
+  });
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(wrapCanvases,0);});}
+else{setTimeout(wrapCanvases,0);}
+new MutationObserver(function(muts){
+  if(window.innerWidth>760)return;
+  for(var i=0;i<muts.length;i++){
+    var t=muts[i].target;
+    if(t&&t.closest&&t.closest('.v6-widget')){wrapCanvases();return;}
+  }
+}).observe(document.documentElement,{childList:true,subtree:true});
 })();
 
 /* ===== widget: cache-mapping (ChatGPT web authored, 2026-10-24) ===== */

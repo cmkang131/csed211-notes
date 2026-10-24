@@ -1159,3 +1159,18 @@
 
 /* review fix (2026-10-24): mobile touch targets >= 44px */
 .v6-widget button[class], .v6-widget .v6-btn { min-height: 44px; }
+
+/* mobile (2026-10-24, parent review): never shrink the 720px canvas to fit;
+   keep logical size and give it a local horizontal scroll box so labels stay readable */
+@media (max-width: 760px) {
+  .v6-widget .v6-scrollx {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 3px;
+  }
+  .v6-widget .v6-scrollx canvas {
+    width: 720px !important;
+    max-width: none !important;
+    display: block;
+  }
+}
