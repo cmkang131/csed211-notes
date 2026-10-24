@@ -65,7 +65,8 @@
     <text x="390" y="292">0x400000 근처</text>
   </g>
 </svg>
-<figcaption>stack은 아래로, heap은 위로 자람. stack overflow와 heap overflow가 서로 반대 방향인 이유</figcaption>
+<figcaption>stack은 아래로, heap은 위로 자람 — 메모리 <b>할당 성장 방향</b>의 차이</figcaption>
+<p class="note">(교정: overflow로 덮어쓰는 방향은 stack·heap 모두 주소가 증가하는 방향 — stack buffer overflow가 saved return address를 덮는 것도 buf에서 위쪽. 반대인 것은 영역의 성장 방향뿐. CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)</p>
 </figure>
 <div class="v6-widget" data-widget="mem-layout" data-config='{}'></div>
 <h3>array·heap·stack의 실제 주소</h3>
@@ -76,7 +77,7 @@ p2 = malloc(1L&lt;&lt;8);       /* 256 B */     p4 = malloc(1L&lt;&lt;8);   /* 2
 <div class="tblwrap"><table>
 <thead><tr><th>영역</th><th>실행 예 주소</th></tr></thead>
 <tbody>
-<tr><td>local variable (stack)</td><td><code>0x7ffffffbe87c</code></td></tr>
+<tr><td>local variable (stack)</td><td><code>0x7ffe4d3be87c</code></td></tr>
 <tr><td>p1, p3 (heap, 큰 할당)</td><td><code>0x7f7262a1e010</code>, <code>0x7f7162a1d010</code></td></tr>
 <tr><td>p2, p4 (heap, 작은 할당)</td><td><code>0x8359d010</code>, <code>0x8359d120</code></td></tr>
 <tr><td>big_array, huge_array (data)</td><td><code>0x80601060</code>, <code>0x601060</code></td></tr>
@@ -132,7 +133,7 @@ void echo() {
   <g font-size="11.5">
     <text x="24" y="134" font-size="12" font-weight="700" fill="#1a1a1a">입력 길이별 결과</text>
     <rect x="24" y="146" width="572" height="26" rx="6" fill="#fff" stroke="#d9d9d9"/><text x="38" y="164" fill="#1a1a1a">23바이트 + null = 24 → buf와 padding을 꽉 채움 · 그대로 출력 (하지만 stack 일부를 이미 덮음)</text>
-    <rect x="24" y="178" width="572" height="26" rx="6" fill="#fff" stroke="#d9d9d9"/><text x="38" y="196" fill="#1a1a1a">24바이트 + null = 25 → return address 첫 byte를 0x00으로 덮음 · 출력이 깨짐</text>
+    <rect x="24" y="178" width="572" height="26" rx="6" fill="#fff" stroke="#d9d9d9"/><text x="38" y="196" fill="#1a1a1a">24바이트 + null = 25 → return address 첫 byte를 0x00으로 덮음 · echo 출력은 정상, return 시 crash</text>
     <rect x="24" y="210" width="572" height="26" rx="6" fill="#fff" stroke="#d9d9d9"/><text x="38" y="228" fill="#1a1a1a">25바이트 이상 → return address 여러 byte가 바뀜 · retq가 엉뚱한 주소로 점프 → Segmentation fault</text>
   </g>
 </svg>
@@ -219,7 +220,7 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 <ul>
 <li>배경: stack randomization + non-executable stack → code injection이 어려워짐. 대안: <b>이미 존재하는 code/library code를 재사용</b>해 fragment(gadget)를 이어 붙임</li>
 <li><b>gadget</b>: ret(0xc3)으로 끝나는 instruction sequence. code 위치는 fixed, executable</li>
-<li class="exrow">예: ab_plus_c gadget (0x4004d4): <code>imul %rsi,%rdi; lea (%rdi,%rdx,1),%rax; ret</code> · setval gadget (0x4004dc): 바이트열 c7 07 d4 48 89 c7 안에 48 89 c7 (movq %rax,%rdi)이 숨어 있고 뒤에 c3 (ret)이 이어짐. 중간 지점부터 실행하면 gadget이 됨</li>
+<li class="exrow">예: ab_plus_c gadget (0x4004d4): <code>lea (%rdi,%rdx,1),%rax; ret</code> — rax ← rdi + rdx. gadget 주소가 0x4004d4이므로 그 앞 0x4004d0의 imul %rsi,%rdi는 실행되지 않음 · setval gadget (0x4004dc): 바이트열 c7 07 d4 48 89 c7 안에 48 89 c7 (movq %rax,%rdi)이 숨어 있고 뒤에 c3 (ret)이 이어짐. 중간 지점부터 실행하면 gadget이 됨</li>
 </ul>
 <figure class="fig" style="--figw:560px">
 <svg viewBox="0 0 560 220" width="560" xmlns="http://www.w3.org/2000/svg" font-family="inherit">
@@ -241,11 +242,12 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
     <defs><marker id="arr8b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#9e2b25"/></marker></defs>
   </g>
 </svg>
-<figcaption>여러 gadget이 stack을 아래로 침범하며 이어짐</figcaption>
+<figcaption>여러 gadget이 stack을 위로(주소 증가 방향으로) 침범하며 이어짐</figcaption>
+<p class="note">(교정: 각 gadget의 ret이 stack에서 주소를 pop하며 %rsp가 증가 → CMU 15-213 대응 자료도 "Multiple gadgets will corrupt stack upwards". 교수님 강의 원본 미대조)</p>
 </figure>
 <div class="nb">
 <p class="bx-h"><b>무엇을 우회하고 무엇을 못 우회하나</b></p>
-ROP는 non-executable stack과 ASLR(실행 파일 영역이 고정일 때)을 우회하지만, <b>stack canary는 일반적인 ROP에 추가 장벽</b>: gadget도 return address를 덮어야 도달할 수 있어 canary 값이 바뀌면 탐지함. 단 canary 값이 유출되면 우회될 수 있음.
+ROP는 non-executable stack을 우회하고, ASLR은 <b>실행 파일·library의 code 주소가 고정된 경우</b>에만 우회함(gadget 주소를 미리 알아야 하므로 code 위치가 실행마다 무작위화되면 주소 유출이 추가로 필요). <b>stack canary는 우회하지 못함</b>(CMU 대응 자료: "Does not overcome stack canaries") — gadget도 return address를 덮어야 도달하므로 canary가 바뀌면 탐지되고, canary 값이 유출된 경우에만 우회 가능. (CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)
 </div>
 
 <h2 id="union"><span class="h2no">6</span>Union</h2>
@@ -388,8 +390,9 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>frame: buf 4byte + padding 20byte = 24byte, return address는 %rsp+24</li>
 <li>24번째 byte까지 채우고 gets가 붙이는 null(25번째 byte)이 return address의 첫 byte를 0x00으로 덮음</li>
 <li>원래 return address 0x4006f6 → 0x400600</li>
-<li>retq가 0x400600으로 점프해 출력이 깨지거나 비정상 동작</li>
+<li>24문자는 정상 echo 출력됨. 그 후 retq가 0x400600으로 점프해 segmentation fault</li>
 </ol>
+<p class="note">(교정: 출력이 깨지는 것이 아니라 출력은 정상이고 return 시에만 crash. CMU 15-213 대응 자료의 같은 예 기준, 교수님 강의 원본 미대조)</p>
 <div class="ans-final"><span class="lb">최종 답</span><span class="val">0x4006f6 → 0x400600 (첫 byte가 0x00으로 덮임)</span></div>
 </div></details>
 </div></div>
