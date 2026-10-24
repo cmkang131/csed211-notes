@@ -74,7 +74,7 @@
       .v6-widget .v6pipe-btn {
         box-sizing: border-box;
         min-width: 72px;
-        min-height: 40px;
+        min-height: 44px;
         padding: 7px 10px;
         font-family: 'Noto Sans KR', sans-serif;
         font-size: 13px;
@@ -96,7 +96,8 @@
       .v6-widget .v6pipe-canvas-wrap {
         width: 100%;
         min-width: 0;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
         background: #ffffff;
       }
 
@@ -369,7 +370,7 @@
       detail:
         "예측은 항상 not-taken입니다. I3가 C5의 EX에서 taken을 확인하면 I4의 ID와 I5의 IF를 flush하고, C6부터 target을 다시 Fetch합니다.",
       legend:
-        "빨간 X는 flush된 wrong-path 명령어입니다. I3는 EX에서 분기 결과를 확정하며, 유효한 완료 명령어는 I1, I2, I3, I6입니다."
+        "빨간 X는 flush된 wrong-path 명령어입니다. I3는 EX에서 분기 결과를 확정하며, 유효한 완료 명령어는 I1, I2, I3, I6입니다. I2 → I3의 데이터 의존은 forwarding이 있다고 가정합니다 (데이터 해저드는 아래 위젯 참조)."
     };
   }
 
@@ -484,9 +485,13 @@
       comparison:
         "forwarding 있음: " +
         forwardingCycles +
-        " cycles  ·  forwarding 없음: " +
+        " cycles (CPI " +
+        (forwardingCycles / 2).toFixed(2) +
+        ")  ·  forwarding 없음: " +
         noForwardingCycles +
-        " cycles"
+        " cycles (CPI " +
+        (noForwardingCycles / 2).toFixed(2) +
+        ")"
     };
   }
 
@@ -517,7 +522,12 @@
 
     canvas.width = Math.round(logicalWidth * dpr);
     canvas.height = Math.round(logicalHeight * dpr);
-    canvas.style.width = "100%";
+    var availW =
+      canvas.parentElement && canvas.parentElement.clientWidth
+        ? canvas.parentElement.clientWidth
+        : logicalWidth;
+    canvas.style.width =
+      availW < logicalWidth ? logicalWidth + "px" : "100%";
     canvas.style.height = "auto";
 
     canvas.setAttribute("role", "img");
@@ -1132,14 +1142,14 @@
       metrics,
       "완료 명령어"
     );
-    var cpiValue = createMetric(metrics, "CPI");
+    var cpiValue = createMetric(metrics, "누적 CPI");
 
     var wastedValue = null;
 
     if (kind === "trace") {
       wastedValue = createMetric(
         metrics,
-        "낭비된 사이클"
+        "오예측 페널티"
       );
     }
 
@@ -1256,6 +1266,20 @@
       if (kind === "hazard") {
         comparison.hidden = false;
         comparison.textContent = model.comparison;
+      } else {
+        comparison.hidden = state.cycle < model.totalCycles;
+        if (!comparison.hidden) {
+          comparison.textContent =
+            "최종 CPI: " +
+            model.totalCycles +
+            "/" +
+            model.validCount +
+            " = " +
+            (model.totalCycles / model.validCount).toFixed(2) +
+            (state.preset === "branch"
+              ? " · 오예측이 없었다면 유효 4개는 8사이클(CPI 2.00)에 완료 → 오예측 페널티는 2사이클"
+              : " · 오예측 없이 6개 완료");
+        }
       }
 
       note.textContent = model.detail;
