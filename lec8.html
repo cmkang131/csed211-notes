@@ -66,7 +66,7 @@
   </g>
 </svg>
 <figcaption>stack은 아래로, heap은 위로 자람 — 메모리 <b>할당 성장 방향</b>의 차이</figcaption>
-<p class="note">(교정: overflow로 덮어쓰는 방향은 stack·heap 모두 주소가 증가하는 방향 — stack buffer overflow가 saved return address를 덮는 것도 buf에서 위쪽. 반대인 것은 영역의 성장 방향뿐. CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)</p>
+<p class="note">(교정: 기존 "stack overflow와 heap overflow가 반대 방향" 설명은 부정확 — 반대인 것은 영역의 <b>성장 방향</b>뿐. stack buffer overflow는 buf에서 주소가 증가하는 쪽(saved return address 방향)으로 덮어쓰고, heap에서의 덮어쓰기 방향은 할당 배치·접근 방식에 따라 달라짐. CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)</p>
 </figure>
 <div class="v6-widget" data-widget="mem-layout" data-config='{}'></div>
 <h3>array·heap·stack의 실제 주소</h3>
