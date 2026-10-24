@@ -173,7 +173,6 @@
 }
 
 .v6-widget .v6-btn:active:not(:disabled) {
-  transform: translateY(1px);
   background: var(--v6-grid);
 }
 
@@ -192,7 +191,7 @@
   border-color: var(--v6-red);
   background: var(--v6-grid);
   color: var(--v6-red);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 @media (hover: hover) {
@@ -555,4 +554,10 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+/* layout-shift guard (2026-10-25): autoplay toggle keeps the width of its
+   longest label ("자동 재생 중지") in both states */
+.v6-widget .v6-btn.v6-btn-toggle { min-width: 112px; }
+@media (max-width: 760px) {
+  .v6-widget .v6-btn.v6-btn-toggle { min-width: 106px; }
 }

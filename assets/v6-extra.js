@@ -4569,6 +4569,7 @@ if (document.fonts && document.fonts.ready){
       "자동 재생",
       auto
     );
+    autoButton.classList.add("v6-btn-toggle");
 
     B(
       actions,
@@ -7130,6 +7131,7 @@ if (document.fonts && document.fonts.ready){
   const stepButton = B(controls, "한 단계", step);
   const undoButton = B(controls, "뒤로", undo);
   const autoButton = B(controls, "자동 재생", auto);
+  autoButton.classList.add("v6-btn-toggle");
   B(controls, "리셋", reset);
 
   // Responsive, consistent control bar.

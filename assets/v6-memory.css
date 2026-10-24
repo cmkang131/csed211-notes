@@ -665,7 +665,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 112px;
+        min-width: 140px;
         min-height: 37px;
         padding: 8px 12px;
         border: 1px solid #1a1a1a;
@@ -1050,7 +1050,6 @@
         border-color: #9e2b25;
         background: #9e2b25;
         color: #ffffff;
-        font-weight: 700;
       }
 
       .v6-widget .vm-progress-item[data-done="true"] {

@@ -73,19 +73,18 @@
 
       .v6-widget .v6pipe-btn {
         box-sizing: border-box;
-        min-width: 72px;
+        min-width: 92px;
         min-height: 44px;
         padding: 7px 10px;
         font-family: 'Noto Sans KR', sans-serif;
         font-size: 13px;
         line-height: 1.4;
         cursor: pointer;
-        white-space: normal;
+        white-space: nowrap;
       }
 
       .v6-widget .v6pipe-btn[aria-pressed="true"] {
         border-color: #9e2b25;
-        font-weight: 700;
       }
 
       .v6-widget .v6pipe-btn:disabled {
