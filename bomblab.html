@@ -97,7 +97,7 @@ jne  &lt;phase_2+27&gt;       # 끝이 아니면 반복</pre>
 <h2><span class="h2no">4</span>gdb로 직접 확인</h2>
 <div class="nb"><p class="bx-h"><b>gdb 명령</b></p>
 <ul>
-<li><code>break explode_bomb</code>: explode_bomb 진입 시 실행이 멈춤 (breakpoint가 걸려 있는 동안만). 거기서 continue하면 폭발이 그대로 실행되고, 이 바이너리에서 폭발이 기록되는지는 확인되지 않았다 — "멈췄으니 안전"이 아니라 진입 시점에 멈춰 조사하는 명령 · <code>disas</code> (함수 disassemble) · <code>stepi</code> / <code>nexti</code> (한 명령씩)</li>
+<li><code>break explode_bomb</code>: 함수 진입 지점에 breakpoint를 걸어 실행을 멈춘다. continue하면 함수 실행이 재개된다. 실제 동작과 외부 기록 여부는 이 바이너리의 함수 본문 미확인 — "멈췄으니 안전"이 아니라 진입 시점에 멈춰 조사하는 용도 · <code>disas</code> (함수 disassemble) · <code>stepi</code> / <code>nexti</code> (한 명령씩)</li>
 <li><code>x/s ADDR</code>: 주소의 문자열 읽기 (phase 1) · <code>x/8gx ADDR</code>: 8바이트씩 8개 (jump table) · <code>x/16dw ADDR</code>: 4바이트 10진수 16개 (배열) · <code>info registers</code></li>
 </ul>
 </div>
@@ -120,7 +120,7 @@ jne  &lt;phase_2+27&gt;       # 끝이 아니면 반복</pre>
 <li>인자 레지스터 순서: <b>%rdi → %rsi → %rdx → %rcx → %r8 → %r9</b>, 반환값 <b>%rax</b></li>
 <li>callee-saved(함수가 사용·변경했다면 원래 값을 보존해야 하는): <code>%rbx %rbp %r12–%r15</code> · caller-saved(호출 뒤 날아갈 수 있는): <code>%rax %rcx %rdx %rsi %rdi %r8–%r11</code></li>
 <li>스택은 낮은 주소로 자람 · <code>call</code> = 리턴 주소 push 후 점프, <code>ret</code> = pop 후 점프</li>
-<li>gdb 최소 세트: <code>b explode_bomb</code> (explode_bomb 진입 시 정지 — continue하면 폭발 진행) · <code>disas 함수명</code> · <code>stepi</code>/<code>nexti</code> · <code>info registers</code> · <code>x/s</code> 문자열 · <code>x/6dw</code> 정수 6개 · <code>x/8gx</code> 테이블 · <code>finish</code> 함수 끝까지</li>
+<li>gdb 최소 세트: <code>b explode_bomb</code> (함수 진입 시 정지 · continue하면 실행 재개) · <code>disas 함수명</code> · <code>stepi</code>/<code>nexti</code> · <code>info registers</code> · <code>x/s</code> 문자열 · <code>x/6dw</code> 정수 6개 · <code>x/8gx</code> 테이블 · <code>finish</code> 함수 끝까지</li>
 <li>비교 읽기: <code>cmp</code>는 flag를 세팅만 하고, 실제 판단은 다음 <code>jX</code>가 그 flag를 해석. <code>cmp $imm, reg; jX</code> → "reg X imm"은 jX의 부호 의미(signed/unsigned)가 맞을 때만 성립하는 축약</li>
 </ul>
 
