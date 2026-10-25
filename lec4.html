@@ -235,9 +235,9 @@ void sumstore(long x, long y, long *dest) {
 <div class="tblwrap"><table>
 <thead><tr><th>Operand</th><th>형태</th><th>의미</th><th>예</th></tr></thead>
 <tbody>
-<tr><td><b>Immediate</b> (즉시값)</td><td><code>$Imm</code></td><td>상수 값, C의 상수처럼 $로 시작 (인코딩 크기는 명령어마다 다름 — 대부분 imm ≤ 32-bit sign-extend, movabsq는 64-bit 상수 가능)</td><td><code>$0x400</code>, <code>$-533</code> (C 정수와 같이 2's complement로 encoding)</td></tr>
-<tr><td><b>Register</b></td><td><code>%rax</code> …</td><td>register 16개 중 하나, 현재 값을 사용</td><td>%rax, %r13 (단 %rsp는 예약, 특수 용도)</td></tr>
-<tr><td><b>Memory</b></td><td><code>(%rax)</code> 등</td><td>해당 주소에서 시작하는 8개 연속 byte (quadword)</td><td><code>(%rax)</code> = %rax가 가리키는 memory</td></tr>
+<tr><td><b>Immediate</b> (즉시값)</td><td style="white-space:nowrap"><code>$Imm</code></td><td>상수 값, C의 상수처럼 $로 시작 (인코딩 크기는 명령어마다 다름 — 대부분 imm ≤ 32-bit sign-extend, movabsq는 64-bit 상수 가능)</td><td><code>$0x400</code>, <code>$-533</code> (C 정수와 같이 2's complement로 encoding)</td></tr>
+<tr><td><b>Register</b></td><td style="white-space:nowrap"><code>%rax</code> …</td><td>register 16개 중 하나, 현재 값을 사용</td><td>%rax, %r13 (단 %rsp는 예약, 특수 용도)</td></tr>
+<tr><td><b>Memory</b></td><td style="white-space:nowrap"><code>(%rax)</code> 등</td><td>해당 주소에서 시작하는 8개 연속 byte (quadword)</td><td><code>(%rax)</code> = %rax가 가리키는 memory</td></tr>
 </tbody></table></div>
 <ul>
 <li><code>movq src, dest</code>: src → dest로 "8 byte(quadword) 복사" (move가 아니라 copy)
