@@ -6203,7 +6203,7 @@ new MutationObserver(function(muts){
     );
 
     const tControl = makeRange(
-      "TLB set bits (t)",
+      "TLB set index bits (s_TLB)",
       1,
       3,
       model.t,
