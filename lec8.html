@@ -361,7 +361,7 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>방어, system 수준: ASLR (stack 주소를 매번 이동), non-executable stack (고전 injection은 막지만 ROP는 못 막음)</li>
 <li>방어, compiler 수준: stack canary는 GCC의 -fstack-protector 계열 옵션으로 활성화할 수 있다. 기본 활성화 여부는 GCC 버전, 배포판 및 빌드 설정에 따라 달라진다. 대표적인 Linux x86-64 구현에서는 %fs:0x28에서 보호 값을 읽고, 검사 실패 시 __stack_chk_fail을 호출한다.</li>
 <li>canary 한계: 최하위 byte 0x00인 경우가 많아 off-by-one null 덮기는 통과 가능 · buffer 앞쪽 local variable 손상은 못 막음</li>
-<li>ROP: ret(0xc3)으로 끝나는 gadget을 이어 붙임 · non-executable stack과 ASLR 우회 · canary는 반환 주소 변조를 탐지해 일반적인 ROP에는 추가 장벽이 되지만, 카나리 값 유출 등의 조건에서는 우회 가능</li>
+<li>ROP: ret으로 끝나는 gadget을 이어 붙인다. 주소가 고정된 non-PIE code에서는 gadget 주소를 미리 알 수 있지만, PIE·ASLR 환경에서는 기준 주소 유출 등 추가 정보가 필요하다 · non-executable stack 우회 · canary는 반환 주소 변조를 탐지해 일반적인 ROP에는 추가 장벽이 되지만, 카나리 값 유출 등의 조건에서는 우회 가능</li>
 <li>struct S1: offset c@0, i[0]@4, i[1]@8, v@16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만 — 다른 member를 읽는 것은 구현 의존)</li>
 <li>union은 같은 bit의 재해석, cast는 값 변환. bit2float/float2bit에 사용</li>
 <li>endian: dw.c = f0..f7일 때 little endian s[0]=0xf1f0, i[0]=0xf3f2f1f0, l[0]=0xf7f6f5f4f3f2f1f0 · big endian은 그대로 0xf0f1, 0xf0f1f2f3, 0xf0f1f2f3f4f5f6f7</li>
