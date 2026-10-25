@@ -204,7 +204,7 @@ void sumstore(long x, long y, long *dest) {
 <ul>
 <li>register·memory 데이터의 산술 연산 (memory operand 산술은 x86 특유, RISC는 일반적으로 불가)</li>
 <li>register ↔ memory 데이터 전송: load (memory → register), store (register → memory)</li>
-<li>제어 이동: procedure로의 무조건 jump, conditional branch (if/else 구현)</li>
+<li>제어 흐름 변경에는 무조건 점프(jmp), 조건 분기(conditional branch), 함수 호출(call), 함수 복귀(ret)가 있다. jmp는 지정된 주소로 이동하고, call은 복귀 주소를 스택에 저장한 뒤 함수로 이동한다. ret은 저장된 복귀 주소로 돌아간다. 조건 분기는 condition codes를 바탕으로 실행할 다음 명령어를 결정하며, if/else와 반복문의 제어 흐름을 구현하는 데 사용된다.</li>
 </ul></li>
 </ul>
 <h3>Object Code와 Disassembly</h3>
