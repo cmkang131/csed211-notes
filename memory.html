@@ -40,6 +40,7 @@
 <ul>
 <li>물리 주소는 <b>tag (t bits) · set index (s bits) · block offset (b bits)</b>으로 쪼개진다. S = 2<sup>s</sup>개 set, block 크기 B = 2<sup>b</sup></li>
 <li>주소가 어느 set으로 가는지는 <b>set index bits</b>만이 결정. 같은 set 안에서는 tag 비교로 hit/miss가 갈림</li>
+<li>주소 길이가 m bits이고 set index가 s bits, block offset이 b bits이면 tag는 t = m − s − b bits이다. Set 수는 S = 2<sup>s</sup>, block 크기는 B = 2<sup>b</sup> bytes이며, 캐시의 데이터 용량은 C = S × E × B bytes이다. 여기서 E는 set당 line 수이고, 데이터 용량 계산에서는 tag·valid bit 등의 메타데이터를 제외한다. 바이트 주소 A의 block offset은 A mod 2<sup>b</sup>, set index는 ⌊A / 2<sup>b</sup>⌋ mod 2<sup>s</sup>, tag는 ⌊A / 2<sup>s+b</sup>⌋로 구한다.</li>
 <li>직접 사상(direct-mapped, E=1)은 충돌이 잦고, E-way set associative는 그 충돌을 E개 라인으로 흡수</li>
 </ul>
 <div class="v6-widget" data-widget="cache-mapping" data-config='{"title":"캐시 주소 해석기","m":32,"s":4,"b":4,"E":4,"address":"0x1A3F"}'></div>
@@ -47,7 +48,14 @@
 <h2><span class="h2no">3</span>캐시 시뮬레이터 (Hit / Miss / Eviction)</h2>
 <ul>
 <li>접근 순서(주소 trace)가 hit rate을 결정한다. Cache Lab (Part A/B) 전에 손으로 trace를 따라가 보는 연습용</li>
-<li>miss를 구분해 볼 것: cold (compulsory, 처음 접근하는 block) / conflict (같은 set으로 매핑되는 block이 E개를 넘어 eviction이 생겨서 발생하는 miss — 같은 용량의 fully associative cache였다면 hit였을 miss) / capacity (working set 자체가 캐시 전체보다 큼). eviction은 해당 set이 가득 찼을 때만 일어난다. 시뮬레이터의 valid bit는 "지금 캐시에 있는가"만 알려 줄 뿐 과거 접근 여부는 알 수 없다 (쫓겨난 block은 흔적이 안 남음). 그래서 miss 종류 판별은 접근 패턴을 보고 직접 하는 연습</li>
+<li>miss를 구분해 볼 것 — <b>Cache miss의 종류</b>
+<ul>
+<li>Cold (compulsory) miss: 해당 메모리 block에 처음 접근할 때 발생한다.</li>
+<li>Conflict miss: 여러 block이 같은 set에 매핑되어 set의 E개 line을 초과하면서 발생한다. 같은 용량과 block 크기를 가진 fully associative cache에서는 hit였을 miss이다.</li>
+<li>Capacity miss: 필요한 working set을 캐시 전체에 담을 수 없어 발생하며, 같은 용량의 fully associative cache에서도 발생할 miss이다.</li>
+<li>Eviction: 해당 set의 모든 line이 유효한 상태에서 새로운 block을 적재하기 위해 기존 line을 교체하는 것이다.</li>
+<li>Valid bit의 한계: Valid bit는 현재 line의 유효성만 알려 준다. 과거에 접근했지만 이미 캐시에서 쫓겨난 block인지까지는 알려 주지 않는다. 따라서 miss 종류는 전체 접근 trace를 분석하여 판별해야 한다.</li>
+</ul></li>
 <li>LRU: set이 꽉 차면 가장 오래 전에 쓰인 라인이 쫓겨남</li>
 </ul>
 <div class="v6-widget" data-widget="cache-sim" data-config='{"title":"캐시 시뮬레이터"}'></div>
