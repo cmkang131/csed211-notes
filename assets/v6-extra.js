@@ -6998,7 +6998,7 @@ if (document.fonts && document.fonts.ready){
         m.frames.pop();
         return "ret은 복귀 주소 " + hex(address) + "를 pop한 뒤 점프합니다. 반환한 bar의 잔존 메모리는 스택 슬롯으로 재사용될 수 있습니다.";
       }],
-      ["foo: %rbx 복원", m => {
+      ["foo: movq 0(%rsp), %rbx", m => {
         const slot = m.slots.get(m.rsp);
         if (!slot || slot.label !== "saved %rbx (foo local slot)") {
           throw new Error("saved %rbx 슬롯이 없습니다.");

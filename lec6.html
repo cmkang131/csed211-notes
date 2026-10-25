@@ -39,7 +39,7 @@
 <li><b>Passing data</b>: 인자와 반환값</li>
 <li><b>Memory management</b>: 프로시저가 실행되는 동안 공간을 할당하고, return하면 해제</li>
 </ul>
-셋 모두 machine instruction으로 구현되고 x86-64는 필요한 메커니즘만 씀 (인자도 local 변수도 없는 프로시저는 그 부분을 구현하지 않아도 됨). machine instruction으로 어떻게 구현할지는 <b>ABI (Application Binary Interface)</b>가 표준으로 정해 둠.<br>
+함수 호출은 ISA가 정의한 call, ret, push, pop 등의 기계어 명령어를 이용해 구현된다. <b>ABI (Application Binary Interface)</b>는 함수 호출 규약으로서 인자와 반환값의 전달 위치, caller-saved와 callee-saved 레지스터, 스택 정렬 등의 규칙을 정한다. 구체적인 명령어 순서와 스택 프레임 구성은 컴파일러와 최적화에 따라 달라질 수 있다. x86-64는 필요한 메커니즘만 씀 (인자도 local 변수도 없는 프로시저는 그 부분을 구현하지 않아도 됨).<br>
 슬라이드 예제: P가 y = Q(x)로 Q를 부르고 print(y)로 이어감. Q 안의 local 변수 t와 배열 v[10]은 Q가 실행되는 동안만 필요한 공간.
 </div>
 <ul>
