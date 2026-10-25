@@ -93,6 +93,10 @@ p2 = malloc(1L&lt;&lt;8);       /* 256 B */     p4 = malloc(1L&lt;&lt;8);   /* 2
 <pre class="c">struct_t { int a[2]; double d; }      // a[0] offset 0, a[1] offset 4, d offset 8
 
 fun(i) { s.d = 3.14; s.a[i] = 1073741824; return s.d; }</pre>
+<div class="nb">
+<p><b>결과 해석 시 주의:</b> a[2] 이상에 쓰는 것은 배열 범위를 벗어난 접근으로, C 언어에서 정의되지 않은 동작(undefined behavior)이다. 아래 수치는 특정 컴파일러·ABI·빌드에서 관찰되는 메모리 덮어쓰기 결과를 설명하기 위한 예시이며, C 표준이 보장하는 결과가 아니다.</p>
+<p>일반적인 x86-64 little-endian 배치에서는 a[2]가 d의 낮은 4바이트를, a[3]가 d의 높은 4바이트를 덮어쓸 수 있다. 그러나 범위를 벗어난 접근이므로 컴파일러 최적화 등을 고려하면 실제 실행 결과를 일반화할 수 없다. fun(4)와 fun(6) 역시 정의되지 않은 동작이며, Segmentation fault 발생 여부나 손상되는 메모리 위치가 항상 동일한 것은 아니다.</p>
+</div>
 <div class="tblwrap"><table>
 <thead><tr><th>호출</th><th>결과</th><th>이유</th></tr></thead>
 <tbody>
@@ -162,6 +166,7 @@ void smash() { printf("I've been smashed!\n"); exit; }  /* 슬라이드 표기 �
 </svg>
 <figcaption>gets가 입력을 buf부터 순서대로 쓰므로, buf[64]를 지난 8바이트가 return address를 smash의 주소로 바꿈</figcaption>
 </figure>
+<p>이 그림은 buf의 시작점에서 return address까지의 오프셋이 64바이트라고 가정한 개념도이다. 실제 공격 문자열에 필요한 filler 길이는 해당 바이너리의 disassembly와 stack frame에서 확인한 반환 주소 오프셋으로 결정해야 한다. Saved %rbp나 alignment padding이 존재하면 필요한 filler 길이는 64바이트보다 길 수 있다. 따라서 64바이트 filler + 8바이트 주소는 해당 스택 배치에서 반환 주소 오프셋이 실제로 64바이트임을 확인한 경우에만 적용한다.</p>
 <div class="v6-widget" data-widget="buf-overflow" data-config='{"n":8}'></div>
 <h3>Code injection</h3>
 <ul>
@@ -248,7 +253,13 @@ call   __stack_chk_fail  <span class="cm"># 다르면 abort</span></pre>
 </figure>
 <div class="nb">
 <p class="bx-h"><b>무엇을 우회하고 무엇을 못 우회하나</b></p>
-ROP는 non-executable stack을 우회하고, ASLR은 <b>실행 파일·library의 code 주소가 고정된 경우</b>에만 우회함(gadget 주소를 미리 알아야 하므로 code 위치가 실행마다 무작위화되면 주소 유출이 추가로 필요). <b>stack canary는 우회하지 못함</b>(CMU 대응 자료: "Does not overcome stack canaries") — gadget도 return address를 덮어야 도달하므로 canary가 바뀌면 탐지되고, canary 값이 유출된 경우에만 우회 가능. (CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)
+<p>ROP가 각 방어 기법에 미치는 영향은 다음과 같다.</p>
+<ul>
+<li><b>NX</b>: 기존의 실행 가능한 코드 조각을 재사용하므로, stack의 코드를 직접 실행하지 않고도 공격을 구성할 수 있다.</li>
+<li><b>ASLR</b>: gadget의 주소를 알아야 한다. 실행 파일이나 라이브러리의 코드 주소가 고정되어 있으면 우회가 가능할 수 있으며, 주소가 무작위화되면 주소 유출 등 추가 정보가 필요할 수 있다.</li>
+<li><b>Stack canary</b>: 일반적인 ROP는 반환 주소를 덮어써야 하므로 canary 검사가 추가 장벽이 된다. Canary 값이 유출되는 등 조건이 달라지면 우회 가능성이 생긴다.</li>
+</ul>
+<p>(CMU 대응 자료: "Does not overcome stack canaries". CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)</p>
 </div>
 
 <h2 id="union"><span class="h2no">6</span>Union</h2>
@@ -361,7 +372,9 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <li>방어, system 수준: ASLR (stack 주소를 매번 이동), non-executable stack (고전 injection은 막지만 ROP는 못 막음)</li>
 <li>방어, compiler 수준: stack canary는 GCC의 -fstack-protector 계열 옵션으로 활성화할 수 있다. 기본 활성화 여부는 GCC 버전, 배포판 및 빌드 설정에 따라 달라진다. 대표적인 Linux x86-64 구현에서는 %fs:0x28에서 보호 값을 읽고, 검사 실패 시 __stack_chk_fail을 호출한다.</li>
 <li>canary 한계: 최하위 byte 0x00인 경우가 많아 off-by-one null 덮기는 통과 가능 · buffer 앞쪽 local variable 손상은 못 막음</li>
-<li>ROP: ret으로 끝나는 gadget을 이어 붙인다. 주소가 고정된 non-PIE code에서는 gadget 주소를 미리 알 수 있지만, PIE·ASLR 환경에서는 기준 주소 유출 등 추가 정보가 필요하다 · non-executable stack 우회 · canary는 반환 주소 변조를 탐지해 일반적인 ROP에는 추가 장벽이 되지만, 카나리 값 유출 등의 조건에서는 우회 가능</li>
+<li>ROP gadget: ret (0xc3)으로 끝나는 기존 실행 코드 조각을 연결한다.</li>
+<li>NX와 ASLR: ROP는 non-executable stack을 우회할 수 있다. ASLR 우회는 코드 주소가 고정되어 있거나 주소 무작위화를 극복할 정보가 확보된 경우에 가능하다.</li>
+<li>Stack canary: 일반적인 ROP는 반환 주소 변조가 필요하므로 canary가 장벽이 된다. Canary 값이 유출되는 등의 조건에서는 우회 가능성이 생긴다.</li>
 <li>struct S1: offset c@0, i[0]@4, i[1]@8, v@16, size 24 (모든 member가 동시에 존재) · union U1: 모두 offset 0, size 8 (한 번에 한 field만 — 다른 member를 읽는 것은 구현 의존)</li>
 <li>union은 같은 bit의 재해석, cast는 값 변환. bit2float/float2bit에 사용</li>
 <li>endian: dw.c = f0..f7일 때 little endian s[0]=0xf1f0, i[0]=0xf3f2f1f0, l[0]=0xf7f6f5f4f3f2f1f0 · big endian은 그대로 0xf0f1, 0xf0f1f2f3, 0xf0f1f2f3f4f5f6f7</li>
