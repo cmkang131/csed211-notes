@@ -176,9 +176,7 @@
 <div class="nb">
 <div class="figwrap static-widget">
 <div class="v6-title">비트 연산 — Bitwise / Logical Operations</div>
-<img src="assets/static/lec2-bit-ops.png" alt="비트 연산 — Bitwise / Logical Operations">
-<div class="v6-params">기본값: 가상 비트 폭(w) 8비트 · 이동 거리(k) 1 · A &amp; B</div>
-<div class="v6x-read">입력 비트 — MSB → LSB<br>A<br>0xA5 · unsigned 165 · signed -91<br>B<br>0x3C · unsigned 60 · signed 60<br>결과 비트 — Result<br>0x24 · unsigned 36 · signed 36<br>계산식 — 가상 w비트 모델<br>A &amp; B = 0x24 · unsigned 36 · signed 36<br>① 가상 비트 모델 — Virtual w-bit Model<br>AND: 두 입력 비트가 모두 1일 때 1입니다.<br>폭 8비트의 패턴에 위젯 자체 규칙을 적용합니다.<br>② C 언어 표준 — Integer Promotion / Undefined Behavior<br>가상 w=4/8은 실제 C의 int 비트 폭이 아닙니다.<br>일반적인 32비트 int 환경에서 char/int8_t는 시프트 전에 int로 승격됩니다.<br>예: uint8_t a=0x80; a &lt;&lt; 1의 계산 결과는 int 256입니다. 가상 8비트 왼쪽 시프트 결과 0x00과 다릅니다.<br>단, 결과를 다시 uint8_t에 저장하면 0x00으로 변환됩니다.<br>음수 시프트 횟수는 undefined behavior(UB)입니다.<br>32비트 int의 경우 k≥32도 UB입니다. char/int8_t 식이라고 해서 k≥8부터 UB가 되는 것은 아닙니다.<br>음수 signed 값을 왼쪽 시프트하는 경우에도 언어 버전과 값의 표현 가능성에 주의해야 합니다.<br>③ 일반적 x86 하드웨어 — Shift Instructions<br>x86의 32비트 시프트 명령은 횟수의 하위 5비트를 사용합니다(k &amp; 31).<br>예: 기계어에서 32비트 값을 32번 시프트하면 실효 횟수는 0입니다.<br>그러나 C 식에서 k=32인 시프트는 UB이므로, 하드웨어의 마스킹 규칙을 C 결과로 가정하면 안 됩니다.<br>SAR는 부호 비트를 복제해 음의 무한대 방향으로 내림합니다. 이는 C 정수 나눗셈의 0 방향 절삭과 구별됩니다.</div>
+<div class="bx"><p><b>① 가상 비트 모델 — Virtual w-bit Model</b></p><p>AND: 두 입력 비트가 모두 1일 때 1입니다.</p><p><b>② C 언어 표준 — Integer Promotion / Undefined Behavior</b></p><p>가상 w=4/8은 실제 C의 int 비트 폭이 아닙니다.</p><p>일반적인 32비트 int 환경에서 char/int8_t는 시프트 전에 int로 승격됩니다.</p><p>예: uint8_t a=0x80; a &lt;&lt; 1의 계산 결과는 int 256입니다. 가상 8비트 왼쪽 시프트 결과 0x00과 다릅니다.</p><p>단, 결과를 다시 uint8_t에 저장하면 0x00으로 변환됩니다.</p><p>음수 시프트 횟수는 undefined behavior(UB)입니다.</p><p>32비트 int의 경우 k≥32도 UB입니다. char/int8_t 식이라고 해서 k≥8부터 UB가 되는 것은 아닙니다.</p><p>음수 signed 값을 왼쪽 시프트하는 경우에도 언어 버전과 값의 표현 가능성에 주의해야 합니다.</p><p><b>③ 일반적 x86 하드웨어 — Shift Instructions</b></p><p>x86의 32비트 시프트 명령은 횟수의 하위 5비트를 사용합니다(k &amp; 31).</p><p>예: 기계어에서 32비트 값을 32번 시프트하면 실효 횟수는 0입니다.</p><p>그러나 C 식에서 k=32인 시프트는 UB이므로, 하드웨어의 마스킹 규칙을 C 결과로 가정하면 안 됩니다.</p><p>SAR는 부호 비트를 복제해 음의 무한대 방향으로 내림합니다. 이는 C 정수 나눗셈의 0 방향 절삭과 구별됩니다.</p></div>
 </div>
 <p class="bx-h"><b>Undefined behavior</b></p>
 shift 양이 <b>0보다 작거나 word size 이상</b>이면 undefined → 기계마다 다름 (exception을 내기도, 음수를 아주 큰 양수로 해석하기도). shift는 보수적으로 사용.
@@ -459,9 +457,7 @@ int iy = (int) y;   // FF FF C4 93</pre>
 <div class="nb">
 <div class="figwrap static-widget">
 <div class="v6-title">정수 표현 — Two&#x27;s Complement</div>
-<img src="assets/static/lec2-int-rep.png" alt="정수 표현 — Two&#x27;s Complement">
-<div class="v6-params">기본값: 비트 폭(w) 5</div>
-<div class="v6x-read">비트 벡터 — MSB → LSB<br>Hex 0x07 · unsigned 7 · signed 7<br>해석 공식 — B2U / B2T<br>Unsigned (부호 없음): B2U = 0×24 + 0×23 + 1×22 + 1×21 + 1×20 = 7<br>Two&#x27;s complement (2의 보수): B2T = −0×24 + 0×23 + 1×22 + 1×21 + 1×20 = 7<br>숫자선 — Number Lines<br>Unsigned · 현재 값 7<br>Two&#x27;s complement · 현재 값 7<br>TMin = -16 · TMax = 15 · UMax = 31<br>같은 비트 패턴도 unsigned / signed 해석에 따라 값이 다릅니다.<br>숫자선의 빨간 점은 현재 값이며, 경계 라벨은 트랙 안쪽에 표시됩니다.</div>
+<div class="bx"><p>Unsigned (부호 없음): B2U = 0×24 + 0×23 + 1×22 + 1×21 + 1×20 = 7</p><p>Two&#x27;s complement (2의 보수): B2T = −0×24 + 0×23 + 1×22 + 1×21 + 1×20 = 7</p></div>
 </div>
 <p class="bx-h"><b>손계산 6 · Truncation</b></p>
 <ul>

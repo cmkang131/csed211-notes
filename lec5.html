@@ -117,9 +117,7 @@
 
 <div class="figwrap static-widget">
 <div class="v6-title">x86-64 명령어 실행기 — Machine-Level Execution</div>
-<img src="assets/static/lec5-asm-sim.png" alt="x86-64 명령어 실행기 — Machine-Level Execution">
-<div class="v6-params">기본값: 예제 프로그램(Preset) 산술: OF와 CF</div>
-<div class="v6x-read">PC=0 · 실행 횟수=0 · 실행 가능<br>명령어 흐름 — Instruction Trace<br>00 movabsq $0x7fffffffffffffff, %rax<br>01 addq $1, %rax<br>02 movq $-1, %rbx<br>03 addq $1, %rbx<br>04 subq $1, %rbx<br>05 negq %rbx<br>06 notq %rbx<br>레지스터 — 64-bit Registers<br><table><tr><td>레지스터</td><td>Hex</td><td>Signed decimal</td></tr><tr><td>%rax</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rcx</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rdx</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rbx</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rsp</td><td>0x0000000000001100</td><td>4352</td></tr><tr><td>%rbp</td><td>0x0000000000001100</td><td>4352</td></tr><tr><td>%rsi</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rdi</td><td>0x0000000000000000</td><td>0</td></tr></table><br>조건 코드 — Condition Codes<br><table><tr><td>플래그</td><td>현재 값</td><td>의미</td></tr><tr><td>ZF</td><td>0</td><td>Zero Flag</td></tr><tr><td>SF</td><td>0</td><td>Sign Flag</td></tr><tr><td>CF</td><td>0</td><td>Carry / Borrow Flag</td></tr><tr><td>OF</td><td>0</td><td>Overflow Flag</td></tr></table><br>초기 ZF/SF/CF/OF=0은 교육용 초기값입니다.<br>64비트 산술 immediate는 부호 확장된 imm32를 사용합니다.<br>pushq immediate도 signed imm32를 64비트로 부호 확장합니다.<br>0xFFFFFFFF는 32비트 즉시값 비트 패턴으로 해석되어 -1을 나타냅니다.<br>전체 imm64 이동은 movabsq에서 지원합니다.<br>조건부 점프와 cmov는 동일한 조건 코드 테이블을 사용합니다.<br>이 실행기는 교육용 x86-64 부분집합입니다.</div>
+<div class="bx"><p>PC=0 · 실행 횟수=0 · 실행 가능</p><p>명령어 흐름 — Instruction Trace</p><p>00 movabsq $0x7fffffffffffffff, %rax</p><p>01 addq $1, %rax</p><p>02 movq $-1, %rbx</p><p>03 addq $1, %rbx</p><p>04 subq $1, %rbx</p><p>05 negq %rbx</p><p>06 notq %rbx</p><p>레지스터 — 64-bit Registers</p><p>레지스터HexSigned decimal%rax0x00000000000000000%rcx0x00000000000000000%rdx0x00000000000000000%rbx0x00000000000000000%rsp0x00000000000011004352%rbp0x00000000000011004352%rsi0x00000000000000000%rdi0x00000000000000000</p><p>조건 코드 — Condition Codes</p><p>플래그현재 값의미ZF0Zero FlagSF0Sign FlagCF0Carry / Borrow FlagOF0Overflow Flag</p><p>초기 ZF/SF/CF/OF=0은 교육용 초기값입니다.</p><p>64비트 산술 immediate는 부호 확장된 imm32를 사용합니다.</p><p>pushq immediate도 signed imm32를 64비트로 부호 확장합니다.</p><p>전체 imm64 이동은 movabsq에서 지원합니다.</p><p>조건부 점프와 cmov는 동일한 조건 코드 테이블을 사용합니다.</p><p>이 실행기는 교육용 x86-64 부분집합입니다.</p></div>
 </div>
 <h2><span class="h2no">3</span>setX(flag 읽기)</h2>
 <h3>setX 명령</h3>
@@ -266,15 +264,11 @@ Done:</pre>
 </ul>
 <div class="figwrap static-widget">
 <div class="v6-title">파이프라인 5단계 실행 트레이스</div>
-<img src="assets/static/lec5-pipe-trace.png" alt="파이프라인 5단계 실행 트레이스">
-<div class="v6-params">기본값: 분기 없음</div>
-<div class="v6x-read">5-stage pipeline · 사이클 단위 실행 추적<br>현재 C1 — IF: I1 Fetch · ID: — · EX: — · MEM: — · WB: —<br>누적 사이클: 1 / 10 · 완료 명령어: 0 / 6 · 누적 CPI: — · 오예측 페널티: 0 cycles<br>IF → ID → EX → MEM → WB 순서로 진행합니다. 파이프라인이 채워진 뒤에는 steady state에서 매 사이클 한 명령어가 완료됩니다.<br>각 셀은 해당 사이클의 stage입니다. 현재 사이클은 회색 열과 빨간 테두리로 표시합니다.<br>분기 예측이 틀리면 이미 가져온 명령어를 버려야 하므로 분기 비용이 커질 수 있습니다. 따라서 조건에 따라 컴파일러는 분기 대신 cmov를 선택할 수 있습니다.</div>
+<div class="bx"><p>5-stage pipeline · 사이클 단위 실행 추적</p><p>현재 C1 — IF: I1 Fetch · ID: — · EX: — · MEM: — · WB: —</p><p>누적 사이클: 1 / 10 · 완료 명령어: 0 / 6 · 누적 CPI: — · 오예측 페널티: 0 cycles</p><p>IF → ID → EX → MEM → WB 순서로 진행합니다. 파이프라인이 채워진 뒤에는 steady state에서 매 사이클 한 명령어가 완료됩니다.</p><p>각 셀은 해당 사이클의 stage입니다. 현재 사이클은 회색 열과 빨간 테두리로 표시합니다.</p><p>분기 예측이 틀리면 이미 가져온 명령어를 버려야 하므로 분기 비용이 커질 수 있습니다. 따라서 조건에 따라 컴파일러는 분기 대신 cmov를 선택할 수 있습니다.</p></div>
 </div>
 <div class="figwrap static-widget">
 <div class="v6-title">데이터 해저드: stall과 forwarding</div>
-<img src="assets/static/lec5-pipe-hazard.png" alt="데이터 해저드: stall과 forwarding">
-<div class="v6-params">기본값: ALU RAW · forwarding: 있음</div>
-<div class="v6x-read">RAW 의존성 · forwarding 유무에 따른 파이프라인 비교<br>현재 C1 — IF: I1 Fetch · ID: — · EX: — · MEM: — · WB: —<br>누적 사이클: 1 / 6 · 완료 명령어: 0 / 2 · 누적 CPI: —<br>forwarding 있음: 6 cycles (CPI 3.00) · forwarding 없음: 8 cycles (CPI 4.00)<br>I2가 필요로 하는 R1을 I1의 EX 결과에서 바로 forwarding하므로 RAW 의존성 때문에 생기는 stall이 없습니다.<br>bubble은 EX에 삽입된 빈 단계입니다. ID의 stall은 의존 명령어가 대기 중임을 뜻합니다. 빨간 화살표는 forwarding 경로입니다.<br>RAW 해저드는 값을 생산하는 명령어와 그 값을 소비하는 명령어 사이의 데이터 의존성 때문에 발생합니다. forwarding은 대기를 줄이지만 load-use에서는 값이 준비되는 시점 때문에 bubble이 남을 수 있습니다.</div>
+<div class="bx"><p>RAW 의존성 · forwarding 유무에 따른 파이프라인 비교</p><p>현재 C1 — IF: I1 Fetch · ID: — · EX: — · MEM: — · WB: —</p><p>누적 사이클: 1 / 6 · 완료 명령어: 0 / 2 · 누적 CPI: —</p><p>forwarding 있음: 6 cycles (CPI 3.00) · forwarding 없음: 8 cycles (CPI 4.00)</p><p>I2가 필요로 하는 R1을 I1의 EX 결과에서 바로 forwarding하므로 RAW 의존성 때문에 생기는 stall이 없습니다.</p><p>bubble은 EX에 삽입된 빈 단계입니다. ID의 stall은 의존 명령어가 대기 중임을 뜻합니다. 빨간 화살표는 forwarding 경로입니다.</p><p>RAW 해저드는 값을 생산하는 명령어와 그 값을 소비하는 명령어 사이의 데이터 의존성 때문에 발생합니다. forwarding은 대기를 줄이지만 load-use에서는 값이 준비되는 시점 때문에 bubble이 남을 수 있습니다.</p></div>
 </div>
 
 <h3>cmov의 아이디어</h3>

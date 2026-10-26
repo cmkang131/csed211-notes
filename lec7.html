@@ -352,9 +352,7 @@ int var_ele(size_t n, int a[n][n], int i, int j) { return a[i][j]; }
 
 <div class="figwrap static-widget">
 <div class="v6-title">배열 주소 계산 — Array Indexing</div>
-<img src="assets/static/lec7-array-index.png" alt="배열 주소 계산 — Array Indexing">
-<div class="v6-params">기본값: 중첩 배열(nested)</div>
-<div class="v6x-read">배열 선택 — int A[4][5]<br>연속 저장 — Row-major (80 Bytes)<br>선택: A[1][2]<br>주소 = base + (i × C + j) × sizeof(int)<br>= 0x0000000000001000 + (1 × 5 + 2) × 4<br>= 0x0000000000001000 + 28<br>= 0x000000000000101C<br>sizeof(A) = 4 × 5 × 4 = 80 B<br>int* p의 p+1은 4바이트 전진합니다.<br>int (*)[5] p의 p+1은 20바이트 전진합니다.<br>중첩 배열은 모든 행을 연속 저장합니다.</div>
+<div class="bx"><p>연속 저장 — Row-major (80 Bytes)</p><p>선택: A[1][2]</p><p>주소 = base + (i × C + j) × sizeof(int)</p><p>= 0x0000000000001000 + (1 × 5 + 2) × 4</p><p>= 0x0000000000001000 + 28</p><p>= 0x000000000000101C</p><p>sizeof(A) = 4 × 5 × 4 = 80 B</p><p>int* p의 p+1은 4바이트 전진합니다.</p><p>int (*)[5] p의 p+1은 20바이트 전진합니다.</p><p>중첩 배열은 모든 행을 연속 저장합니다.</p></div>
 </div>
 <h2><span class="h2no">7</span>struct: 표현과 멤버 접근</h2>
 <pre class="c">struct rec {
@@ -559,9 +557,7 @@ short get_j(int idx) {
 
 <div class="figwrap static-widget">
 <div class="v6-title">구조체 배치와 정렬 — Struct Layout</div>
-<img src="assets/static/lec7-struct-layout.png" alt="구조체 배치와 정렬 — Struct Layout">
-<div class="v6-params">기본값: char[n] 배열 길이 5</div>
-<div class="v6x-read">필드 구성 — Field Order<br><table><tr><td>필드</td><td>타입</td><td>크기</td><td>정렬 K</td><td>Offset</td><td>순서 변경</td></tr><tr><td>a</td><td>char</td><td>1 B</td><td>1</td><td>0</td></tr><tr><td>b</td><td>long</td><td>8 B</td><td>8</td><td>8</td></tr><tr><td>c</td><td>char</td><td>1 B</td><td>1</td><td>16</td></tr></table><br>바이트 지도 — 8 Bytes per Row<br>sizeof(struct) = 24 B<br>최대 정렬 요구(max alignment) = 8 B<br>데이터 = 10 B<br>내부 패딩 = 7 B<br>끝 패딩 = 7 B<br>각 필드의 offset은 해당 타입 정렬 요구 K의 배수입니다.<br>구조체 전체 크기는 최대 정렬 요구의 배수로 올림합니다.<br>정렬 최적화 버튼은 휴리스틱이며 모든 경우의 최적을 보장하지 않습니다.<br>모델: 일반적인 x86-64 System V ABI (long, 포인터, double = 8B).</div>
+<div class="bx"><p>필드타입크기정렬 KOffset순서 변경achar1 B10blong8 B88cchar1 B116</p><p>바이트 지도 — 8 Bytes per Row</p><p>sizeof(struct) = 24 B</p><p>최대 정렬 요구(max alignment) = 8 B</p><p>데이터 = 10 B</p><p>내부 패딩 = 7 B</p><p>끝 패딩 = 7 B</p><p>각 필드의 offset은 해당 타입 정렬 요구 K의 배수입니다.</p><p>구조체 전체 크기는 최대 정렬 요구의 배수로 올림합니다.</p><p>모델: 일반적인 x86-64 System V ABI (long, 포인터, double = 8B).</p></div>
 </div>
 <h2><span class="h2no">10</span>Floating point</h2>
 <h3>배경: x87, SSE, AVX</h3>

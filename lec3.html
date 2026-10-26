@@ -266,9 +266,7 @@ denorm도 <svg style="vertical-align: -0.186ex;" xmlns="http://www.w3.org/2000/s
 
 <div class="figwrap static-widget">
 <div class="v6-title">IEEE 754 binary32 — 부동소수점 실험실</div>
-<img src="assets/static/lec3-float-lab.png" alt="IEEE 754 binary32 — 부동소수점 실험실">
-<div class="v6-params">기본값: 1.0 · 10진수 / 특수값 0.1</div>
-<div class="v6x-read">프리셋 — Presets<br>10진수 인코딩 — Decimal Encoder<br>32비트 필드 — Sign / Exponent / Fraction<br>부호(Sign) · 1bit<br>비트 31 → 31 · 하나의 연속된 1비트 필드<br>지수(Exponent) · 8bit<br>비트 30 → 23 · 하나의 연속된 8비트 필드<br>가수(Fraction) · 23bit<br>비트 22 → 0 · 하나의 연속된 23비트 필드<br>비트 패턴: 0x3F800000<br>분류: 정규(normalized)<br>근삿값(JS Number 표시): 1<br>디코딩 공식 — IEEE 754<br>s=0, e=127, frac=0<br>E = 127 − 127 = 0<br>M = 1 + 0 / 2²³<br>값 = (−1)⁰ × M × 2⁰<br>정규수(normalized)는 숨은 선행 1을 사용합니다. 비정규수(subnormal)는 숨은 선행 1이 없습니다.<br>정확한 값 — Exact Representation<br>정확한 유리수 / 10진수 전개 펼치기<br>유리수(num/den)<br>1/1<br>정확한 10진수<br>1</div>
+<div class="bx"><p>32비트 필드 — Sign / Exponent / Fraction</p><p>정규수(normalized)는 숨은 선행 1을 사용합니다. 비정규수(subnormal)는 숨은 선행 1이 없습니다.</p></div>
 </div>
 <h2 id="rounding"><span class="h2no">7</span>Rounding</h2>
 <h3>연산의 기본 아이디어</h3>
@@ -311,9 +309,7 @@ nearest는 버리는 부분이 절반보다 작으면 내림, 크면 올림 → 
 <div class="nb">
 <div class="figwrap static-widget">
 <div class="v6-title">이진 반올림 — Rounding Modes</div>
-<img src="assets/static/lec3-fp-round.png" alt="이진 반올림 — Rounding Modes">
-<div class="v6-params">기본값: 남길 소수 비트(k) 2 · 이진 소수 1.101 · Halfway: 아래쪽 짝수</div>
-<div class="v6x-read">입력값과 양자화 간격<br>1.101 (binary) = 1.625 (decimal)<br>남길 간격 Δ = 1 / 22 = 0.25<br>반올림 결과 — 4개 모드<br>최근접 짝수 — Round to Nearest, Ties to Even<br>결과: 1.5 · 이진: 1.10<br>0 방향 절삭 — Toward Zero<br>결과: 1.5 · 이진: 1.10<br>양의 무한대 방향 올림 — Toward +∞<br>결과: 1.75 · 이진: 1.11<br>음의 무한대 방향 내림 — Toward −∞<br>결과: 1.5 · 이진: 1.10<br>숫자선은 각 표시 구간 안에서의 상대 위치를 나타냅니다.<br>│는 원래 입력, 빨간 ●는 반올림 결과, 빨간 점선은 두 값 사이의 거리입니다.<br>◆는 입력과 결과가 완전히 일치하는 위치입니다.<br>정확한 halfway(중간값)입니다.<br>최근접 짝수 반올림은 두 후보 중 반올림 후 남기는 마지막 비트가 0인 값(정수 배율에서 짝수)을 선택합니다.<br>선택한 값: 1.5.<br>0 방향 절삭은 부호와 무관하게 0에 가까운 쪽을 선택합니다.<br>음의 무한대 방향 내림은 항상 작거나 같은 격자점을 선택합니다.<br>최근접 짝수 규칙은 halfway에서 특정 방향을 반복적으로 선택하는 편향을 줄입니다.</div>
+<div class="bx"><p>남길 간격 Δ = 1 / 22 = 0.25</p><p>최근접 짝수 — Round to Nearest, Ties to Even</p><p>양의 무한대 방향 올림 — Toward +∞</p><p>음의 무한대 방향 내림 — Toward −∞</p><p>최근접 짝수 반올림은 두 후보 중 반올림 후 남기는 마지막 비트가 0인 값(정수 배율에서 짝수)을 선택합니다.</p><p>0 방향 절삭은 부호와 무관하게 0에 가까운 쪽을 선택합니다.</p><p>음의 무한대 방향 내림은 항상 작거나 같은 격자점을 선택합니다.</p><p>최근접 짝수 규칙은 halfway에서 특정 방향을 반복적으로 선택하는 편향을 줄입니다.</p></div>
 </div>
 <p class="bx-h"><b>손계산 3 · 1/4 단위(소수점 아래 2비트) Rounding</b></p>
 <div class="tblwrap"><table class="tbl small">
