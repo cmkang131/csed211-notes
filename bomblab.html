@@ -50,7 +50,7 @@
 <div class="nb"><p class="bx-h"><b>함수 호출 규약 (lec6)</b></p>
 <ul>
 <li>인자는 <code>%rdi %rsi %rdx %rcx %r8 %r9</code> 순서, 반환값은 <code>%rax</code>. <code>call sscanf</code> 직전에 rsi·rdx에 뭘 싣는지가 입력 형식 힌트</li>
-<li><code>sscanf</code> 반환값 %eax = 읽은 항목 수 → <code>cmp $0x1,%eax; jg</code> = "2개 이상 입력해야 통과" (phase 3·4)</li>
+<li><code>sscanf</code>의 반환값 %eax는 성공적으로 대입한 항목 수다. Phase 3은 <code>cmp $0x1,%eax; jg</code>로 반환값이 1보다 큰지 검사한다. 두 개의 변환 항목을 읽는 입력 형식에서는 두 항목이 모두 대입되어 반환값이 2이면 이 검사를 통과한다. Phase 4는 <code>cmpl $0x2,%eax</code>로 반환값이 정확히 2인지 검사한다. 두 phase 모두 두 입력 항목을 요구하지만, 실제 disassembly를 설명할 때는 각 phase에서 사용한 비교 명령과 분기 조건을 구분한다.</li>
 <li><code>read_six_numbers</code>: 정수 6개가 %rsp부터 int 배열로 깔림 → <code>(%rsp)</code>, <code>0x4(%rsp)</code> … <code>0x14(%rsp)</code> (phase 2·6)</li>
 <li>이 과목의 <code>func4</code>는 인자 2개(n=%edi, x=%esi)의 이중 재귀: n≤0 → 0, n==1 → x, 아니면 func4(n−1,x)+func4(n−2,x)+x (lea (%rax,%rbp,1),%r12d가 첫 재귀 결과에 x를 더함 → f(1)=x, f(2)=2x, f(3)=4x, f(4)=7x, f(5)=12x). base case부터 읽고 C로 옮긴 뒤 원하는 반환값이 나오는 입력을 역산 (phase 4)</li>
 </ul></div>
