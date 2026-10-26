@@ -42,10 +42,11 @@
 <details class="pd"><summary>정답 보기</summary>
 <div class="pd-body">
 <span class="sol-tag">풀이</span>
-<ol class="steps"><li>s = x + y (2의 보수 비트 패턴으로 계산)</li>
-<li>x ^ s의 부호 비트: x와 합의 부호가 다르면 1</li>
-<li>(x^s) &amp; (y^s)의 부호 비트가 1 = 둘 다 합과 부호가 다름 = x, y 부호가 같고 합만 다름 = 오버플로</li></ol>
-<div class="ans-final"><span class="lb">최종 답</span><span class="val">int s = x + y; return !(((x ^ s) &amp; (y ^ s)) &gt;&gt; 31);</span></div>
+<ol class="steps"><li>x, y를 uint32_t로 변환한다. 변환은 2^32를 법으로 한 비트 패턴에 대응한다.</li>
+<li>s = ux + uy를 계산한다. unsigned 덧셈은 2^32를 법으로 정의되므로 signed overflow가 발생하지 않는다.</li>
+<li>ux ^ s의 최상위 비트는 x와 합의 부호 비트가 다를 때 1이다. uy ^ s도 같은 방식으로 해석한다.</li>
+<li>((ux ^ s) &amp; (uy ^ s)) &gt;&gt; 31은 오버플로가 발생할 때만 1이 된다. 따라서 !overflow는 오버플로가 없으면 1, 있으면 0을 반환한다.</li></ol>
+<div class="ans-final"><span class="lb">최종 답</span><span class="val"><code>#include &lt;stdint.h&gt;<br>int add_fits(int x, int y) {<br>&nbsp;&nbsp;uint32_t ux = (uint32_t)x;<br>&nbsp;&nbsp;uint32_t uy = (uint32_t)y;<br>&nbsp;&nbsp;uint32_t s = ux + uy;<br>&nbsp;&nbsp;uint32_t overflow = ((ux ^ s) &amp; (uy ^ s)) &gt;&gt; 31;<br>&nbsp;&nbsp;return !overflow;<br>}</code></span></div>
 </div></details>
 </section>
 <div class="pnav"><a href="pset-10.html">&larr; 이전</a><a href="../problems.html">목차</a><a href="pset-12.html">다음 &rarr;</a></div>
