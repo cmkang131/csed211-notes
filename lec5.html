@@ -15,9 +15,6 @@
 <link rel="stylesheet" href="assets/v5-layer.css">
 <link rel="stylesheet" href="assets/v6.css">
 <link rel="stylesheet" href="assets/v6-extra.css">
-<script src="assets/v6.js" defer></script>
-<script src="assets/v6-extra.js" defer></script>
-<script src="assets/v6-pipeline.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -118,7 +115,12 @@
 <li>정리: flag는 산술 연산으로도, cmp/test로도 세팅됨. 대부분 두 값을 비교하는 용도. cmp로 <svg style="vertical-align: -0.186ex;" xmlns="http://www.w3.org/2000/svg" width="4.933ex" height="1.756ex" role="img" focusable="false" viewBox="0 -694 2180.4 776" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-421-TEX-I-1D44E" d="M33 157Q33 258 109 349T280 441Q331 441 370 392Q386 422 416 422Q429 422 439 414T449 394Q449 381 412 234T374 68Q374 43 381 35T402 26Q411 27 422 35Q443 55 463 131Q469 151 473 152Q475 153 483 153H487Q506 153 506 144Q506 138 501 117T481 63T449 13Q436 0 417 -8Q409 -10 393 -10Q359 -10 336 5T306 36L300 51Q299 52 296 50Q294 48 292 46Q233 -10 172 -10Q117 -10 75 30T33 157ZM351 328Q351 334 346 350T323 385T277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q217 26 254 59T298 110Q300 114 325 217T351 328Z"></path><path id="MJX-421-TEX-N-2212" d="M84 237T84 250T98 270H679Q694 262 694 250T679 230H98Q84 237 84 250Z"></path><path id="MJX-421-TEX-I-1D44F" d="M73 647Q73 657 77 670T89 683Q90 683 161 688T234 694Q246 694 246 685T212 542Q204 508 195 472T180 418L176 399Q176 396 182 402Q231 442 283 442Q345 442 383 396T422 280Q422 169 343 79T173 -11Q123 -11 82 27T40 150V159Q40 180 48 217T97 414Q147 611 147 623T109 637Q104 637 101 637H96Q86 637 83 637T76 640T73 647ZM336 325V331Q336 405 275 405Q258 405 240 397T207 376T181 352T163 330L157 322L136 236Q114 150 114 114Q114 66 138 42Q154 26 178 26Q211 26 245 58Q270 81 285 114T318 219Q336 291 336 325Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><use data-c="1D44E" xlink:href="#MJX-421-TEX-I-1D44E"></use></g><g data-mml-node="mo" transform="translate(751.2,0)"><use data-c="2212" xlink:href="#MJX-421-TEX-N-2212"></use></g><g data-mml-node="mi" transform="translate(1751.4,0)"><use data-c="1D44F" xlink:href="#MJX-421-TEX-I-1D44F"></use></g></g></g></svg>의 부호·overflow·0 여부 확인, test로 0/음수 확인.</li>
 </ul>
 
-<div class="v6-widget" data-widget="asm-sim" data-config='{"preset":0}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">x86-64 명령어 실행기 — Machine-Level Execution</div>
+<img src="assets/static/lec5-asm-sim.png" alt="x86-64 명령어 실행기 — Machine-Level Execution">
+<div class="v6-params">기본값: 예제 프로그램(Preset) 산술: OF와 CF</div>
+<div class="v6x-read">PC=0 · 실행 횟수=0 · 실행 가능<br>명령어 흐름 — Instruction Trace<br>00 movabsq $0x7fffffffffffffff, %rax<br>01 addq $1, %rax<br>02 movq $-1, %rbx<br>03 addq $1, %rbx<br>04 subq $1, %rbx<br>05 negq %rbx<br>06 notq %rbx<br>레지스터 — 64-bit Registers<br><table><tr><td>레지스터</td><td>Hex</td><td>Signed decimal</td></tr><tr><td>%rax</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rcx</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rdx</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rbx</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rsp</td><td>0x0000000000001100</td><td>4352</td></tr><tr><td>%rbp</td><td>0x0000000000001100</td><td>4352</td></tr><tr><td>%rsi</td><td>0x0000000000000000</td><td>0</td></tr><tr><td>%rdi</td><td>0x0000000000000000</td><td>0</td></tr></table><br>조건 코드 — Condition Codes<br><table><tr><td>플래그</td><td>현재 값</td><td>의미</td></tr><tr><td>ZF</td><td>0</td><td>Zero Flag</td></tr><tr><td>SF</td><td>0</td><td>Sign Flag</td></tr><tr><td>CF</td><td>0</td><td>Carry / Borrow Flag</td></tr><tr><td>OF</td><td>0</td><td>Overflow Flag</td></tr></table><br>초기 ZF/SF/CF/OF=0은 교육용 초기값입니다.<br>64비트 산술 immediate는 부호 확장된 imm32를 사용합니다.<br>pushq immediate도 signed imm32를 64비트로 부호 확장합니다.<br>0xFFFFFFFF는 32비트 즉시값 비트 패턴으로 해석되어 -1을 나타냅니다.<br>전체 imm64 이동은 movabsq에서 지원합니다.<br>조건부 점프와 cmov는 동일한 조건 코드 테이블을 사용합니다.<br>이 실행기는 교육용 x86-64 부분집합입니다.</div>
+</div>
 <h2><span class="h2no">3</span>setX(flag 읽기)</h2>
 <h3>setX 명령</h3>
 <ul>
@@ -262,8 +264,18 @@ Done:</pre>
 <li>명령어 하나는 여러 단계로 나뉨 (명령 해석 → 데이터 읽기 → 연산 → 메모리 쓰기)</li>
 <li>파이프라이닝은 여러 명령어의 서로 다른 실행 단계를 겹쳐 처리하여 처리량을 높인다. 파이프라인 단계 수를 늘리면 클럭 주파수를 높일 가능성이 있지만, 단계 수가 많을수록 항상 성능이 좋아지는 것은 아니다. 분기 예측이 실패하면 잘못된 경로에서 가져온 명령어를 폐기하고 올바른 경로에서 실행을 재개해야 하므로 성능 손실이 발생할 수 있다. 분기 예측이 성공하면 이러한 오예측 페널티는 발생하지 않으며, 컴파일러는 분기와 조건부 이동의 비용을 비교해 적절한 방법을 선택한다. (단계 수는 예전 4~5단계, 지금은 20단계 정도)</li>
 </ul>
-<div class="v6-widget" data-widget="pipe-trace" data-config='{"preset":0}'></div>
-<div class="v6-widget" data-widget="pipe-hazard" data-config='{"preset":0}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">파이프라인 5단계 실행 트레이스</div>
+<img src="assets/static/lec5-pipe-trace.png" alt="파이프라인 5단계 실행 트레이스">
+<div class="v6-params">기본값: 분기 없음</div>
+<div class="v6x-read">5-stage pipeline · 사이클 단위 실행 추적<br>현재 C1 — IF: I1 Fetch · ID: — · EX: — · MEM: — · WB: —<br>누적 사이클: 1 / 10 · 완료 명령어: 0 / 6 · 누적 CPI: — · 오예측 페널티: 0 cycles<br>IF → ID → EX → MEM → WB 순서로 진행합니다. 파이프라인이 채워진 뒤에는 steady state에서 매 사이클 한 명령어가 완료됩니다.<br>각 셀은 해당 사이클의 stage입니다. 현재 사이클은 회색 열과 빨간 테두리로 표시합니다.<br>분기 예측이 틀리면 이미 가져온 명령어를 버려야 하므로 분기 비용이 커질 수 있습니다. 따라서 조건에 따라 컴파일러는 분기 대신 cmov를 선택할 수 있습니다.</div>
+</div>
+<div class="figwrap static-widget">
+<div class="v6-title">데이터 해저드: stall과 forwarding</div>
+<img src="assets/static/lec5-pipe-hazard.png" alt="데이터 해저드: stall과 forwarding">
+<div class="v6-params">기본값: ALU RAW · forwarding: 있음</div>
+<div class="v6x-read">RAW 의존성 · forwarding 유무에 따른 파이프라인 비교<br>현재 C1 — IF: I1 Fetch · ID: — · EX: — · MEM: — · WB: —<br>누적 사이클: 1 / 6 · 완료 명령어: 0 / 2 · 누적 CPI: —<br>forwarding 있음: 6 cycles (CPI 3.00) · forwarding 없음: 8 cycles (CPI 4.00)<br>I2가 필요로 하는 R1을 I1의 EX 결과에서 바로 forwarding하므로 RAW 의존성 때문에 생기는 stall이 없습니다.<br>bubble은 EX에 삽입된 빈 단계입니다. ID의 stall은 의존 명령어가 대기 중임을 뜻합니다. 빨간 화살표는 forwarding 경로입니다.<br>RAW 해저드는 값을 생산하는 명령어와 그 값을 소비하는 명령어 사이의 데이터 의존성 때문에 발생합니다. forwarding은 대기를 줄이지만 load-use에서는 값이 준비되는 시점 때문에 bubble이 남을 수 있습니다.</div>
+</div>
 
 <h3>cmov의 아이디어</h3>
 <ul>

@@ -15,8 +15,6 @@
 <link rel="stylesheet" href="assets/v5-layer.css">
 <link rel="stylesheet" href="assets/v6.css">
 <link rel="stylesheet" href="assets/v6-extra.css">
-<script src="assets/v6.js" defer></script>
-<script src="assets/v6-extra.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -229,7 +227,12 @@ void sumstore(long x, long y, long *dest) {
 </ul>
 </div>
 
-<div class="v6-widget" data-widget="asm-encode" data-config='{"preset":"mov-rsp-rbp"}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">x86-64 인코딩·디코딩 — Objdump Reading</div>
+<img src="assets/static/lec4-asm-encode.png" alt="x86-64 인코딩·디코딩 — Objdump Reading">
+<div class="v6-params">기본값: 인코드(Encode) · 명령어 movq %rsp,%rbp · 레지스터 %rax · Base %rbx · Index %rcx · Scale 4 · Disp 16 · Immediate 8 · Hex bytes 48 89 E5 · 기준 RIP (명령 시작 주소) 0x401000</div>
+<div class="v6x-read">지원 범위(Coverage)<br>• pushq/popq %rbp, retq, nop, leaveq<br>• movq %rsp,%rbp / movq %rbp,%rsp<br>• movq 기본 8개 레지스터 ↔ 메모리, ModRM/SIB/disp<br>• subq $imm8,%rsp<br>• movq $signed-imm32,%r64 (C7 /0)<br>• movabsq $imm64,%r64 (B8+r)<br>• call rel32<br>부분집합 제한: REX.W=0x48 고정. rax/rcx/rdx/rbx/rsp/rbp/rsi/rdi만 지원합니다.<br>R8–R15, REX.R/X/B, 주소 크기 override, segment prefix, 일반 x86-64 ISA 전체는 지원하지 않습니다.<br>기계어 바이트 — Instruction Bytes<br><table><tr><td>필드</td><td>바이트</td><td>의미</td></tr><tr><td>REX.W</td><td>48</td><td>W=1, R=X=B=0</td></tr><tr><td>opcode 89</td><td>89</td><td>r64 → r/m64</td></tr><tr><td>ModRM</td><td>E5</td><td>mod=11, reg/rm은 레지스터</td></tr></table><br>디스어셈블(Disassembly)<br>movq %rsp,%rbp<br>Hex bytes<br>48 89 E5<br>Round-trip 검증: 통과<br>인코드 → 디코드 결과가 의미상 동일합니다.<br>objdump 스타일<br>00000000: 48 89 e5 movq %rsp,%rbp<br>Bomb Lab 포인트: 주소 → 바이트열 → 어셈블리 순서로 읽습니다.</div>
+</div>
 <h2 id="addressing-mov"><span class="h2no">3</span>Assembly 기본 연산: mov, Addressing Mode</h2>
 <h3>Operand의 세 종류와 movq</h3>
 <div class="tblwrap"><table>
@@ -294,7 +297,12 @@ void sumstore(long x, long y, long *dest) {
 </ul>
 </div>
 
-<div class="v6-widget" data-widget="addr-modes" data-config='{"rbx":64,"rcx":16,"scale":4,"disp":8}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">유효주소 계산기 — Addressing Modes</div>
+<img src="assets/static/lec4-addr-modes.png" alt="유효주소 계산기 — Addressing Modes">
+<div class="v6-params">기본값: %rbx 0x040 · %rcx 0x010 · Scale 4 · Displacement 8 · leaq — 주소 계산</div>
+<div class="v6x-read">피연산자(operand): 8(%rbx,%rcx,4)<br>EA = Imm + R[%rbx] + R[%rcx] × S<br>= 8 + 64 + 16 × 4<br>= 136<br>64비트 EA = 0x0000000000000088<br>leaq 8(%rbx,%rcx,4), %rax<br>%rax ← 0x0000000000000088<br>메모리 참조 없음(no dereference).<br>메모리 — Little-endian<br><table><tr><td>시작 주소</td><td>8바이트 (낮은 주소 → 높은 주소)</td><td>64비트 값</td></tr><tr><td>0x0000000000000078</td><td>78 00 66 55 44 33 22 11</td><td>0x1122334455660078</td></tr><tr><td>0x0000000000000080</td><td>80 00 66 55 44 33 22 11</td><td>0x1122334455660080</td></tr><tr><td>0x0000000000000088</td><td>88 00 66 55 44 33 22 11</td><td>0x1122334455660088</td></tr><tr><td>0x0000000000000090</td><td>90 00 66 55 44 33 22 11</td><td>0x1122334455660090</td></tr><tr><td>0x0000000000000098</td><td>98 00 66 55 44 33 22 11</td><td>0x1122334455660098</td></tr></table><br>주소 지정 형태<br><table><tr><td>피연산자</td><td>계산</td><td>특징</td></tr><tr><td>(%rbx)</td><td>R[%rbx]</td><td>Base register</td></tr><tr><td>(%rbx,%rcx)</td><td>R[%rbx] + R[%rcx]</td><td>Base + index</td></tr><tr><td>16(%rbx)</td><td>16 + R[%rbx]</td><td>Base + displacement</td></tr><tr><td>16(%rbx,%rcx,4)</td><td>16 + R[%rbx] + 4×R[%rcx]</td><td>Base + scaled index</td></tr><tr><td>16(,%rcx,4)</td><td>16 + 4×R[%rcx]</td><td>SIB, base 없음</td></tr><tr><td>16</td><td>절대주소 16</td><td>Displacement-only. 명령 형식에 따라 인코딩 제약이 있습니다.</td></tr><tr><td>16(%rip)</td><td>다음 RIP + 16</td><td>RIP-relative. 절대주소와 다릅니다.</td></tr></table><br>leaq는 계산된 주소를 저장하고, movq는 그 주소에서 8바이트를 읽습니다.<br>Absolute displacement-only와 RIP-relative는 서로 다릅니다.<br>RIP-relative의 기준은 현재 명령의 시작 주소가 아닌 다음 RIP입니다.<br>교육용 모델의 계산은 64비트 모듈러 주소 연산입니다.</div>
+</div>
 <h2 id="lea-arithmetic"><span class="h2no">4</span>lea(Load Effective Address)와 산술 연산</h2>
 <h3>leaq : 주소만 계산하는 명령어</h3>
 <ul>

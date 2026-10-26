@@ -14,8 +14,6 @@
 <link rel="stylesheet" href="assets/v5-layer.css">
 <link rel="stylesheet" href="assets/v6.css">
 <link rel="stylesheet" href="assets/v6-extra.css">
-<script src="assets/v6.js" defer></script>
-<script src="assets/v6-extra.js" defer></script>
 </head>
 <body>
 <article class="paper">
@@ -68,7 +66,12 @@
 <figcaption>stack은 아래로, heap은 위로 자람 — 메모리 <b>할당 성장 방향</b>의 차이</figcaption>
 <p class="note">(교정: 기존 "stack overflow와 heap overflow가 반대 방향" 설명은 부정확 — 반대인 것은 영역의 <b>성장 방향</b>뿐. stack buffer overflow는 buf에서 주소가 증가하는 쪽(saved return address 방향)으로 덮어쓰고, heap에서의 덮어쓰기 방향은 할당 배치·접근 방식에 따라 달라짐. CMU 15-213 대응 강의자료 기준, 교수님 강의 원본 미대조)</p>
 </figure>
-<div class="v6-widget" data-widget="mem-layout" data-config='{}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">프로세스 가상주소 공간 — Virtual Memory Layout</div>
+<img src="assets/static/lec8-mem-layout.png" alt="프로세스 가상주소 공간 — Virtual Memory Layout">
+<div class="v6-params">기본값: 가상주소(hex) 0x0000000000400000</div>
+<div class="v6x-read">주소 공간 개념도 · 실제 프로세스 매핑이 아닌 교육용 예시<br>범례: 카드 높이는 주소 크기 비율이 아닙니다. 주소 예시와 성장 방향을 기준으로 읽으세요.<br>높은 주소 ↑ / 낮은 주소 ↓<br>커널 영역<br>0xFFFF800000000000 ~<br>사용자 모드 접근 불가<br>비정규 주소 간격<br>canonical hole<br>비정규 주소<br>스택(stack)<br>0x00007FFFFFFFE000 부근<br>↓ 낮은 주소 방향<br>mmap / 공유 라이브러리<br>0x00007F0000000000 부근<br>매핑 기반<br>미매핑 간격<br>주소 범위는 실행마다 다름<br>힙(heap)<br>0x0000000000800000 부근<br>↑ 높은 주소 방향<br>data / bss<br>0x0000000000600000 부근<br>전역·정적 데이터<br>text<br>0x0000000000400000 부근<br>읽기 + 실행<br>← 선택 주소<br>낮은 주소 / 보호 영역<br>0x0000000000000000 부근<br>NULL 등<br>선택 주소: 0x0000000000400000<br>영역 판정: text 코드 영역(예시, 읽기+실행)<br>Heap: 4096 B · Stack 사용량: 4096 B<br>사용자 영역 끝: 0x00007FFFFFFFFFFF · 첫 비정규 주소: 0x0000800000000000 · 커널 시작: 0xFFFF800000000000<br>Linux x86-64 주소 공간의 교육용 모델입니다. 카드 높이는 실제 주소 범위와 비례하지 않으며, 실제 매핑·권한·ASLR 배치는 운영체제와 프로세스에 따라 달라집니다.</div>
+</div>
 <h3>array·heap·stack의 실제 주소</h3>
 <pre class="c">char big_array[1L&lt;&lt;24];   /* 16 MB global array */
 char huge_array[1L&lt;&lt;31];  /* 2 GB global array */
@@ -167,7 +170,12 @@ void smash() { printf("I've been smashed!\n"); exit; }  /* 슬라이드 표기 �
 <figcaption>gets가 입력을 buf부터 순서대로 쓰므로, buf[64]를 지난 8바이트가 return address를 smash의 주소로 바꿈</figcaption>
 </figure>
 <p>이 그림은 buf의 시작점에서 return address까지의 오프셋이 64바이트라고 가정한 개념도이다. 실제 공격 문자열에 필요한 filler 길이는 해당 바이너리의 disassembly와 stack frame에서 확인한 반환 주소 오프셋으로 결정해야 한다. Saved %rbp나 alignment padding이 존재하면 필요한 filler 길이는 64바이트보다 길 수 있다. 따라서 64바이트 filler + 8바이트 주소는 해당 스택 배치에서 반환 주소 오프셋이 실제로 64바이트임을 확인한 경우에만 적용한다.</p>
-<div class="v6-widget" data-widget="buf-overflow" data-config='{"n":8}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">스택 버퍼 오버플로 — Stack Smashing</div>
+<img src="assets/static/lec8-buf-overflow.png" alt="스택 버퍼 오버플로 — Stack Smashing">
+<div class="v6-params">기본값: buf 크기 N 8 · 입력 문자열 HELLO · 입력 길이(ASCII 예시) 5 · Stack protector (canary) OFF · ASLR (개념 토글) ON · NX (개념 토글) ON</div>
+<div class="v6x-read">스택 메모리 — 낮은 주소에서 높은 주소 순서<br>1 · 지역 버퍼 buf[8] · 기준 주소 0x00007FFFFFFFE000<br>0x4c<br>0x4c<br>0x4f<br>2 · Saved %rbp (8바이트) · 기준 주소 0x00007FFFFFFFE008<br>3 · Return Address (8바이트) · 기준 주소 0x00007FFFFFFFE010<br>buf 크기: 8 B<br>입력 문자 수(Unicode 코드 포인트 기준): 5개<br>입력 UTF-8 바이트 수: 5 B<br>gets() 모델의 쓰기 길이: 6 B (UTF-8 5 B + 끝 NUL 1 B)<br>버퍼 경계 초과 바이트 수: 0 B<br>saved %rbp 침범: 아니오<br>return address 침범: 아니오<br>방어 기법 — Mitigations<br>Stack canary: 반환 전에 보호 값이 변경되었는지 검사합니다. 이 위젯에서는 8바이트 영역으로 단순화합니다.<br>ASLR: 개념상 활성 — 주소 배치를 무작위화하는 기법입니다. 토글은 개념 설명용이며 실제 주소나 침범 계산을 바꾸지 않습니다.<br>NX: 개념상 활성 — 비실행 메모리에서의 코드 실행을 제한합니다. 토글은 개념 설명용이며 실제 명령어 실행을 시뮬레이트하지 않습니다.<br>주의: ret 결과는 교육용 단순화 모델입니다. 실제 CPU의 ret, 프로세스 종료, 메모리 권한 및 운영체제의 방어 동작 전체를 재현하지 않습니다.<br>길이 슬라이더는 ASCII &#x27;A&#x27; 반복 입력을 생성합니다. 텍스트 직접 입력 시 문자 수에 맞춰 슬라이더가 동기화됩니다.<br>한글 등 비ASCII 문자는 UTF-8에서 여러 바이트를 차지할 수 있으므로 버퍼 침범 계산은 문자 수가 아니라 바이트 수를 사용합니다.<br>핵심 방어는 입력 길이를 검사하는 안전한 코드입니다. 이 그림은 설명용 스택 배치이며 실제 컴파일러의 패딩, canary 및 프레임 포인터 구성은 다를 수 있습니다.</div>
+</div>
 <h3>Code injection</h3>
 <ul>
 <li>return address A를 <b>buf의 주소 B</b>로 덮고, buf 안에 실행할 machine code를 채움 → Q가 ret하면 %rip가 B로 이동해 stack 위 exploit code를 실행</li>
@@ -361,7 +369,12 @@ unsigned float2bit(float f0) { f = f0; return u; }  // f에 값을 쓰고 u로 �
 <figcaption>같은 byte열을 little endian은 뒤집어 읽고, big endian은 그대로 읽음</figcaption>
 </figure>
 
-<div class="v6-widget" data-widget="byte-order" data-config='{"value":"0x01234567"}'></div>
+<div class="figwrap static-widget">
+<div class="v6-title">바이트 순서 — Little / Big Endian</div>
+<img src="assets/static/lec8-byte-order.png" alt="바이트 순서 — Little / Big Endian">
+<div class="v6-params">기본값: 정수(hex 또는 10진) 0x01234567 · 32비트(int)</div>
+<div class="v6x-read">Little-endian — x86-64<br>낮은 주소 (Low Address) → 높은 주소 (High Address)<br>Big-endian<br>낮은 주소 (Low Address) → 높은 주소 (High Address)<br>입력값: 0x01234567<br>표시 폭: 4바이트<br>해당 폭으로 해석한 값: 0x01234567<br>Little-endian: 0x67 0x45 0x23 0x01<br>Big-endian: 0x01 0x23 0x45 0x67<br>화살표는 낮은 메모리 주소에서 높은 메모리 주소로 증가하는 방향입니다.<br>Little-endian은 최하위 바이트(LSB)를 낮은 주소에 저장합니다.<br>Big-endian은 최상위 바이트(MSB)를 낮은 주소에 저장합니다.<br>바이트 저장 순서는 달라도 같은 폭과 해석 규칙을 사용하면 원래 정수 값을 복원할 수 있습니다.</div>
+</div>
 <h2><span class="h2no">8</span>시험 포인트</h2>
 <div class="nb">
 <ul>
