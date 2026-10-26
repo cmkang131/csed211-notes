@@ -28,6 +28,7 @@
 <section>
 <div class="problem">
 <span class="prob-no">문제 5</span>
+<p>전제: 이 문제에서는 32비트 2의 보수 정수의 비트 패턴을 사용하고, 덧셈 결과는 32비트로 취한다. signed 정수의 오른쪽 시프트는 arithmetic right shift로 가정한다. 일반 ISO C에서는 signed int의 덧셈 결과가 표현 범위를 넘으면 동작이 정의되지 않으므로, 아래 계산은 이 문제에서 지정한 32비트 기계 모델을 따른다.</p>
 <p>addOK 식 !(((x ^ s) &amp; (y ^ s)) &gt;&gt; 31)(단, s = x + y)에 x = 0x60000000, y = 0x30000000을 넣어 결과를 구하라.</p>
 </div>
 </section>
