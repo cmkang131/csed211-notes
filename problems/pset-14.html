@@ -36,7 +36,20 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-한쪽이 unsigned면 다른 쪽도 unsigned로 변환 (일반 산술 변환). unsigned 정수형으로 변환하면 결과는 해당 타입의 값 범위에 따른 모듈러 연산으로 결정된다. 반면, 값이 표현 범위를 벗어나는 signed 정수형으로의 변환 결과는 C 구현에 따라 달라질 수 있다. 이 문제의 (3)은 GCC/Clang의 Linux x86-64 구현을 가정한다. 부호 있는 정수 연산에서 결과가 해당 타입의 표현 범위를 벗어나면 ISO C에서 동작은 정의되지 않는다(UB). 2의 보수 표현을 사용하더라도 부호 있는 정수 오버플로가 자동으로 순환한다고 보장되지는 않는다. 반면, unsigned 정수 연산은 해당 타입의 비트 폭에 따른 모듈러 연산을 수행한다.
+<strong>1. 혼합 signed/unsigned 연산 — 일반 산술 변환</strong><br>
+먼저 정수 승격(integer promotions)을 적용한다. 승격 후 signed와 unsigned 타입이 섞여 있다면 다음 규칙을 적용한다.<br>
+- unsigned 타입의 변환 순위가 signed 타입 이상이면 signed 피연산자를 unsigned 타입으로 변환한다.<br>
+- unsigned 타입의 변환 순위가 signed 타입보다 낮고, signed 타입이 unsigned 타입의 모든 값을 표현할 수 있으면 unsigned 피연산자를 signed 타입으로 변환한다.<br>
+- 그 외에는 두 피연산자를 signed 타입에 대응하는 unsigned 타입으로 변환한다.<br>
+따라서 이 문제의 (1)과 (5)에서는 int와 unsigned int의 변환 순위가 같으므로 int 피연산자가 unsigned int로 변환된다.<br>
+<strong>2. 정수형 변환</strong><br>
+- unsigned 정수형으로 변환하면 결과는 해당 타입의 값 범위에 따른 모듈러 연산으로 결정된다.<br>
+- 값이 표현 범위를 벗어나는 signed 정수형으로의 변환 결과는 C 구현에 따라 달라질 수 있다.<br>
+- 이 문제의 (3)은 GCC/Clang의 Linux x86-64 구현을 가정한다.<br>
+<strong>3. 부호 있는 정수 오버플로</strong><br>
+부호 있는 정수 산술 연산의 수학적 결과가 해당 타입의 표현 범위를 벗어나면 ISO C에서 동작은 정의되지 않는다(UB). 2의 보수 표현을 사용하더라도 부호 있는 정수 오버플로가 자동으로 순환한다고 보장되지는 않는다.<br>
+<strong>4. 부호 없는 정수 연산</strong><br>
+unsigned 정수 연산은 해당 타입의 비트 폭에 따른 모듈러 연산을 수행한다.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
