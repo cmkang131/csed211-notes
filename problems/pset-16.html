@@ -40,7 +40,7 @@
 <section>
 <details class="pd"><summary>힌트 보기</summary>
 <div class="pd-body"><div class="bx">
-V = (−1)^s × M × 2^E. exp = 0이면 비정규(E = 1−bias, M = 0.f), exp = 전부 1이면 특수(∞/NaN), 아니면 정규(E = exp−bias, M = 1.f).
+값은 V = (−1)^s × M × 2^E로 계산한다. 지수 필드가 0000인 경우: fraction이 000이면 부호 있는 0 — (+0) 또는 (−0); fraction이 0이 아니면 비정규수 — E = 1−bias, M = 0.f. 지수 필드가 1111인 경우: fraction이 000이면 부호 있는 무한대 — (+∞) 또는 (−∞); fraction이 0이 아니면 NaN. 그 밖의 지수 필드(0001~1110): 정규수 — E = exp−bias, M = 1.f. 여기서 exp는 지수 필드의 정수값이고, f는 fraction 비트가 나타내는 이진 소수 부분이다.
 </div></div>
 </details>
 <details class="pd"><summary>정답 보기</summary>
