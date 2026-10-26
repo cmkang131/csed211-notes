@@ -45,7 +45,7 @@
 <span class="sol-tag">풀이</span>
 <div class="subpart first">
 <span class="part">(a)</span>
-<ol class="steps"><li>첫 6개 인자는 레지스터: a→%rdi, b→%rsi, c→%rdx, d→%rcx, e→%r8, f→%r9.</li><li>나머지는 caller가 스택에 push: g가 먼저(낮은 주소), h가 그 위.</li><li>callee 진입 시 (%rsp)에는 return address가 있으므로 첫 스택 인자는 8(%rsp).<br></li></ol>
+<ol class="steps"><li>첫 6개 인자는 레지스터: a→%rdi, b→%rsi, c→%rdx, d→%rcx, e→%r8, f→%r9.</li><li>나머지 인자는 caller가 스택에 배치한다. callee 진입 직후에는 낮은 주소부터 return address, g, h 순서로 놓이므로 g는 8(%rsp), h는 16(%rsp)에 있다. 이를 순차적인 pushq 명령으로 배치한다면 스택이 아래쪽(낮은 주소 방향)으로 자라므로 h를 먼저 push하고 g를 나중에 push한다.</li><li>callee 진입 시 (%rsp)에는 return address가 있으므로 첫 스택 인자는 8(%rsp).<br></li></ol>
 </div>
 <div class="subpart">
 <span class="part">(b)</span>
